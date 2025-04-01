@@ -881,7 +881,6 @@ dev = [
     { name = "pyrfc3339" },
     { name = "pytest" },
     { name = "pytest-coverage" },
-    { name = "ruff" },
     { name = "types-pyrfc3339" },
     { name = "uvicorn" },
 ]
@@ -907,7 +906,6 @@ dev = [
     { name = "pyrfc3339", specifier = ">=1.1" },
     { name = "pytest", specifier = ">=8.1.1" },
     { name = "pytest-coverage", specifier = ">=0.0" },
-    { name = "ruff", specifier = ">=0.9" },
     { name = "types-pyrfc3339", specifier = ">=1.1.1" },
     { name = "uvicorn", specifier = ">=0.29.0" },
 ]
