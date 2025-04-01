@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "stapi-pydantic",
-    "stapi-fastapi"
+    "stapi-fastapi",
 ]
 
 [dependency-groups]
@@ -14,6 +14,7 @@ dev = [
     "mypy>=1.15.0",
     "pytest>=8.3.5",
     "ruff>=0.11.2",
+    "pre-commit>=4.2.0",
 ]
 
 [tool.uv.workspace]
@@ -45,4 +46,4 @@ max-complexity = 8
 
 [tool.mypy]
 strict = true
-files = "stapi-pydantic/src/stapi_pydantic/**/*.py"
+files = ["stapi-pydantic/src/stapi_pydantic/**/*.py", "stapi-fastapi/src/stapi_fastapi/**/*.py"]
