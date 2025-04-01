@@ -1,6 +1,7 @@
-from .opportunity import OpportunityProperties
+from stapi_pydantic.opportunity import OpportunityProperties
+from stapi_pydantic.shared import Link
+
 from .product import Product, Provider, ProviderRole
-from .shared import Link
 
 __all__ = [
     "Link",

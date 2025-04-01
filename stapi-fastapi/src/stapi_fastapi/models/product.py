@@ -4,10 +4,9 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, Any, Literal, Self
 
 from pydantic import AnyHttpUrl, BaseModel, Field
-
-from stapi_fastapi.models.opportunity import OpportunityProperties
-from stapi_fastapi.models.order import OrderParameters
-from stapi_fastapi.models.shared import Link
+from stapi_pydantic.opportunity import OpportunityProperties
+from stapi_pydantic.order import OrderParameters
+from stapi_pydantic.shared import Link
 
 if TYPE_CHECKING:
     from stapi_fastapi.backends.product_backend import (

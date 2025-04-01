@@ -6,6 +6,22 @@ from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.datastructures import URL
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
+from stapi_pydantic.conformance import (
+    ASYNC_OPPORTUNITIES,
+    CORE,
+    Conformance,
+)
+from stapi_pydantic.opportunity import (
+    OpportunitySearchRecord,
+    OpportunitySearchRecords,
+)
+from stapi_pydantic.order import (
+    Order,
+    OrderCollection,
+    OrderStatus,
+    OrderStatuses,
+)
+from stapi_pydantic.shared import Link
 
 from stapi_fastapi.backends.root_backend import (
     GetOpportunitySearchRecord,
@@ -16,23 +32,8 @@ from stapi_fastapi.backends.root_backend import (
 )
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
 from stapi_fastapi.exceptions import NotFoundException
-from stapi_fastapi.models.conformance import (
-    ASYNC_OPPORTUNITIES,
-    CORE,
-    Conformance,
-)
-from stapi_fastapi.models.opportunity import (
-    OpportunitySearchRecord,
-    OpportunitySearchRecords,
-)
-from stapi_fastapi.models.order import (
-    Order,
-    OrderCollection,
-    OrderStatuses,
-)
 from stapi_fastapi.models.product import Product, ProductsCollection
 from stapi_fastapi.models.root import RootResponse
-from stapi_fastapi.models.shared import Link
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_fastapi.routers.route_names import (
@@ -237,7 +238,9 @@ class RootRouter(APIRouter):
             links=links,
         )
 
-    async def get_orders(self, request: Request, next: str | None = None, limit: int = 10) -> OrderCollection:
+    async def get_orders(
+        self, request: Request, next: str | None = None, limit: int = 10
+    ) -> OrderCollection[OrderStatus]:
         links: list[Link] = []
         match await self._get_orders(next, limit, request):
             case Success((orders, maybe_pagination_token)):
@@ -263,7 +266,7 @@ class RootRouter(APIRouter):
                 raise AssertionError("Expected code to be unreachable")
         return OrderCollection(features=orders, links=links)
 
-    async def get_order(self, order_id: str, request: Request) -> Order:
+    async def get_order(self, order_id: str, request: Request) -> Order[OrderStatus]:
         """
         Get details for order with `order_id`.
         """
@@ -332,7 +335,7 @@ class RootRouter(APIRouter):
     def generate_order_statuses_href(self, request: Request, order_id: str) -> URL:
         return request.url_for(f"{self.name}:{LIST_ORDER_STATUSES}", order_id=order_id)
 
-    def order_links(self, order: Order, request: Request) -> list[Link]:
+    def order_links(self, order: Order[OrderStatus], request: Request) -> list[Link]:
         return [
             Link(
                 href=str(self.generate_order_href(request, order.id)),
