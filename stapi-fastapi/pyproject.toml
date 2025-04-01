@@ -22,9 +22,6 @@ dependencies = [
     "uvicorn>=0.29.0",
 ]
 
-[project.scripts]
-dev = "stapi_fastapi.__dev__:cli"
-
 [tool.hatch.build.targets.sdist]
 include = ["src/stapi_fastapi"]
 
