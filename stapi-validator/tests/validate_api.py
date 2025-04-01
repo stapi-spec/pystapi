@@ -3,7 +3,9 @@ from schemathesis.checks import (
     not_a_server_error,
     status_code_conformance,
     content_type_conformance,
-    response_schema_conformance
+    response_schema_conformance,
+    response_headers_conformance,
+    negative_data_rejection
 )
 import pytest
 import json

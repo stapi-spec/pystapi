@@ -1,7 +1,7 @@
 import sys
 import pytest
 
-def main():
+def main() -> None:
     sys.exit(pytest.main(['stapi-validator/tests/validate_api.py']))
 
 if __name__ == '__main__':
