@@ -1,41 +1,47 @@
-[tool.poetry]
+[project]
 name = "stapi-fastapi"
-# placeholder version filled by poetry-dynamic-versioning
-version = "0.0.0"
+version = "0.6.0"
 description = "Sensor Tasking API (STAPI) with FastAPI"
-authors = ["Christian Wygoda <christian.wygoda@wygoda.net>"]
-license = "MIT"
+authors = [{ name = "Christian Wygoda", email = "christian.wygoda@wygoda.net" }]
+requires-python = ">=3.12,<4.0"
 readme = "README.md"
-packages = [{include = "stapi_fastapi", from="src"}]
+license = "MIT"
+dependencies = [
+    "fastapi>=0.115.0",
+    "pydantic>=2.10",
+    "geojson-pydantic>=1.1",
+    "pygeofilter>=0.2",
+    "returns>=0.23",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.12,<4.0"
-fastapi = ">=0.115.0"
-pydantic = ">=2.10"
-geojson-pydantic = ">=1.1"
-pygeofilter = ">=0.2"
-returns = ">=0.23"
-
-[tool.poetry.group.dev]
-optional = true
-
-[tool.poetry.group.dev.dependencies]
-httpx = ">=0.27.0"
-nox = ">=2024.4.15"
-mypy = ">=1.13.0"
-pre-commit = ">=4.1.0"
-pre-commit-hooks = ">=4.6.0"
-pydantic-settings = ">=2.2.1"
-pymarkdownlnt = ">=0.9.25"
-pyrfc3339 = ">=1.1"
-pytest = ">=8.1.1"
-pytest-coverage = ">=0.0"
-ruff = ">=0.9"
-types-pyRFC3339 = ">=1.1.1"
-uvicorn = ">=0.29.0"
-
-[tool.poetry.scripts]
+[project.scripts]
 dev = "stapi_fastapi.__dev__:cli"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.27.0",
+    "nox>=2024.4.15",
+    "mypy>=1.13.0",
+    "pre-commit>=4.1.0",
+    "pre-commit-hooks>=4.6.0",
+    "pydantic-settings>=2.2.1",
+    "pymarkdownlnt>=0.9.25",
+    "pyrfc3339>=1.1",
+    "pytest>=8.1.1",
+    "pytest-coverage>=0.0",
+    "ruff>=0.9",
+    "types-pyRFC3339>=1.1.1",
+    "uvicorn>=0.29.0",
+]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/stapi_fastapi"]
+
+[tool.hatch.build.targets.wheel]
+include = ["src/stapi_fastapi"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src/stapi_fastapi" = "stapi_fastapi"
 
 [tool.ruff]
 line-length = 88
@@ -88,9 +94,6 @@ enable = true
 [[tool.mypy.overrides]]
 module = "pygeofilter.parsers.*"
 ignore_missing_imports = true
-
-# [tool.mypy]
-#plugins = ['pydantic.mypy']
 
 [tool.pymarkdown]
 plugins.md013.line_length = 120
