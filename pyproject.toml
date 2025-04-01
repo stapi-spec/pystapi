@@ -20,6 +20,13 @@ dev = [
     "pre-commit>=4.2.0",
     "pre-commit-hooks>=5.0.0",
 ]
+docs = [
+    "mkdocs-material>=9.6.11",
+    "mkdocstrings-python>=1.16.8",
+]
+
+[tool.uv]
+default-groups = ["dev", "docs"]
 
 [tool.uv.workspace]
 members = ["stapi-pydantic", "stapi-fastapi"]
