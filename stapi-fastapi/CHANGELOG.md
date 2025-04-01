@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Add constants for route names to be used in link href generation
 
+## Changed
+
+- stapi-fastapi is now using stapi-pydantic models, deduplicating code
+- Product in stapu-fastapi is now subclass of Product from stapi-pydantic
+
 ## [v0.6.0] - 2025-02-11
 
 ### Added

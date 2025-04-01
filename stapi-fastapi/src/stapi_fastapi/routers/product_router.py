@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse
 from geojson_pydantic.geometries import Geometry
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
+from stapi_pydantic.json_schema_model import JsonSchemaModel
 from stapi_pydantic.opportunity import (
     OpportunityCollection,
     OpportunityPayload,
@@ -38,7 +39,6 @@ from stapi_fastapi.routers.route_names import (
     GET_PRODUCT,
     SEARCH_OPPORTUNITIES,
 )
-from stapi_fastapi.types.json_schema_model import JsonSchemaModel
 
 if TYPE_CHECKING:
     from stapi_fastapi.routers import RootRouter

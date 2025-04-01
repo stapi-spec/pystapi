@@ -13,7 +13,6 @@ from httpx import Response
 from pydantic import BaseModel, Field, model_validator
 from pytest import fail
 from stapi_fastapi.models.product import Product
-from stapi_pydantic.product import Provider, ProviderRole
 from stapi_pydantic.opportunity import (
     Opportunity,
     OpportunityCollection,
@@ -25,6 +24,7 @@ from stapi_pydantic.order import (
     OrderParameters,
     OrderStatus,
 )
+from stapi_pydantic.product import Provider, ProviderRole
 
 from .backends import (
     mock_create_order,
