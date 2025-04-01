@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+
+set -e
+
+scripts=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+root=$(dirname "$scripts")
+
+uv run fastapi dev "$root/stapi-fastapi/tests/application.py" >/dev/null 2>&1 &
+server_pid=$!
+
+set +e
+"$scripts"/wait-for-it.sh localhost:8000 -- test 0 # TODO update to validate
+result=$?
+set -e
+
+kill $(pgrep -P $server_pid)
+if [ $result ]; then
+    echo "Validated OK!"
+else
+    exit $result
+fi
