@@ -17,12 +17,6 @@ dependencies = [
     "pytest-metadata>=3.1.1",
 ]
 
-[dependency-groups]
-dev = [
-    "isort>=5.13.2",
-    "black>=24.10.0",
-]
-
 [project.scripts]
 stapi-validator = "stapi_validator:main"
 
