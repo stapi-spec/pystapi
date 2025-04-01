@@ -2,7 +2,7 @@
 
 set -e
 
-scripts=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+scripts="$(cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 root=$(dirname "$scripts")
 
 uv run fastapi dev "$root/stapi-fastapi/tests/application.py" >/dev/null 2>&1 &
