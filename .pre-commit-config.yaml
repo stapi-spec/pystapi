@@ -32,7 +32,6 @@ repos:
         entry: uv run pymarkdown scan
         language: system
         files: \.(md|mdown|markdown)$
-        exclude: ^.github/pull_request_template.md$
 
       - id: check-added-large-files
         name: Check for added large files
@@ -50,6 +49,7 @@ repos:
         entry: uv run check-yaml
         language: system
         types: [yaml]
+        exclude: ^mkdocs.yml$
 
       - id: mixed-line-ending
         name: Check mixed line endings
