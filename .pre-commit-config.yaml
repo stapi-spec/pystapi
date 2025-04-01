@@ -4,7 +4,7 @@ repos:
 
       - id: ruff-check
         name: Lint with ruff
-        entry: ruff check --fix
+        entry: uv run ruff check --fix
         language: system
         types: [python]
         pass_filenames: false
@@ -12,7 +12,7 @@ repos:
 
       - id: ruff-format
         name: Format with ruff
-        entry: ruff format
+        entry: uv run ruff format
         language: system
         types: [python]
         pass_filenames: false
@@ -20,7 +20,7 @@ repos:
 
       - id: mypy
         name: Check typing with mypy
-        entry: mypy
+        entry: uv run mypy
         language: system
         types: [python]
         pass_filenames: false
@@ -29,57 +29,57 @@ repos:
       - id: pymarkdown
         name: Markdownlint
         description: Run markdownlint on Markdown files
-        entry: pymarkdown scan
+        entry: uv run pymarkdown scan
         language: python
         files: \.(md|mdown|markdown)$
         exclude: ^.github/pull_request_template.md$
 
       - id: check-added-large-files
         name: Check for added large files
-        entry: check-added-large-files
+        entry: uv run check-added-large-files
         language: system
 
       - id: check-toml
         name: Check Toml
-        entry: check-toml
+        entry: uv run check-toml
         language: system
         types: [toml]
 
       - id: check-yaml
         name: Check Yaml
-        entry: check-yaml
+        entry: uv run check-yaml
         language: system
         types: [yaml]
 
       - id: mixed-line-ending
         name: Check mixed line endings
-        entry: mixed-line-ending
+        entry: uv run mixed-line-ending
         language: system
         types: [text]
         stages: [pre-commit, pre-push, manual]
 
       - id: end-of-file-fixer
         name: Fix End of Files
-        entry: end-of-file-fixer
+        entry: uv run end-of-file-fixer
         language: system
         types: [text]
         stages: [pre-commit, pre-push, manual]
 
       - id: trailing-whitespace
         name: Trim Trailing Whitespace
-        entry: trailing-whitespace-fixer
+        entry: uv run trailing-whitespace-fixer
         language: system
         types: [text]
         stages: [pre-commit, pre-push, manual]
 
       - id: check-merge-conflict
         name: Check merge conflicts
-        entry: check-merge-conflict
+        entry: uv run check-merge-conflict
         language: system
 
       - id: no-commit-to-branch
         name: Check not committting to main
-        entry: no-commit-to-branch
+        entry: uv run no-commit-to-branch
         language: system
         args: ["--branch", "main"]
         pass_filenames: false
