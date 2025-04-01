@@ -8,7 +8,7 @@ from fastapi import FastAPI
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from stapi_fastapi.models.conformance import ASYNC_OPPORTUNITIES, CORE, OPPORTUNITIES
+from stapi_fastapi.models.conformance import CORE, OPPORTUNITIES
 from stapi_fastapi.routers.root_router import RootRouter
 
 from tests.backends import (
@@ -22,7 +22,7 @@ from tests.shared import (
     InMemoryOpportunityDB,
     InMemoryOrderDB,
     product_test_satellite_provider_sync_opportunity,
-    product_test_spotlight_sync_async_opportunity,
+    product_test_spotlight_sync_opportunity,
 )
 
 
@@ -43,9 +43,9 @@ root_router = RootRouter(
     get_order_statuses=mock_get_order_statuses,
     get_opportunity_search_records=mock_get_opportunity_search_records,
     get_opportunity_search_record=mock_get_opportunity_search_record,
-    conformances=[CORE, OPPORTUNITIES, ASYNC_OPPORTUNITIES],
+    conformances=[CORE, OPPORTUNITIES],
 )
-root_router.add_product(product_test_spotlight_sync_async_opportunity)
+root_router.add_product(product_test_spotlight_sync_opportunity)
 root_router.add_product(product_test_satellite_provider_sync_opportunity)
 app: FastAPI = FastAPI(lifespan=lifespan)
 app.include_router(root_router, prefix="")

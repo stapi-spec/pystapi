@@ -5,8 +5,9 @@ description = "Monorepo for Satellite Tasking API (STAPI) Specification Python p
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "pystapi-validator",
     "stapi-pydantic",
-    "stapi-fastapi",
+    "stapi-fastapi"
 ]
 
 [dependency-groups]
@@ -19,6 +20,7 @@ dev = [
     "pymarkdownlnt>=0.9.25",
     "pre-commit>=4.2.0",
     "pre-commit-hooks>=5.0.0",
+    "fastapi[standard]>=0.115.12",
 ]
 docs = [
     "mkdocs-material>=9.6.11",
@@ -29,9 +31,10 @@ docs = [
 default-groups = ["dev", "docs"]
 
 [tool.uv.workspace]
-members = ["stapi-pydantic", "stapi-fastapi"]
+members = ["pystapi-validator", "stapi-pydantic", "stapi-fastapi"]
 
 [tool.uv.sources]
+pystapi-validator.workspace = true
 stapi-pydantic.workspace = true
 stapi-fastapi.workspace = true
 
@@ -57,6 +60,7 @@ max-complexity = 8  # default 10
 [tool.mypy]
 strict = true
 files = [
+    "pystapi-validator/src/pystapi_validator/**/*.py",
     "stapi-pydantic/src/stapi_pydantic/**/*.py",
     "stapi-fastapi/src/stapi_fastapi/**/*.py"
 ]
