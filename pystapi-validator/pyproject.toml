@@ -1,5 +1,5 @@
 [project]
-name = "stapi-validator"
+name = "pystapi-validator"
 version = "0.1.0"
 description = "API validation for STAPI FastAPI using Schemathesis and OpenAPI YAML with reporting"
 authors = [
@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-stapi-validator = "stapi_validator:main"
+pystapi-validator = "pystapi_validator:main"
 
 [build-system]
 requires = ["hatchling"]

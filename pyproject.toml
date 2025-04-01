@@ -7,7 +7,7 @@ requires-python = ">=3.10"
 dependencies = [
     "mkdocstrings-python>=1.16.8",
     "stapi-pydantic",
-    "stapi-validator"
+    "pystapi-validator"
 ]
 
 [dependency-groups]
@@ -24,15 +24,15 @@ docs = [
 default-groups = ["dev", "docs"]
 
 [tool.uv.workspace]
-members = ["stapi-pydantic", "stapi-validator"]
+members = ["stapi-pydantic", "pystapi-validator"]
 
 [tool.uv.sources]
 stapi-pydantic.workspace = true
-stapi-validator.workspace = true
+pystapi-validator.workspace = true
 
 [tool.mypy]
 strict = true
 files = [
     "stapi-pydantic/src/stapi_pydantic/**/*.py",
-    "stapi-validator/src/stapi_validator/**/*.py"
+    "pystapi-validator/src/pystapi_validator/**/*.py"
 ]
