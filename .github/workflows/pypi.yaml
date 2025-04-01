@@ -34,6 +34,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
+      - name: Create virtual environment
+        run: uv venv
       - name: Install build
         run: uv pip install build
       - name: Build
