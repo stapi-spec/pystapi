@@ -19,8 +19,8 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - name: Sync
         run: uv sync
-      - name: Lint
-        run: scripts/lint
+      - name: Pre-Commit Hooks
+        run: uv run pre-commit run --all-files
       - name: Test
         run: uv run pytest
       - name: Docs
@@ -28,6 +28,7 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site/
+
   docs:
     name: Deploy docs
     runs-on: ubuntu-latest
