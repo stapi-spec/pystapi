@@ -8,7 +8,7 @@ from .opportunity import (
     OpportunitySearchStatus,
     OpportunitySearchStatusCode,
 )
-from .product import Product, Provider, ProviderRole
+from .product import Product, ProductsCollection, Provider, ProviderRole
 from .shared import Link
 
 __all__ = [
@@ -22,6 +22,7 @@ __all__ = [
     "OpportunitySearchStatus",
     "OpportunitySearchStatusCode",
     "Product",
+    "ProductsCollection",
     "Provider",
     "ProviderRole",
 ]
