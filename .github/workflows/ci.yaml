@@ -19,7 +19,27 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - name: Sync
         run: uv sync
-      - name: Lint
-        run: scripts/lint
+      - name: Pre-Commit Hooks
+        run: uv run pre-commit run --all-files
       - name: Test
         run: uv run pytest
+      - name: Docs
+        run: uv run mkdocs build --strict
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/
+
+  docs:
+    name: Deploy docs
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    needs: ci
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

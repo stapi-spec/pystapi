@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import (
     AfterValidator,
@@ -11,9 +11,7 @@ from pydantic import (
 )
 
 
-def validate_before(
-    value: str | tuple[datetime, datetime],
-) -> tuple[datetime, datetime]:
+def validate_before(value: Any) -> Any:
     if isinstance(value, str):
         start, end = value.split("/", 1)
         return (datetime.fromisoformat(start), datetime.fromisoformat(end))
