@@ -23,3 +23,5 @@ jobs:
         run: scripts/lint
       - name: Test
         run: uv run pytest
+      - name: Check docs
+        run: uv run mkdocs build --strict
