@@ -3,7 +3,7 @@ name = "stapi-validator"
 version = "0.1.0"
 description = "API validation for STAPI FastAPI using Schemathesis and OpenAPI YAML with reporting"
 authors = [
-    {name = "Your Name", email = "you@example.com"}
+    { name = "Brian Terry", email = "brian.b.terry@ama-inc.com" }
 ]
 license = "MIT"
 readme = "README.md"
