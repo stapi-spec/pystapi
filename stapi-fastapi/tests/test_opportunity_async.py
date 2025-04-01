@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
-from stapi_fastapi.models.shared import Link
+from stapi_pydantic.shared import Link
 from stapi_pydantic.opportunity import (
     OpportunityCollection,
     OpportunitySearchRecord,
