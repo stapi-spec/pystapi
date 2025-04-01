@@ -8,15 +8,19 @@ dependencies = [
     "stapi-pydantic"
 ]
 
-[tool.uv.workspace]
-members = ["stapi-pydantic"]
-
-[tool.uv.sources]
-stapi-pydantic.workspace = true
-
 [dependency-groups]
 dev = [
     "mypy>=1.15.0",
     "pytest>=8.3.5",
     "ruff>=0.11.2",
 ]
+
+[tool.uv.workspace]
+members = ["stapi-pydantic"]
+
+[tool.uv.sources]
+stapi-pydantic.workspace = true
+
+[tool.mypy]
+strict = true
+files = "stapi-pydantic/src/stapi_pydantic/**/*.py"

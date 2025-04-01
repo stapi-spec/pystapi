@@ -79,14 +79,14 @@ class OrderProperties[T: OrderStatus](BaseModel):
 
 
 # derived from geojson_pydantic.Feature
-class Order(_GeoJsonBase):
+class Order[T: OrderStatus](_GeoJsonBase):
     # We need to enforce that orders have an id defined, as that is required to
     # retrieve them via the API
     id: StrictStr
     type: Literal["Feature"] = "Feature"
 
     geometry: Geometry = Field(...)
-    properties: OrderProperties = Field(...)
+    properties: OrderProperties[T] = Field(...)
 
     links: list[Link] = Field(default_factory=list)
 
@@ -102,12 +102,12 @@ class Order(_GeoJsonBase):
 
 
 # derived from geojson_pydantic.FeatureCollection
-class OrderCollection(_GeoJsonBase):
+class OrderCollection[T: OrderStatus](_GeoJsonBase):
     type: Literal["FeatureCollection"] = "FeatureCollection"
-    features: list[Order]
+    features: list[Order[T]]
     links: list[Link] = Field(default_factory=list)
 
-    def __iter__(self) -> Iterator[Order]:  # type: ignore [override]
+    def __iter__(self) -> Iterator[Order[T]]:  # type: ignore [override]
         """iterate over features"""
         return iter(self.features)
 
@@ -115,7 +115,7 @@ class OrderCollection(_GeoJsonBase):
         """return features length"""
         return len(self.features)
 
-    def __getitem__(self, index: int) -> Order:
+    def __getitem__(self, index: int) -> Order[T]:
         """get feature at a given index"""
         return self.features[index]
 

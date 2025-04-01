@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Literal, Optional, Self
+from typing import Any, Literal, Optional, Self
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
@@ -25,7 +25,7 @@ class Provider(BaseModel):
 
     # redefining init is a hack to get str type to validate for `url`,
     # as str is ultimately coerced into an AnyHttpUrl automatically anyway
-    def __init__(self, url: AnyHttpUrl | str, **kwargs) -> None:
+    def __init__(self, url: AnyHttpUrl | str, **kwargs: Any) -> None:
         super().__init__(url=url, **kwargs)
 
 
@@ -47,18 +47,17 @@ class Product(BaseModel):
 
     def __init__(
         self,
-        *args,
+        *args: Any,
         constraints: type[Constraints],
         opportunity_properties: type[OpportunityProperties],
         order_parameters: type[OrderParameters],
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
 
         self._constraints = constraints
         self._opportunity_properties = opportunity_properties
         self._order_parameters = order_parameters
-        return self._create_order
 
     @property
     def constraints(self) -> type[Constraints]:

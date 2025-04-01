@@ -10,14 +10,16 @@ from pydantic import (
 )
 
 
-def validate_before(value: Any) -> tuple[datetime, datetime]:
+def validate_before(
+    value: str | tuple[datetime, datetime],
+) -> tuple[datetime, datetime]:
     if isinstance(value, str):
         start, end = value.split("/", 1)
         return (datetime.fromisoformat(start), datetime.fromisoformat(end))
     return value
 
 
-def validate_after(value: tuple[datetime, datetime]):
+def validate_after(value: tuple[datetime, datetime]) -> tuple[datetime, datetime]:
     if value[1] < value[0]:
         raise ValueError("end before start")
     return value

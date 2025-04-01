@@ -1,0 +1,21 @@
+name: "Continuous integration"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  ci:
+    name: Continuous integration
+    runs-on: ubuntu-lates
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Sync
+        run: uv sync
+      - name: Lint
+        run: scripts/lint
+      - name: Test
+        run: uv run pytest

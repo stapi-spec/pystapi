@@ -22,7 +22,7 @@ class Link(BaseModel):
 
     # redefining init is a hack to get str type to validate for `href`,
     # as str is ultimately coerced into an AnyUrl automatically anyway
-    def __init__(self, href: AnyUrl | str, **kwargs):
+    def __init__(self, href: AnyUrl | str, **kwargs: Any):
         super().__init__(href=href, **kwargs)
 
     # overriding the default serialization to filter None field values from
