@@ -5,6 +5,7 @@ description = "Monorepo for Satellite Tasking API (STAPI) Specification Python p
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "mkdocstrings-python>=1.16.8",
     "stapi-pydantic",
     "stapi-validator"
 ]
@@ -15,6 +16,12 @@ dev = [
     "pytest>=8.3.5",
     "ruff>=0.11.2",
 ]
+docs = [
+    "mkdocs-material>=9.6.11",
+]
+
+[tool.uv]
+default-groups = ["dev", "docs"]
 
 [tool.uv.workspace]
 members = ["stapi-pydantic", "stapi-validator"]
