@@ -59,6 +59,13 @@ files = [
     "stapi-fastapi/src/stapi_fastapi/**/*.py"
 ]
 
+[[tool.mypy.overrides]]
+module = "pygeofilter.parsers.*"
+ignore_missing_imports = true
+
+[tool.pymarkdown]
+plugins.md013.line_length = 120
+plugins.md024.enabled = false # duplicate headers
 
 [tool.coverage.report]
 show_missing = true

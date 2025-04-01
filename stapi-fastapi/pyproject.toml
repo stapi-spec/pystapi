@@ -34,14 +34,6 @@ include = ["src/stapi_fastapi"]
 [tool.hatch.build.targets.wheel.sources]
 "src/stapi_fastapi" = "stapi_fastapi"
 
-[[tool.mypy.overrides]]
-module = "pygeofilter.parsers.*"
-ignore_missing_imports = true
-
-[tool.pymarkdown]
-plugins.md013.line_length = 120
-plugins.md024.enabled = false # duplicate headers
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
