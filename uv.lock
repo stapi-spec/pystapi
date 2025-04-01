@@ -5,6 +5,7 @@ requires-python = ">=3.10"
 [manifest]
 members = [
     "pystapi",
+    "pystapi-client",
     "stapi-fastapi",
     "stapi-pydantic",
 ]
@@ -462,14 +463,14 @@ wheels = [
 
 [[package]]
 name = "griffe"
-version = "1.7.1"
+version = "1.7.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/30/1b/fe7a3a33a2fb7ad7807f71957e6108a50d93271ab718d9a56080415f66de/griffe-1.7.1.tar.gz", hash = "sha256:464730d0e95d0afd038e699a5f7276d7438d0712db0c489a17e761f70e011507", size = 394522 }
+sdist = { url = "https://files.pythonhosted.org/packages/59/08/7df7e90e34d08ad890bd71d7ba19451052f88dc3d2c483d228d1331a4736/griffe-1.7.2.tar.gz", hash = "sha256:98d396d803fab3b680c2608f300872fd57019ed82f0672f5b5323a9ad18c540c", size = 394919 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1d/94/48e28b1c7402f750200e9e3ef4834c862ea85c64f426a231a6dc312f61a9/griffe-1.7.1-py3-none-any.whl", hash = "sha256:37a7f15233937d723ddc969fa4117fdd03988885c16938dc43bccdfe8fa4d02d", size = 129134 },
+    { url = "https://files.pythonhosted.org/packages/b1/5e/38b408f41064c9fcdbb0ea27c1bd13a1c8657c4846e04dab9f5ea770602c/griffe-1.7.2-py3-none-any.whl", hash = "sha256:1ed9c2e338a75741fc82083fe5a1bc89cb6142efe126194cc313e34ee6af5423", size = 129187 },
 ]
 
 [[package]]
@@ -1087,6 +1088,7 @@ name = "pystapi"
 version = "0.0.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "pystapi-client" },
     { name = "stapi-fastapi" },
     { name = "stapi-pydantic" },
 ]
@@ -1108,6 +1110,7 @@ docs = [
 
 [package.metadata]
 requires-dist = [
+    { name = "pystapi-client", editable = "pystapi-client" },
     { name = "stapi-fastapi", editable = "stapi-fastapi" },
     { name = "stapi-pydantic", editable = "stapi-pydantic" },
 ]
@@ -1126,6 +1129,23 @@ dev = [
 docs = [
     { name = "mkdocs-material", specifier = ">=9.6.11" },
     { name = "mkdocstrings-python", specifier = ">=1.16.8" },
+]
+
+[[package]]
+name = "pystapi-client"
+version = "0.0.1"
+source = { editable = "pystapi-client" }
+dependencies = [
+    { name = "httpx" },
+    { name = "python-dateutil" },
+    { name = "stapi-pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "python-dateutil", specifier = ">=2.8.2" },
+    { name = "stapi-pydantic", editable = "stapi-pydantic" },
 ]
 
 [[package]]

@@ -1,0 +1,25 @@
+[project]
+name = "pystapi-client"
+version = "0.0.1"
+description = "Python library for searching Satellite Tasking API (STAPI) APIs."
+readme = "README.md"
+authors = []
+maintainers = [{ name = "Pete Gadomski", email = "pete.gadomski@gmail.com" }]
+keywords = ["stapi"]
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.28.1",
+    "stapi-pydantic",
+    "python-dateutil>=2.8.2",
+]
+
+[project.scripts]
+stapi-client = "pystapi_client.cli:cli"
+
+[tool.uv.sources]
+stapi-pydantic = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
