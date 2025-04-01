@@ -5,7 +5,6 @@ description = "Monorepo for Satellite Tasking API (STAPI) Specification Python p
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "mkdocstrings-python>=1.16.8",
     "stapi-pydantic",
 ]
 
@@ -17,6 +16,7 @@ dev = [
 ]
 docs = [
     "mkdocs-material>=9.6.11",
+    "mkdocstrings-python>=1.16.8",
 ]
 
 [tool.uv]
