@@ -1,0 +1,36 @@
+site_name: pystapi
+site_url: https://stapi-spec.github.io/pystapi
+repo_url: https://github.com/stapi-spec/pystapi/
+repo_name: pystapi
+theme:
+  name: material
+  logo: img/stapi.png
+  favicon: img/stapi.png
+  features:
+    - navigation.indexes
+
+nav:
+  - index.md
+  - stapi-pydantic:
+      - stapi-pydantic/index.md
+      - stapi-pydantic/api.md
+
+plugins:
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            show_if_no_docstring: true
+            show_submodules: true
+          inventories:
+            - https://docs.python.org/3/objects.inv
+            - https://docs.pydantic.dev/latest/objects.inv
+
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
