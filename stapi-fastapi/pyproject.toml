@@ -6,7 +6,7 @@ authors = [{ name = "Christian Wygoda", email = "christian.wygoda@wygoda.net" }]
 readme = "README.md"
 license = "MIT"
 
-requires-python = ">=3.12,<4.0"
+requires-python = ">=3.10"
 
 dependencies = [
     "httpx>=0.27.0",
