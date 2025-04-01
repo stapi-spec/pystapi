@@ -36,7 +36,7 @@ A minimal test implementation is provided in [stapi-fastapi/tests/application.py
 Run it like so:
 
 ```commandline
-fastapi dev stapi-fastapi/tests/application.py
+uv run fastapi dev stapi-fastapi/tests/application.py
 ```
 
 The app should be accessible at `http://localhost:8000`.
