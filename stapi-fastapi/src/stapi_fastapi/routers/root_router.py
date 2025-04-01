@@ -21,6 +21,7 @@ from stapi_pydantic.order import (
     OrderStatus,
     OrderStatuses,
 )
+from stapi_pydantic.product import ProductsCollection
 from stapi_pydantic.shared import Link
 
 from stapi_fastapi.backends.root_backend import (
@@ -32,7 +33,7 @@ from stapi_fastapi.backends.root_backend import (
 )
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
 from stapi_fastapi.exceptions import NotFoundException
-from stapi_fastapi.models.product import Product, ProductsCollection
+from stapi_fastapi.models.product import Product
 from stapi_fastapi.models.root import RootResponse
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_fastapi.routers.product_router import ProductRouter
