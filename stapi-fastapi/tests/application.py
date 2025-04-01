@@ -10,6 +10,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from stapi_fastapi.models.conformance import ASYNC_OPPORTUNITIES, CORE, OPPORTUNITIES
 from stapi_fastapi.routers.root_router import RootRouter
+
 from tests.backends import (
     mock_get_opportunity_search_record,
     mock_get_opportunity_search_records,

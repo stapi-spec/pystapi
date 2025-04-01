@@ -1,5 +1,5 @@
-from collections.abc import Coroutine
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable, Coroutine
+from typing import Any, TypeVar
 
 from fastapi import Request
 from returns.maybe import Maybe
@@ -26,8 +26,10 @@ Args:
 Returns:
     A tuple containing a list of orders and a pagination token.
 
-    - Should return returns.result.Success[tuple[list[Order], returns.maybe.Some[str]]] if including a pagination token
-    - Should return returns.result.Success[tuple[list[Order], returns.maybe.Nothing]] if not including a pagination token
+    - Should return returns.result.Success[tuple[list[Order], returns.maybe.Some[str]]]
+      if including a pagination token
+    - Should return returns.result.Success[tuple[list[Order], returns.maybe.Nothing]]
+      if not including a pagination token
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
 
@@ -65,8 +67,10 @@ Args:
 Returns:
     A tuple containing a list of order statuses and a pagination token.
 
-    - Should return returns.result.Success[returns.maybe.Some[tuple[list[OrderStatus], returns.maybe.Some[str]]] if order is found and including a pagination token.
-    - Should return returns.result.Success[returns.maybe.Some[tuple[list[OrderStatus], returns.maybe.Nothing]]] if order is found and not including a pagination token.
+    - Should return returns.result.Success[returns.maybe.Some[tuple[list[OrderStatus], returns.maybe.Some[str]]]
+      if order is found and including a pagination token.
+    - Should return returns.result.Success[returns.maybe.Some[tuple[list[OrderStatus], returns.maybe.Nothing]]]
+      if order is found and not including a pagination token.
     - Should return returns.result.Success[returns.maybe.Nothing] if the order is not found or if access is denied.
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
@@ -84,14 +88,14 @@ Args:
     limit (int): The maximum number of search records to return in a page.
 
 Returns:
-    - Should return returns.result.Success[tuple[list[OpportunitySearchRecord], returns.maybe.Some[str]]] if including a pagination token
-    - Should return returns.result.Success[tuple[list[OpportunitySearchRecord], returns.maybe.Nothing]] if not including a pagination token
+    - Should return returns.result.Success[tuple[list[OpportunitySearchRecord], returns.maybe.Some[str]]]
+      if including a pagination token
+    - Should return returns.result.Success[tuple[list[OpportunitySearchRecord], returns.maybe.Nothing]]
+      if not including a pagination token
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
 
-GetOpportunitySearchRecord = Callable[
-    [str, Request], Coroutine[Any, Any, ResultE[Maybe[OpportunitySearchRecord]]]
-]
+GetOpportunitySearchRecord = Callable[[str, Request], Coroutine[Any, Any, ResultE[Maybe[OpportunitySearchRecord]]]]
 """
 Type alias for an async function that gets the OpportunitySearchRecord with
 `search_record_id`.
@@ -102,6 +106,7 @@ Args:
 
 Returns:
     - Should return returns.result.Success[returns.maybe.Some[OpportunitySearchRecord]] if the search record is found.
-    - Should return returns.result.Success[returns.maybe.Nothing] if the search record is not found or if access is denied.
+    - Should return returns.result.Success[returns.maybe.Nothing] if the search record is not found or
+      if access is denied.
     - Returning returns.result.Failure[Exception] will result in a 500.
 """

@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import HTTPException, status
 
@@ -13,5 +13,5 @@ class ConstraintsException(StapiException):
 
 
 class NotFoundException(StapiException):
-    def __init__(self, detail: Optional[Any] = None) -> None:
+    def __init__(self, detail: Any | None = None) -> None:
         super().__init__(status.HTTP_404_NOT_FOUND, detail)

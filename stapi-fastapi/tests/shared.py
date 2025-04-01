@@ -12,7 +12,6 @@ from geojson_pydantic.types import Position2D
 from httpx import Response
 from pydantic import BaseModel, Field, model_validator
 from pytest import fail
-
 from stapi_fastapi.models.opportunity import (
     Opportunity,
     OpportunityCollection,
@@ -252,9 +251,7 @@ def pagination_tester(
 
     while next_url:
         if method == "POST":
-            body = next(
-                (d["body"] for d in resp_body["links"] if d["rel"] == "next"), None
-            )
+            body = next((d["body"] for d in resp_body["links"] if d["rel"] == "next"), None)
 
         res = make_request(stapi_client, next_url, method, body, limit)
 
@@ -266,9 +263,7 @@ def pagination_tester(
 
         # get url w/ query params for next call if exists, and POST body if necessary
         if resp_body["links"]:
-            next_url = next(
-                (d["href"] for d in resp_body["links"] if d["rel"] == "next"), None
-            )
+            next_url = next((d["href"] for d in resp_body["links"] if d["rel"] == "next"), None)
         else:
             next_url = None
 

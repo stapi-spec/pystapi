@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 from enum import StrEnum
-from typing import Any, Generic, Literal, Optional, TypeVar, Union
+from typing import Any, Generic, Literal, TypeVar
 
 from geojson_pydantic.base import _GeoJsonBase
 from geojson_pydantic.geometries import Geometry
@@ -18,7 +18,7 @@ from .filter import CQL2Filter
 from .opportunity import OpportunityProperties
 from .shared import Link
 
-Props = TypeVar("Props", bound=Union[dict[str, Any], BaseModel])
+Props = TypeVar("Props", bound=dict[str, Any] | BaseModel)
 Geom = TypeVar("Geom", bound=Geometry)
 
 
@@ -47,8 +47,8 @@ class OrderStatusCode(StrEnum):
 class OrderStatus(BaseModel):
     timestamp: AwareDatetime
     status_code: OrderStatusCode
-    reason_code: Optional[str] = None
-    reason_text: Optional[str] = None
+    reason_code: str | None = None
+    reason_text: str | None = None
     links: list[Link] = Field(default_factory=list)
 
     model_config = ConfigDict(extra="allow")

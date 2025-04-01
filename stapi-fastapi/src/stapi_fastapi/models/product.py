@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import TYPE_CHECKING, Literal, Optional, Self
+from typing import TYPE_CHECKING, Any, Literal, Self
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
@@ -30,13 +30,13 @@ class ProviderRole(StrEnum):
 
 class Provider(BaseModel):
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     roles: list[ProviderRole]
     url: AnyHttpUrl
 
     # redefining init is a hack to get str type to validate for `url`,
     # as str is ultimately coerced into an AnyHttpUrl automatically anyway
-    def __init__(self, url: AnyHttpUrl | str, **kwargs) -> None:
+    def __init__(self, url: AnyHttpUrl | str, **kwargs: Any) -> None:
         super().__init__(url=url, **kwargs)
 
 
@@ -62,7 +62,7 @@ class Product(BaseModel):
 
     def __init__(
         self,
-        *args,
+        *args: Any,
         constraints: type[Constraints],
         opportunity_properties: type[OpportunityProperties],
         order_parameters: type[OrderParameters],
@@ -70,7 +70,7 @@ class Product(BaseModel):
         search_opportunities: SearchOpportunities | None = None,
         search_opportunities_async: SearchOpportunitiesAsync | None = None,
         get_opportunity_collection: GetOpportunityCollection | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
 
@@ -101,17 +101,13 @@ class Product(BaseModel):
     @property
     def search_opportunities_async(self) -> SearchOpportunitiesAsync:
         if not self._search_opportunities_async:
-            raise AttributeError(
-                "This product does not support async opportunity search"
-            )
+            raise AttributeError("This product does not support async opportunity search")
         return self._search_opportunities_async
 
     @property
     def get_opportunity_collection(self) -> GetOpportunityCollection:
         if not self._get_opportunity_collection:
-            raise AttributeError(
-                "This product does not support async opportunity search"
-            )
+            raise AttributeError("This product does not support async opportunity search")
         return self._get_opportunity_collection
 
     @property
@@ -132,10 +128,7 @@ class Product(BaseModel):
 
     @property
     def supports_async_opportunity_search(self) -> bool:
-        return (
-            self._search_opportunities_async is not None
-            and self._get_opportunity_collection is not None
-        )
+        return self._search_opportunities_async is not None and self._get_opportunity_collection is not None
 
     def with_links(self, links: list[Link] | None = None) -> Self:
         if not links:
@@ -147,8 +140,6 @@ class Product(BaseModel):
 
 
 class ProductsCollection(BaseModel):
-    type_: Literal["ProductCollection"] = Field(
-        default="ProductCollection", alias="type"
-    )
+    type_: Literal["ProductCollection"] = Field(default="ProductCollection", alias="type")
     links: list[Link] = Field(default_factory=list)
     products: list[Product]

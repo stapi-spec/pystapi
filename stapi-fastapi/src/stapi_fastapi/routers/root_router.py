@@ -1,5 +1,6 @@
 import logging
 import traceback
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.datastructures import URL
@@ -53,15 +54,15 @@ class RootRouter(APIRouter):
         self,
         get_orders: GetOrders,
         get_order: GetOrder,
-        get_order_statuses: GetOrderStatuses,
+        get_order_statuses: GetOrderStatuses,  # type: ignore
         get_opportunity_search_records: GetOpportunitySearchRecords | None = None,
         get_opportunity_search_record: GetOpportunitySearchRecord | None = None,
         conformances: list[str] = [CORE],
         name: str = "root",
         openapi_endpoint_name: str = "openapi",
         docs_endpoint_name: str = "swagger_ui_html",
-        *args,
-        **kwargs,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
 
@@ -196,11 +197,7 @@ class RootRouter(APIRouter):
         if self.supports_async_opportunity_search:
             links.append(
                 Link(
-                    href=str(
-                        request.url_for(
-                            f"{self.name}:{LIST_OPPORTUNITY_SEARCH_RECORDS}"
-                        )
-                    ),
+                    href=str(request.url_for(f"{self.name}:{LIST_OPPORTUNITY_SEARCH_RECORDS}")),
                     rel="opportunity-search-records",
                     type=TYPE_JSON,
                 ),
@@ -215,9 +212,7 @@ class RootRouter(APIRouter):
     def get_conformance(self) -> Conformance:
         return Conformance(conforms_to=self.conformances)
 
-    def get_products(
-        self, request: Request, next: str | None = None, limit: int = 10
-    ) -> ProductsCollection:
+    def get_products(self, request: Request, next: str | None = None, limit: int = 10) -> ProductsCollection:
         start = 0
         limit = min(limit, 100)
         try:
@@ -225,9 +220,7 @@ class RootRouter(APIRouter):
                 start = self.product_ids.index(next)
         except ValueError:
             logger.exception("An error occurred while retrieving products")
-            raise NotFoundException(
-                detail="Error finding pagination token for products"
-            ) from None
+            raise NotFoundException(detail="Error finding pagination token for products") from None
         end = start + limit
         ids = self.product_ids[start:end]
         links = [
@@ -240,16 +233,11 @@ class RootRouter(APIRouter):
         if end > 0 and end < len(self.product_ids):
             links.append(self.pagination_link(request, self.product_ids[end], limit))
         return ProductsCollection(
-            products=[
-                self.product_routers[product_id].get_product(request)
-                for product_id in ids
-            ],
+            products=[self.product_routers[product_id].get_product(request) for product_id in ids],
             links=links,
         )
 
-    async def get_orders(
-        self, request: Request, next: str | None = None, limit: int = 10
-    ) -> OrderCollection:
+    async def get_orders(self, request: Request, next: str | None = None, limit: int = 10) -> OrderCollection:
         links: list[Link] = []
         match await self._get_orders(next, limit, request):
             case Success((orders, maybe_pagination_token)):
@@ -282,7 +270,7 @@ class RootRouter(APIRouter):
         match await self._get_order(order_id, request):
             case Success(Some(order)):
                 order.links.extend(self.order_links(order, request))
-                return order
+                return order  # type: ignore
             case Success(Maybe.empty):
                 raise NotFoundException("Order not found")
             case Failure(e):
@@ -304,7 +292,7 @@ class RootRouter(APIRouter):
         request: Request,
         next: str | None = None,
         limit: int = 10,
-    ) -> OrderStatuses:
+    ) -> OrderStatuses:  # type: ignore
         links: list[Link] = []
         match await self._get_order_statuses(order_id, next, limit, request):
             case Success(Some((statuses, maybe_pagination_token))):
@@ -331,7 +319,7 @@ class RootRouter(APIRouter):
                 raise AssertionError("Expected code to be unreachable")
         return OrderStatuses(statuses=statuses, links=links)
 
-    def add_product(self, product: Product, *args, **kwargs) -> None:
+    def add_product(self, product: Product, *args: Any, **kwargs: Any) -> None:
         # Give the include a prefix from the product router
         product_router = ProductRouter(product, self, *args, **kwargs)
         self.include_router(product_router, prefix=f"/products/{product.id}")
@@ -358,7 +346,7 @@ class RootRouter(APIRouter):
             ),
         ]
 
-    def order_statuses_link(self, request: Request, order_id: str):
+    def order_statuses_link(self, request: Request, order_id: str) -> Link:
         return Link(
             href=str(
                 request.url_for(
@@ -370,11 +358,9 @@ class RootRouter(APIRouter):
             type=TYPE_JSON,
         )
 
-    def pagination_link(self, request: Request, pagination_token: str, limit: int):
+    def pagination_link(self, request: Request, pagination_token: str, limit: int) -> Link:
         return Link(
-            href=str(
-                request.url.include_query_params(next=pagination_token, limit=limit)
-            ),
+            href=str(request.url.include_query_params(next=pagination_token, limit=limit)),
             rel="next",
             type=TYPE_JSON,
         )
@@ -386,9 +372,7 @@ class RootRouter(APIRouter):
         match await self._get_opportunity_search_records(next, limit, request):
             case Success((records, maybe_pagination_token)):
                 for record in records:
-                    record.links.append(
-                        self.opportunity_search_record_self_link(record, request)
-                    )
+                    record.links.append(self.opportunity_search_record_self_link(record, request))
                 match maybe_pagination_token:
                     case Some(x):
                         links.append(self.pagination_link(request, x, limit))
@@ -409,18 +393,14 @@ class RootRouter(APIRouter):
                 raise AssertionError("Expected code to be unreachable")
         return OpportunitySearchRecords(search_records=records, links=links)
 
-    async def get_opportunity_search_record(
-        self, search_record_id: str, request: Request
-    ) -> OpportunitySearchRecord:
+    async def get_opportunity_search_record(self, search_record_id: str, request: Request) -> OpportunitySearchRecord:
         """
         Get the Opportunity Search Record with `search_record_id`.
         """
         match await self._get_opportunity_search_record(search_record_id, request):
             case Success(Some(search_record)):
-                search_record.links.append(
-                    self.opportunity_search_record_self_link(search_record, request)
-                )
-                return search_record
+                search_record.links.append(self.opportunity_search_record_self_link(search_record, request))
+                return search_record  # type: ignore
             case Success(Maybe.empty):
                 raise NotFoundException("Opportunity Search Record not found")
             case Failure(e):
@@ -436,9 +416,7 @@ class RootRouter(APIRouter):
             case _:
                 raise AssertionError("Expected code to be unreachable")
 
-    def generate_opportunity_search_record_href(
-        self, request: Request, search_record_id: str
-    ) -> URL:
+    def generate_opportunity_search_record_href(self, request: Request, search_record_id: str) -> URL:
         return request.url_for(
             f"{self.name}:{GET_OPPORTUNITY_SEARCH_RECORD}",
             search_record_id=search_record_id,
@@ -448,11 +426,7 @@ class RootRouter(APIRouter):
         self, opportunity_search_record: OpportunitySearchRecord, request: Request
     ) -> Link:
         return Link(
-            href=str(
-                self.generate_opportunity_search_record_href(
-                    request, opportunity_search_record.id
-                )
-            ),
+            href=str(self.generate_opportunity_search_record_href(request, opportunity_search_record.id)),
             rel="self",
             type=TYPE_JSON,
         )
@@ -460,17 +434,13 @@ class RootRouter(APIRouter):
     @property
     def _get_opportunity_search_records(self) -> GetOpportunitySearchRecords:
         if not self.__get_opportunity_search_records:
-            raise AttributeError(
-                "Root router does not support async opportunity search"
-            )
+            raise AttributeError("Root router does not support async opportunity search")
         return self.__get_opportunity_search_records
 
     @property
     def _get_opportunity_search_record(self) -> GetOpportunitySearchRecord:
         if not self.__get_opportunity_search_record:
-            raise AttributeError(
-                "Root router does not support async opportunity search"
-            )
+            raise AttributeError("Root router does not support async opportunity search")
         return self.__get_opportunity_search_record
 
     @property

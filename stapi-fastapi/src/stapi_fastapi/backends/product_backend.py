@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Coroutine
-from typing import Any, Callable
+from collections.abc import Callable, Coroutine
+from typing import Any
 
 from fastapi import Request
 from returns.maybe import Maybe
@@ -18,7 +18,7 @@ from stapi_fastapi.routers.product_router import ProductRouter
 
 SearchOpportunities = Callable[
     [ProductRouter, OpportunityPayload, str | None, int, Request],
-    Coroutine[Any, Any, ResultE[tuple[list[Opportunity], Maybe[str]]]],
+    Coroutine[Any, Any, ResultE[tuple[list[Opportunity], Maybe[str]]]],  # type: ignore
 ]
 """
 Type alias for an async function that searches for ordering opportunities for the given
@@ -34,8 +34,10 @@ Args:
 Returns:
     A tuple containing a list of opportunities and a pagination token.
 
-    - Should return returns.result.Success[tuple[list[Opportunity], returns.maybe.Some[str]]] if including a pagination token
-    - Should return returns.result.Success[tuple[list[Opportunity], returns.maybe.Nothing]] if not including a pagination token
+    - Should return returns.result.Success[tuple[list[Opportunity], returns.maybe.Some[str]]]
+      if including a pagination token
+    - Should return returns.result.Success[tuple[list[Opportunity], returns.maybe.Nothing]]
+      if not including a pagination token
     - Returning returns.result.Failure[Exception] will result in a 500.
 
 Note:
@@ -66,7 +68,7 @@ returns.result.Failure[stapi_fastapi.exceptions.ConstraintsException] if not val
 
 GetOpportunityCollection = Callable[
     [ProductRouter, str, Request],
-    Coroutine[Any, Any, ResultE[Maybe[OpportunityCollection]]],
+    Coroutine[Any, Any, ResultE[Maybe[OpportunityCollection]]],  # type: ignore
 ]
 """
 Type alias for an async function that retrieves the opportunity collection with
@@ -80,14 +82,14 @@ Args:
     request (Request): FastAPI's Request object.
 
 Returns:
-    - Should return returns.result.Success[returns.maybe.Some[OpportunityCollection]] if the opportunity collection is found.
-    - Should return returns.result.Success[returns.maybe.Nothing] if the opportunity collection is not found or if access is denied.
+    - Should return returns.result.Success[returns.maybe.Some[OpportunityCollection]]
+      if the opportunity collection is found.
+    - Should return returns.result.Success[returns.maybe.Nothing] if the opportunity collection is not found or
+      if access is denied.
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
 
-CreateOrder = Callable[
-    [ProductRouter, OrderPayload, Request], Coroutine[Any, Any, ResultE[Order]]
-]
+CreateOrder = Callable[[ProductRouter, OrderPayload, Request], Coroutine[Any, Any, ResultE[Order]]]  # type: ignore
 """
 Type alias for an async function that creates a new order.
 

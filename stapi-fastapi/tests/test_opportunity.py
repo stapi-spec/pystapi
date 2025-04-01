@@ -1,6 +1,5 @@
 import pytest
 from fastapi.testclient import TestClient
-
 from stapi_fastapi.models.opportunity import (
     OpportunityCollection,
 )
@@ -8,9 +7,7 @@ from stapi_fastapi.models.opportunity import (
 from .shared import create_mock_opportunity, pagination_tester
 
 
-def test_search_opportunities_response(
-    stapi_client: TestClient, assert_link, opportunity_search
-) -> None:
+def test_search_opportunities_response(stapi_client: TestClient, assert_link, opportunity_search) -> None:
     product_id = "test-spotlight"
     url = f"/products/{product_id}/opportunities"
 
@@ -47,9 +44,7 @@ def test_search_opportunities_pagination(
     product_id = "test-spotlight"
     expected_returns = []
     if limit != 0:
-        expected_returns = [
-            x.model_dump(mode="json") for x in mock_pagination_opportunities
-        ]
+        expected_returns = [x.model_dump(mode="json") for x in mock_pagination_opportunities]
 
     pagination_tester(
         stapi_client=stapi_client,

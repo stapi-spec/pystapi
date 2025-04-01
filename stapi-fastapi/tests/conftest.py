@@ -1,13 +1,12 @@
-from collections.abc import AsyncIterator, Generator, Iterator
+from collections.abc import AsyncIterator, Callable, Generator, Iterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
-from typing import Any, Callable
+from typing import Any
 from urllib.parse import urljoin
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 from stapi_fastapi.models.conformance import ASYNC_OPPORTUNITIES, CORE, OPPORTUNITIES
 from stapi_fastapi.models.opportunity import (
     Opportunity,

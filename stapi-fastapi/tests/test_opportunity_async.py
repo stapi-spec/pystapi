@@ -1,11 +1,11 @@
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta, timezone
-from typing import Any, Callable
+from typing import Any
 from uuid import uuid4
 
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
-
 from stapi_fastapi.models.opportunity import (
     OpportunityCollection,
     OpportunitySearchRecord,
@@ -125,9 +125,7 @@ def test_prefer_header(
     url = f"/products/{product_id}/opportunities"
 
     # prefer = "wait"
-    response = stapi_client_async_opportunity.post(
-        url, json=opportunity_search, headers={"Prefer": "wait"}
-    )
+    response = stapi_client_async_opportunity.post(url, json=opportunity_search, headers={"Prefer": "wait"})
     assert response.status_code == 200
     assert response.headers["Preference-Applied"] == "wait"
 
@@ -138,9 +136,7 @@ def test_prefer_header(
         pytest.fail("response is not an opportunity collection")
 
     # prefer = "respond-async"
-    response = stapi_client_async_opportunity.post(
-        url, json=opportunity_search, headers={"Prefer": "respond-async"}
-    )
+    response = stapi_client_async_opportunity.post(url, json=opportunity_search, headers={"Prefer": "respond-async"})
     assert response.status_code == 201
     assert response.headers["Preference-Applied"] == "respond-async"
 
@@ -165,9 +161,7 @@ def test_async_search_record_retrieval(
 
     # get the search record by id and verify it matches the original response
     search_record_id = search_response_body["id"]
-    record_response = stapi_client_async_opportunity.get(
-        f"/searches/opportunities/{search_record_id}"
-    )
+    record_response = stapi_client_async_opportunity.get(f"/searches/opportunities/{search_record_id}")
     assert record_response.status_code == 200
     record_response_body = record_response.json()
     assert record_response_body == search_response_body
@@ -176,9 +170,7 @@ def test_async_search_record_retrieval(
     records_response = stapi_client_async_opportunity.get("/searches/opportunities")
     assert records_response.status_code == 200
     records_response_body = records_response.json()
-    assert search_record_id in [
-        x["id"] for x in records_response_body["search_records"]
-    ]
+    assert search_record_id in [x["id"] for x in records_response_body["search_records"]]
 
 
 @pytest.mark.mock_products([product_test_spotlight_async_opportunity])
@@ -215,9 +207,7 @@ def test_async_opportunity_search_to_completion(
         )
     )
 
-    stapi_client_async_opportunity.app_state[
-        "_opportunities_db"
-    ].put_opportunity_collection(collection)
+    stapi_client_async_opportunity.app_state["_opportunities_db"].put_opportunity_collection(collection)
 
     # - the OpportunitySearchRecord links and status are updated in the database
     search_record.links.append(
@@ -231,30 +221,21 @@ def test_async_opportunity_search_to_completion(
         status_code=OpportunitySearchStatusCode.completed,
     )
 
-    stapi_client_async_opportunity.app_state["_opportunities_db"].put_search_record(
-        search_record
-    )
+    stapi_client_async_opportunity.app_state["_opportunities_db"].put_search_record(search_record)
 
     # Verify we can retrieve the OpportunitySearchRecord by its id and its status is
     # `completed`
     url = f"/searches/opportunities/{search_record.id}"
     retrieved_search_response = stapi_client_async_opportunity.get(url)
     assert retrieved_search_response.status_code == 200
-    retrieved_search_record = OpportunitySearchRecord(
-        **retrieved_search_response.json()
-    )
-    assert (
-        retrieved_search_record.status.status_code
-        == OpportunitySearchStatusCode.completed
-    )
+    retrieved_search_record = OpportunitySearchRecord(**retrieved_search_response.json())
+    assert retrieved_search_record.status.status_code == OpportunitySearchStatusCode.completed
 
     # Verify we can retrieve the OpportunityCollection from the
     # OpportunitySearchRecord's `opportunities` link; verify the retrieved
     # OpportunityCollection contains an order link and a link pointing back to the
     # OpportunitySearchRecord
-    opportunities_link = next(
-        x for x in retrieved_search_record.links if x.rel == "opportunities"
-    )
+    opportunities_link = next(x for x in retrieved_search_record.links if x.rel == "opportunities")
     url = str(opportunities_link.href)
     retrieved_collection_response = stapi_client_async_opportunity.get(url)
     assert retrieved_collection_response.status_code == 200
@@ -282,16 +263,12 @@ def test_new_search_location_header_matches_self_link(
 @pytest.mark.mock_products([product_test_spotlight_async_opportunity])
 def test_bad_ids(stapi_client_async_opportunity: TestClient) -> None:
     search_record_id = "bad_id"
-    res = stapi_client_async_opportunity.get(
-        f"/searches/opportunities/{search_record_id}"
-    )
+    res = stapi_client_async_opportunity.get(f"/searches/opportunities/{search_record_id}")
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
     product_id = "test-spotlight"
     opportunity_collection_id = "bad_id"
-    res = stapi_client_async_opportunity.get(
-        f"/products/{product_id}/opportunities/{opportunity_collection_id}"
-    )
+    res = stapi_client_async_opportunity.get(f"/products/{product_id}/opportunities/{opportunity_collection_id}")
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
 

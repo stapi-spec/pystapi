@@ -1,7 +1,6 @@
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
-
 from stapi_fastapi.models.product import Product
 
 from .shared import pagination_tester
@@ -34,13 +33,9 @@ def test_product_response_self_link(
     url = "GET /products"
     assert_link(url, body, "self", f"/products/{product_id}")
     assert_link(url, body, "constraints", f"/products/{product_id}/constraints")
-    assert_link(
-        url, body, "order-parameters", f"/products/{product_id}/order-parameters"
-    )
+    assert_link(url, body, "order-parameters", f"/products/{product_id}/order-parameters")
     assert_link(url, body, "opportunities", f"/products/{product_id}/opportunities")
-    assert_link(
-        url, body, "create-order", f"/products/{product_id}/orders", method="POST"
-    )
+    assert_link(url, body, "create-order", f"/products/{product_id}/orders", method="POST")
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])

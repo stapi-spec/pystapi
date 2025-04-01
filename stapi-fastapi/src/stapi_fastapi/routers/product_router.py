@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import traceback
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastapi import (
     APIRouter,
@@ -64,18 +64,14 @@ class ProductRouter(APIRouter):
         self,
         product: Product,
         root_router: RootRouter,
-        *args,
-        **kwargs,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
 
-        if (
-            root_router.supports_async_opportunity_search
-            and not product.supports_async_opportunity_search
-        ):
+        if root_router.supports_async_opportunity_search and not product.supports_async_opportunity_search:
             raise ValueError(
-                f"Product '{product.id}' must support async opportunity search since "
-                f"the root router does",
+                f"Product '{product.id}' must support async opportunity search since the root router does",
             )
 
         self.product = product
@@ -116,7 +112,7 @@ class ProductRouter(APIRouter):
         # the annotation on every `ProductRouter` instance's `create_order`, not just
         # this one's.
         async def _create_order(
-            payload: OrderPayload,
+            payload: OrderPayload,  # type: ignore
             request: Request,
             response: Response,
         ) -> Order:
@@ -137,10 +133,7 @@ class ProductRouter(APIRouter):
             tags=["Products"],
         )
 
-        if (
-            product.supports_opportunity_search
-            or root_router.supports_async_opportunity_search
-        ):
+        if product.supports_opportunity_search or root_router.supports_async_opportunity_search:
             self.add_api_route(
                 path="/opportunities",
                 endpoint=self.search_opportunities,
@@ -214,10 +207,7 @@ class ProductRouter(APIRouter):
             ),
         ]
 
-        if (
-            self.product.supports_opportunity_search
-            or self.root_router.supports_async_opportunity_search
-        ):
+        if self.product.supports_opportunity_search or self.root_router.supports_async_opportunity_search:
             links.append(
                 Link(
                     href=str(
@@ -238,7 +228,7 @@ class ProductRouter(APIRouter):
         request: Request,
         response: Response,
         prefer: Prefer | None = Depends(get_prefer),
-    ) -> OpportunityCollection | Response:
+    ) -> OpportunityCollection | Response:  # type: ignore
         """
         Explore the opportunities available for a particular set of constraints
         """
@@ -269,7 +259,7 @@ class ProductRouter(APIRouter):
         request: Request,
         response: Response,
         prefer: Prefer | None,
-    ) -> OpportunityCollection:
+    ) -> OpportunityCollection:  # type: ignore
         links: list[Link] = []
         match await self.product.search_opportunities(
             self,
@@ -312,16 +302,10 @@ class ProductRouter(APIRouter):
     ) -> JSONResponse:
         match await self.product.search_opportunities_async(self, search, request):
             case Success(search_record):
-                search_record.links.append(
-                    self.root_router.opportunity_search_record_self_link(
-                        search_record, request
-                    )
-                )
+                search_record.links.append(self.root_router.opportunity_search_record_self_link(search_record, request))
                 headers = {}
                 headers["Location"] = str(
-                    self.root_router.generate_opportunity_search_record_href(
-                        request, search_record.id
-                    )
+                    self.root_router.generate_opportunity_search_record_href(request, search_record.id)
                 )
                 if prefer is not None:
                     headers["Preference-Applied"] = "respond-async"
@@ -356,9 +340,7 @@ class ProductRouter(APIRouter):
         """
         return self.product.order_parameters
 
-    async def create_order(
-        self, payload: OrderPayload, request: Request, response: Response
-    ) -> Order:
+    async def create_order(self, payload: OrderPayload, request: Request, response: Response) -> Order:  # type: ignore
         """
         Create a new order.
         """
@@ -371,7 +353,7 @@ class ProductRouter(APIRouter):
                 order.links.extend(self.root_router.order_links(order, request))
                 location = str(self.root_router.generate_order_href(request, order.id))
                 response.headers["Location"] = location
-                return order
+                return order  # type: ignore
             case Failure(e) if isinstance(e, ConstraintsException):
                 raise e
             case Failure(e):
@@ -386,7 +368,7 @@ class ProductRouter(APIRouter):
             case x:
                 raise AssertionError(f"Expected code to be unreachable {x}")
 
-    def order_link(self, request: Request, opp_req: OpportunityPayload):
+    def order_link(self, request: Request, opp_req: OpportunityPayload) -> Link:
         return Link(
             href=str(
                 request.url_for(
@@ -399,9 +381,7 @@ class ProductRouter(APIRouter):
             body=opp_req.search_body(),
         )
 
-    def pagination_link(
-        self, request: Request, opp_req: OpportunityPayload, pagination_token: str
-    ):
+    def pagination_link(self, request: Request, opp_req: OpportunityPayload, pagination_token: str) -> Link:
         body = opp_req.body()
         body["next"] = pagination_token
         return Link(
@@ -414,7 +394,7 @@ class ProductRouter(APIRouter):
 
     async def get_opportunity_collection(
         self, opportunity_collection_id: str, request: Request
-    ) -> OpportunityCollection:
+    ) -> OpportunityCollection:  # type: ignore
         """
         Fetch an opportunity collection generated by an asynchronous opportunity search.
         """
@@ -436,7 +416,7 @@ class ProductRouter(APIRouter):
                         type=TYPE_JSON,
                     ),
                 )
-                return opportunity_collection
+                return opportunity_collection  # type: ignore
             case Success(Maybe.empty):
                 raise NotFoundException("Opportunity Collection not found")
             case Failure(e):

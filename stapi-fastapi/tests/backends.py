@@ -4,7 +4,6 @@ from uuid import uuid4
 from fastapi import Request
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, ResultE, Success
-
 from stapi_fastapi.models.opportunity import (
     Opportunity,
     OpportunityCollection,
@@ -24,9 +23,7 @@ from stapi_fastapi.models.order import (
 from stapi_fastapi.routers.product_router import ProductRouter
 
 
-async def mock_get_orders(
-    next: str | None, limit: int, request: Request
-) -> ResultE[tuple[list[Order], Maybe[str]]]:
+async def mock_get_orders(next: str | None, limit: int, request: Request) -> ResultE[tuple[list[Order], Maybe[str]]]:
     """
     Return orders from backend.  Handle pagination/limit if applicable
     """
@@ -42,9 +39,7 @@ async def mock_get_orders(
         orders = [request.state._orders_db.get_order(order_id) for order_id in ids]
 
         if end > 0 and end < len(order_ids):
-            return Success(
-                (orders, Some(request.state._orders_db._orders[order_ids[end]].id))
-            )
+            return Success((orders, Some(request.state._orders_db._orders[order_ids[end]].id)))
         return Success((orders, Nothing))
     except Exception as e:
         return Failure(e)
@@ -55,9 +50,7 @@ async def mock_get_order(order_id: str, request: Request) -> ResultE[Maybe[Order
     Show details for order with `order_id`.
     """
     try:
-        return Success(
-            Maybe.from_optional(request.state._orders_db.get_order(order_id))
-        )
+        return Success(Maybe.from_optional(request.state._orders_db.get_order(order_id)))
     except Exception as e:
         return Failure(e)
 
@@ -84,9 +77,7 @@ async def mock_get_order_statuses(
         return Failure(e)
 
 
-async def mock_create_order(
-    product_router: ProductRouter, payload: OrderPayload, request: Request
-) -> ResultE[Order]:
+async def mock_create_order(product_router: ProductRouter, payload: OrderPayload, request: Request) -> ResultE[Order]:
     """
     Create a new order.
     """
@@ -136,10 +127,7 @@ async def mock_search_opportunities(
         if next:
             start = int(next)
         end = start + limit
-        opportunities = [
-            o.model_copy(update=search.model_dump())
-            for o in request.state._opportunities[start:end]
-        ]
+        opportunities = [o.model_copy(update=search.model_dump()) for o in request.state._opportunities[start:end]]
         if end > 0 and end < len(request.state._opportunities):
             return Success((opportunities, Some(str(end))))
         return Success((opportunities, Nothing))
@@ -175,11 +163,7 @@ async def mock_get_opportunity_collection(
 ) -> ResultE[Maybe[OpportunityCollection]]:
     try:
         return Success(
-            Maybe.from_optional(
-                request.state._opportunities_db.get_opportunity_collection(
-                    opportunity_collection_id
-                )
-            )
+            Maybe.from_optional(request.state._opportunities_db.get_opportunity_collection(opportunity_collection_id))
         )
     except Exception as e:
         return Failure(e)
@@ -211,10 +195,6 @@ async def mock_get_opportunity_search_record(
     search_record_id: str, request: Request
 ) -> ResultE[Maybe[OpportunitySearchRecord]]:
     try:
-        return Success(
-            Maybe.from_optional(
-                request.state._opportunities_db.get_search_record(search_record_id)
-            )
-        )
+        return Success(Maybe.from_optional(request.state._opportunities_db.get_search_record(search_record_id)))
     except Exception as e:
         return Failure(e)

@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 from geojson_pydantic import Point
 from geojson_pydantic.types import Position2D
 from httpx import Response
-
 from stapi_fastapi.models.order import Order, OrderPayload, OrderStatus, OrderStatusCode
 
 from .shared import MyOrderParameters, find_link, pagination_tester
@@ -34,9 +33,7 @@ def create_order_payloads() -> list[OrderPayload]:
     payloads = []
     for start, end in datetimes:
         payload = OrderPayload(
-            geometry=Point(
-                type="Point", coordinates=Position2D(longitude=14.4, latitude=56.5)
-            ),
+            geometry=Point(type="Point", coordinates=Position2D(longitude=14.4, latitude=56.5)),
             datetime=(
                 datetime.fromisoformat(start),
                 datetime.fromisoformat(end),
@@ -94,9 +91,7 @@ def test_new_order_links(new_order_response: Response, assert_link) -> None:
 
 
 @pytest.fixture
-def get_order_response(
-    stapi_client: TestClient, new_order_response: Response
-) -> Response:
+def get_order_response(stapi_client: TestClient, new_order_response: Response) -> Response:
     order_id = new_order_response.json()["id"]
 
     res = stapi_client.get(f"/orders/{order_id}")
@@ -106,9 +101,7 @@ def get_order_response(
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
-def test_get_order_properties(
-    get_order_response: Response, create_order_payloads
-) -> None:
+def test_get_order_properties(get_order_response: Response, create_order_payloads) -> None:
     order = get_order_response.json()
 
     assert order["geometry"] == {
@@ -121,20 +114,13 @@ def test_get_order_properties(
         "coordinates": list(create_order_payloads[0].geometry.coordinates),
     }
 
-    assert (
-        order["properties"]["search_parameters"]["datetime"]
-        == create_order_payloads[0].model_dump()["datetime"]
-    )
+    assert order["properties"]["search_parameters"]["datetime"] == create_order_payloads[0].model_dump()["datetime"]
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
-def test_order_status_after_create(
-    get_order_response: Response, stapi_client: TestClient, assert_link
-) -> None:
+def test_order_status_after_create(get_order_response: Response, stapi_client: TestClient, assert_link) -> None:
     body = get_order_response.json()
-    assert_link(
-        f"GET /orders/{body['id']}", body, "monitor", f"/orders/{body['id']}/statuses"
-    )
+    assert_link(f"GET /orders/{body['id']}", body, "monitor", f"/orders/{body['id']}/statuses")
     link = find_link(body["links"], "monitor")
     assert link is not None
 
@@ -145,9 +131,7 @@ def test_order_status_after_create(
 
 
 @pytest.fixture
-def setup_orders_pagination(
-    stapi_client: TestClient, create_order_payloads
-) -> list[Order]:
+def setup_orders_pagination(stapi_client: TestClient, create_order_payloads) -> list[Order]:
     product_id = "test-spotlight"
     orders = []
     for order in create_order_payloads:
@@ -165,9 +149,7 @@ def setup_orders_pagination(
 
 
 @pytest.mark.parametrize("limit", [0, 1, 2, 4])
-def test_get_orders_pagination(
-    limit, setup_orders_pagination, create_order_payloads, stapi_client: TestClient
-) -> None:
+def test_get_orders_pagination(limit, setup_orders_pagination, create_order_payloads, stapi_client: TestClient) -> None:
     expected_returns = []
     if limit > 0:
         expected_returns = setup_orders_pagination
@@ -202,9 +184,7 @@ def order_statuses() -> dict[str, list[OrderStatus]]:
                 links=[],
             ),
             OrderStatus(
-                timestamp=datetime(
-                    2025, 1, 16, 10, 15, 32, 466726, tzinfo=timezone.utc
-                ),
+                timestamp=datetime(2025, 1, 16, 10, 15, 32, 466726, tzinfo=timezone.utc),
                 status_code=OrderStatusCode.completed,
                 links=[],
             ),
