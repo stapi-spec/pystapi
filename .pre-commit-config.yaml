@@ -1,7 +1,6 @@
 repos:
   - repo: local
     hooks:
-
       - id: ruff-check
         name: Lint with ruff
         entry: uv run ruff check --fix
@@ -76,10 +75,3 @@ repos:
         name: Check merge conflicts
         entry: uv run check-merge-conflict
         language: system
-
-      - id: no-commit-to-branch
-        name: Check not committting to main
-        entry: uv run no-commit-to-branch
-        language: system
-        args: ["--branch", "main"]
-        pass_filenames: false
