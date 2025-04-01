@@ -873,17 +873,13 @@ source = { editable = "stapi-fastapi" }
 dependencies = [
     { name = "fastapi" },
     { name = "geojson-pydantic" },
-    { name = "pydantic" },
-    { name = "pygeofilter" },
-    { name = "returns" },
-]
-
-[package.dev-dependencies]
-dev = [
     { name = "httpx" },
     { name = "nox" },
+    { name = "pydantic" },
     { name = "pydantic-settings" },
+    { name = "pygeofilter" },
     { name = "pyrfc3339" },
+    { name = "returns" },
     { name = "types-pyrfc3339" },
     { name = "uvicorn" },
 ]
@@ -892,17 +888,13 @@ dev = [
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "geojson-pydantic", specifier = ">=1.1" },
-    { name = "pydantic", specifier = ">=2.10" },
-    { name = "pygeofilter", specifier = ">=0.2" },
-    { name = "returns", specifier = ">=0.23" },
-]
-
-[package.metadata.requires-dev]
-dev = [
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "nox", specifier = ">=2024.4.15" },
+    { name = "pydantic", specifier = ">=2.10" },
     { name = "pydantic-settings", specifier = ">=2.2.1" },
+    { name = "pygeofilter", specifier = ">=0.2" },
     { name = "pyrfc3339", specifier = ">=1.1" },
+    { name = "returns", specifier = ">=0.23" },
     { name = "types-pyrfc3339", specifier = ">=1.1.1" },
     { name = "uvicorn", specifier = ">=0.29.0" },
 ]

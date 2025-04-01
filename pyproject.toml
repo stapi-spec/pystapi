@@ -58,3 +58,23 @@ files = [
     "stapi-pydantic/src/stapi_pydantic/**/*.py",
     "stapi-fastapi/src/stapi_fastapi/**/*.py"
 ]
+
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+sort = "Cover"
+omit = [
+    "stapi-pydantic/tests/**/*.py",
+    "stapi-fastapi/tests/**/*.py",
+]
+
+[tool.pytest.ini_options]
+addopts="--cov=stapi-pydantic/src/stapi_pydantic --cov=stapi-fastapi/src/stapi_fastapi"
+filterwarnings = [
+    "ignore:The 'app' shortcut is now deprecated.:DeprecationWarning",
+    "ignore:Pydantic serializer warnings:UserWarning",
+]
+markers = [
+    "mock_products",
+]

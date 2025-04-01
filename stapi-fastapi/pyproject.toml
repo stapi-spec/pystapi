@@ -9,25 +9,21 @@ license = "MIT"
 requires-python = ">=3.12,<4.0"
 
 dependencies = [
+    "httpx>=0.27.0",
     "fastapi>=0.115.0",
     "pydantic>=2.10",
     "geojson-pydantic>=1.1",
     "pygeofilter>=0.2",
     "returns>=0.23",
-]
-
-[project.scripts]
-dev = "stapi_fastapi.__dev__:cli"
-
-[dependency-groups]
-dev = [
-    "httpx>=0.27.0",
     "nox>=2024.4.15",
     "pydantic-settings>=2.2.1",
     "pyrfc3339>=1.1",
     "types-pyRFC3339>=1.1.1",
     "uvicorn>=0.29.0",
 ]
+
+[project.scripts]
+dev = "stapi_fastapi.__dev__:cli"
 
 [tool.hatch.build.targets.sdist]
 include = ["src/stapi_fastapi"]
@@ -37,25 +33,6 @@ include = ["src/stapi_fastapi"]
 
 [tool.hatch.build.targets.wheel.sources]
 "src/stapi_fastapi" = "stapi_fastapi"
-
-[tool.coverage.report]
-show_missing = true
-skip_empty = true
-sort = "Cover"
-omit = [
-    "tests/**/*.py",
-    "stapi_fastapi/__dev__.py",
-]
-
-[tool.pytest.ini_options]
-addopts="--cov=stapi_fastapi"
-filterwarnings = [
-    "ignore:The 'app' shortcut is now deprecated.:DeprecationWarning",
-    "ignore:Pydantic serializer warnings:UserWarning",
-]
-markers = [
-    "mock_products",
-]
 
 [[tool.mypy.overrides]]
 module = "pygeofilter.parsers.*"
