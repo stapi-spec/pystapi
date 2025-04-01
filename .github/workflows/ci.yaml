@@ -14,20 +14,29 @@ jobs:
   ci:
     name: Continuous integration
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.12"
+          - "3.13"
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
       - name: Sync
         run: uv sync
-      - name: Lint
-        run: scripts/lint
+      - name: Pre-Commit Hooks
+        run: uv run pre-commit run --all-files
       - name: Test
         run: uv run pytest
       - name: Docs
         run: uv run mkdocs build --strict
       - uses: actions/upload-pages-artifact@v3
+        if: ${{ matrix.python-version == '3.12' }}
         with:
           path: site/
+
   docs:
     name: Deploy docs
     runs-on: ubuntu-latest
@@ -35,6 +44,9 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
     needs: ci
     steps:
       - id: deploy

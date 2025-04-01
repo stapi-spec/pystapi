@@ -1,0 +1,39 @@
+[project]
+name = "stapi-fastapi"
+version = "0.6.0"
+description = "Sensor Tasking API (STAPI) with FastAPI"
+authors = [
+    { name = "Christian Wygoda", email = "christian.wygoda@wygoda.net" },
+    { name = "Phil Varner", email = "phil@philvarner.com" },
+]
+readme = "README.md"
+license = "MIT"
+
+requires-python = ">=3.12"
+
+dependencies = [
+    "httpx>=0.27.0",
+    "fastapi>=0.115.0",
+    "pydantic>=2.10",
+    "geojson-pydantic>=1.1",
+    "pygeofilter>=0.2",
+    "returns>=0.23",
+    "nox>=2024.4.15",
+    "pydantic-settings>=2.2.1",
+    "pyrfc3339>=1.1",
+    "types-pyRFC3339>=1.1.1",
+    "uvicorn>=0.29.0",
+]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/stapi_fastapi"]
+
+[tool.hatch.build.targets.wheel]
+include = ["src/stapi_fastapi"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src/stapi_fastapi" = "stapi_fastapi"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Any, Literal, Optional, Self
+from typing import Any, Literal, Self
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
@@ -19,7 +19,7 @@ class ProviderRole(StrEnum):
 
 class Provider(BaseModel):
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     roles: list[ProviderRole]
     url: AnyHttpUrl
 
@@ -81,8 +81,6 @@ class Product(BaseModel):
 
 
 class ProductsCollection(BaseModel):
-    type_: Literal["ProductCollection"] = Field(
-        default="ProductCollection", alias="type"
-    )
+    type_: Literal["ProductCollection"] = Field(default="ProductCollection", alias="type")
     links: list[Link] = Field(default_factory=list)
     products: list[Product]

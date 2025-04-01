@@ -13,10 +13,10 @@ from pydantic import (
     field_validator,
 )
 
-from .datetime_interval import DatetimeInterval
-from .filter import CQL2Filter
-from .opportunity import OpportunityProperties
-from .shared import Link
+from stapi_fastapi.models.opportunity import OpportunityProperties
+from stapi_fastapi.models.shared import Link
+from stapi_fastapi.types.datetime_interval import DatetimeInterval
+from stapi_fastapi.types.filter import CQL2Filter
 
 Props = TypeVar("Props", bound=dict[str, Any] | BaseModel)
 Geom = TypeVar("Geom", bound=Geometry)
@@ -79,14 +79,14 @@ class OrderProperties[T: OrderStatus](BaseModel):
 
 
 # derived from geojson_pydantic.Feature
-class Order[T: OrderStatus](_GeoJsonBase):
+class Order(_GeoJsonBase):
     # We need to enforce that orders have an id defined, as that is required to
     # retrieve them via the API
     id: StrictStr
     type: Literal["Feature"] = "Feature"
 
     geometry: Geometry = Field(...)
-    properties: OrderProperties[T] = Field(...)
+    properties: OrderProperties[OrderStatus] = Field(...)
 
     links: list[Link] = Field(default_factory=list)
 
@@ -102,12 +102,12 @@ class Order[T: OrderStatus](_GeoJsonBase):
 
 
 # derived from geojson_pydantic.FeatureCollection
-class OrderCollection[T: OrderStatus](_GeoJsonBase):
+class OrderCollection(_GeoJsonBase):
     type: Literal["FeatureCollection"] = "FeatureCollection"
-    features: list[Order[T]]
+    features: list[Order]
     links: list[Link] = Field(default_factory=list)
 
-    def __iter__(self) -> Iterator[Order[T]]:  # type: ignore [override]
+    def __iter__(self) -> Iterator[Order]:  # type: ignore [override]
         """iterate over features"""
         return iter(self.features)
 
@@ -115,7 +115,7 @@ class OrderCollection[T: OrderStatus](_GeoJsonBase):
         """return features length"""
         return len(self.features)
 
-    def __getitem__(self, index: int) -> Order[T]:
+    def __getitem__(self, index: int) -> Order:
         """get feature at a given index"""
         return self.features[index]
 

@@ -1,0 +1,77 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: Lint with ruff
+        entry: uv run ruff check --fix
+        language: system
+        types: [python]
+        pass_filenames: false
+        verbose: true
+
+      - id: ruff-format
+        name: Format with ruff
+        entry: uv run ruff format
+        language: system
+        types: [python]
+        pass_filenames: false
+        verbose: true
+
+      - id: mypy
+        name: Check typing with mypy
+        entry: uv run mypy
+        language: system
+        types: [python]
+        pass_filenames: false
+        verbose: true
+
+      - id: pymarkdown
+        name: Markdownlint
+        description: Run markdownlint on Markdown files
+        entry: uv run pymarkdown scan
+        language: system
+        files: \.(md|mdown|markdown)$
+
+      - id: check-added-large-files
+        name: Check for added large files
+        entry: uv run check-added-large-files
+        language: system
+
+      - id: check-toml
+        name: Check Toml
+        entry: uv run check-toml
+        language: system
+        types: [toml]
+
+      - id: check-yaml
+        name: Check Yaml
+        entry: uv run check-yaml
+        language: system
+        types: [yaml]
+        exclude: ^mkdocs.yml$
+
+      - id: mixed-line-ending
+        name: Check mixed line endings
+        entry: uv run mixed-line-ending
+        language: system
+        types: [text]
+        stages: [pre-commit, pre-push, manual]
+
+      - id: end-of-file-fixer
+        name: Fix End of Files
+        entry: uv run end-of-file-fixer
+        language: system
+        types: [text]
+        stages: [pre-commit, pre-push, manual]
+
+      - id: trailing-whitespace
+        name: Trim Trailing Whitespace
+        entry: uv run trailing-whitespace-fixer
+        language: system
+        types: [text]
+        stages: [pre-commit, pre-push, manual]
+
+      - id: check-merge-conflict
+        name: Check merge conflicts
+        entry: uv run check-merge-conflict
+        language: system
