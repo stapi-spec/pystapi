@@ -11,12 +11,12 @@ This project provides API validation for STAPI FastAPI implementations using Sch
 
 1. Install dependencies:
    ```
-   poetry install
+   uv sync
    ```
 
 2. Run tests and generate report:
    ```
-   poetry run pytest tests/validate_api.py --html=report.html --self-contained-html
+   uv run pytest tests/validate_api.py --html=report.html --self-contained-html
    ```
 
 3. Open `report.html` in your browser to view the detailed test report.
