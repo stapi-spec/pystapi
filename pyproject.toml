@@ -5,7 +5,8 @@ description = "Monorepo for Satellite Tasking API (STAPI) Specification Python p
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "stapi-pydantic"
+    "stapi-pydantic",
+    "stapi-fastapi"
 ]
 
 [dependency-groups]
@@ -16,10 +17,11 @@ dev = [
 ]
 
 [tool.uv.workspace]
-members = ["stapi-pydantic"]
+members = ["stapi-pydantic", "stapi-fastapi"]
 
 [tool.uv.sources]
 stapi-pydantic.workspace = true
+stapi-fastapi.workspace = true
 
 [tool.mypy]
 strict = true
