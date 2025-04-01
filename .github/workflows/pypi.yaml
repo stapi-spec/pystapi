@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - */v*
+
+jobs:
+  repo_name:
+    name: Get repo name
+    runs-on: ubuntu-latest
+    outputs:
+      repo_name: ${{ steps.split.outputs.repo_name }}
+    steps:
+      - name: Get repo name
+        # https://stackoverflow.com/questions/73402042/github-action-expressions-split-string
+        env:
+          TAG: ${{ github.ref_name }}
+        id: split
+        run: echo "repo_name=${TAG%%/*}"
+  release:
+    name: Release ${{ needs.repo_name.outputs.repo_name }}
+    runs-on: ubuntu-latest
+    needs: repo_name
+    environment:
+      name: pypi
+      url: https://pypi.org/p/${{ needs.repo_name.outputs.repo_name }}
+    permissions:
+      id-token: write
+    if: ${{ github.repository }} == 'stapi-spec/pystapi'
+    defaults:
+      run:
+        working-directory: ${{ needs.repo_name.outputs.repo_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install build
+        run: uv pip install build
+      - name: Build
+        run: uv run python -m build
+      - uses: pypa/gh-action-pypi-publish@release/v1
