@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated, Any, Callable
+from typing import Annotated, Callable
 
 from pydantic import (
     AfterValidator,
