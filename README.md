@@ -1,6 +1,6 @@
 # pystapi
 
-Monorepo for Python Satellite Tasking API (STAPI) Specification packages
+Monorepo for Python Satellite Tasking API (STAPI) Specification packages.
 
 ## Packages
 
