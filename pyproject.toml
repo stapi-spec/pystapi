@@ -25,4 +25,7 @@ stapi-validator.workspace = true
 
 [tool.mypy]
 strict = true
-files = "stapi-pydantic/src/stapi_pydantic/**/*.py"
+files = [
+    "stapi-pydantic/src/stapi_pydantic/**/*.py",
+    "stapi-validator/src/stapi_validator/**/*.py"
+]
