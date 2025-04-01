@@ -37,10 +37,6 @@ stapi-fastapi.workspace = true
 
 [tool.ruff]
 line-length = 88
-include = [
-    "stapi-pydantic/src/stapi_pydantic/**/*.py",
-    "stapi-fastapi/src/stapi_fastapi/**/*.py"
-]
 
 [tool.ruff.format]
 quote-style = 'double'
@@ -71,7 +67,7 @@ ignore_missing_imports = true
 
 [tool.pymarkdown]
 plugins.md013.line_length = 120
-plugins.md024.enabled = false # duplicate headers
+plugins.md024.enabled = false  # duplicate headers in changelog
 
 [tool.coverage.report]
 show_missing = true
