@@ -31,6 +31,7 @@ jobs:
   docs:
     name: Deploy docs
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
