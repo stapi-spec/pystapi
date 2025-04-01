@@ -3,7 +3,7 @@ name = "stapi-validator"
 version = "0.1.0"
 description = "API validation for STAPI FastAPI using Schemathesis and OpenAPI YAML with reporting"
 authors = [
-    {name = "Your Name", email = "you@example.com"}
+    { name = "Brian Terry", email = "brian.b.terry@ama-inc.com" }
 ]
 license = "MIT"
 readme = "README.md"
@@ -15,12 +15,6 @@ dependencies = [
     "pyyaml>=6.0.2",
     "pytest-html>=4.1.1",
     "pytest-metadata>=3.1.1",
-]
-
-[dependency-groups]
-dev = [
-    "isort>=5.13.2",
-    "black>=24.10.0",
 ]
 
 [project.scripts]
