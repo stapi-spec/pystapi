@@ -41,3 +41,5 @@ jobs:
       - name: Build
         run: .venv/bin/python -m build
       - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: ${{ needs.package_name.outputs.package_name}}/dist
