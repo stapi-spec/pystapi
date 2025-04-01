@@ -1,0 +1,26 @@
+[project]
+name = "pystapi"
+version = "0.0.0" # This package should never be released, only the workspace members should be
+description = "Monorepo for Satellite Tasking API (STAPI) Specification Python packages"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "stapi-pydantic"
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15.0",
+    "pytest>=8.3.5",
+    "ruff>=0.11.2",
+]
+
+[tool.uv.workspace]
+members = ["stapi-pydantic"]
+
+[tool.uv.sources]
+stapi-pydantic.workspace = true
+
+[tool.mypy]
+strict = true
+files = "stapi-pydantic/src/stapi_pydantic/**/*.py"
