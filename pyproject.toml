@@ -1,26 +1,26 @@
 [project]
-name = "stapi-validator"
-version = "0.1.0"
-description = "API validation for STAPI FastAPI using Schemathesis and OpenAPI YAML with reporting"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+name = "pystapi"
+version = "0.0.0" # This package should never be released, only the workspace members should be
+description = "Monorepo for Satellite Tasking API (STAPI) Specification Python packages"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
-    "schemathesis>=3.37.0",
-    "pytest>=8.3.3",
-    "requests>=2.32.3",
-    "pyyaml>=6.0.2",
-    "pytest-html>=4.1.1",
-    "pytest-metadata>=3.1.1",
+    "stapi-pydantic"
 ]
 
 [dependency-groups]
 dev = [
-    "isort>=5.13.2",
-    "black>=24.10.0",
+    "mypy>=1.15.0",
+    "pytest>=8.3.5",
+    "ruff>=0.11.2",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[tool.uv.workspace]
+members = ["stapi-pydantic"]
+
+[tool.uv.sources]
+stapi-pydantic.workspace = true
+
+[tool.mypy]
+strict = true
+files = "stapi-pydantic/src/stapi_pydantic/**/*.py"

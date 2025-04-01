@@ -1,25 +1,28 @@
-[tool.poetry]
+[project]
 name = "stapi-validator"
 version = "0.1.0"
 description = "API validation for STAPI FastAPI using Schemathesis and OpenAPI YAML with reporting"
-authors = ["Your Name <you@example.com>"]
+authors = [
+    {name = "Your Name", email = "you@example.com"}
+]
 license = "MIT"
 readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "schemathesis>=3.37.0",
+    "pytest>=8.3.3",
+    "requests>=2.32.3",
+    "pyyaml>=6.0.2",
+    "pytest-html>=4.1.1",
+    "pytest-metadata>=3.1.1",
+]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-schemathesis = "^3.37.0"
-pytest = "^8.3.3"
-requests = "^2.32.3"
-pyyaml = "^6.0.2"
-pytest-html = "^4.1.1"
-pytest-metadata = "^3.1.1"
-
-[tool.poetry.group.dev.dependencies]
-isort = "^5.13.2"
-black = "^24.10.0"
+[dependency-groups]
+dev = [
+    "isort>=5.13.2",
+    "black>=24.10.0",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
+requires = ["hatchling"]
+build-backend = "hatchling.build"
