@@ -8,6 +8,9 @@
     - A new link at the bottom of the CHANGELOG for that header
 5. `git push -u origin`
 6. Once approved, merge the PR
-7. `git checkout main && git pull && git tag {package}-v{version} && git push {package}-v{version}`
+7. `git checkout main && git pull && git tag {package}/v{version} && git push {package}/v{version}`
 8. Github actions will automatically publish the release on tag push
 9. Create a new [release](https://github.com/stapi-spec/pystapi/releases) pointing to the new tag
+
+> [!NOTE]
+> The tag format (`{package}/v{version}`) is very important, because that's how we discover which package to build and publish.
