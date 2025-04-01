@@ -5,40 +5,39 @@ on:
     tags:
       - "*/v*"
 
-env:
-  UV_SYSTEM_PYTHON: 1
-
 jobs:
-  repo_name:
-    name: Get repo name
+  package_name:
+    name: Get package name
     runs-on: ubuntu-latest
     outputs:
-      repo_name: ${{ steps.split.outputs.repo_name }}
+      package_name: ${{ steps.split.outputs.package_name }}
     steps:
       - name: Get repo name
         # https://stackoverflow.com/questions/73402042/github-action-expressions-split-string
         env:
           TAG: ${{ github.ref_name }}
         id: split
-        run: echo "repo_name=${TAG%%/*}" >> $GITHUB_OUTPUT
+        run: echo "package_name=${TAG%%/*}" >> $GITHUB_OUTPUT
   release:
-    name: Release ${{ needs.repo_name.outputs.repo_name }}
+    name: Release ${{ needs.package_name.outputs.package_name }}
     runs-on: ubuntu-latest
-    needs: repo_name
+    needs: package_name
     environment:
       name: pypi
-      url: https://pypi.org/p/${{ needs.repo_name.outputs.repo_name }}
+      url: https://pypi.org/p/${{ needs.package_name.outputs.package_name }}
     permissions:
       id-token: write
     if: ${{ github.repository }} == 'stapi-spec/pystapi'
     defaults:
       run:
-        working-directory: ${{ needs.repo_name.outputs.repo_name }}
+        working-directory: ${{ needs.package_name.outputs.package_name }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
+      - name: Create virtual environment
+        run: uv venv
       - name: Install build
         run: uv pip install build
       - name: Build
-        run: python -m build
+        run: uv run python -m build
       - uses: pypa/gh-action-pypi-publish@release/v1
