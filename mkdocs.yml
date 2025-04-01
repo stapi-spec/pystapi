@@ -1,0 +1,8 @@
+site_name: pystapi
+site_description: Monorepo for Python Satellite Tasking API (STAPI) Specification packages
+
+theme:
+  name: material
+
+plugins:
+  - mkdocstrings

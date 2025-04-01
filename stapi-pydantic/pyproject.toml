@@ -1,0 +1,12 @@
+[project]
+name = "stapi-pydantic"
+version = "0.0.1"
+description = "Pydantic models for the Satellite Tasking API (STAPI) Specification"
+readme = "README.md"
+authors = [{ name = "Pete Gadomski", email = "pete.gadomski@gmail.com" }]
+requires-python = ">=3.10"
+dependencies = ["geojson-pydantic>=1.2.0", "pydantic>=2.10.6"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

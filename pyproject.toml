@@ -1,0 +1,23 @@
+[project]
+name = "pystapi"
+version = "0.0.0"                                                                        # this top-level package should never be released
+description = "Monorepo for Python Satellite Tasking API (STAPI) Specification packages"
+readme = "README.md"
+authors = [{ name = "Pete Gadomski", email = "pete.gadomski@gmail.com" }]
+requires-python = ">=3.10"
+dependencies = ["stapi-pydantic"]
+
+[tool.uv.workspace]
+members = ["stapi-pydantic"]
+
+[tool.uv.sources]
+stapi-pydantic.workspace = true
+
+[dependency-groups]
+dev = ["mypy>=1.15.0", "pytest>=8.3.5", "ruff>=0.11.2"]
+docs = [
+    "mike>=2.1.3",
+    "mkdocs-material>=9.6.9",
+    "mkdocstrings>=0.29.0",
+    "mkdocstrings-python>=1.16.8",
+]
