@@ -2,7 +2,10 @@
 name = "stapi-fastapi"
 version = "0.6.0"
 description = "Sensor Tasking API (STAPI) with FastAPI"
-authors = [{ name = "Christian Wygoda", email = "christian.wygoda@wygoda.net" }]
+authors = [
+    { name = "Christian Wygoda", email = "christian.wygoda@wygoda.net" },
+    { name = "Phil Varner", email = "phil@philvarner.com" }
+]
 readme = "README.md"
 license = "MIT"
 
