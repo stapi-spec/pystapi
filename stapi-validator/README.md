@@ -1,4 +1,4 @@
-## About
+# pystapi-validator
 
 This project provides API validation for STAPI FastAPI implementations using Schemathesis against the latest STAPI OpenAPI specification.
 
