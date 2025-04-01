@@ -23,14 +23,8 @@ dev = "stapi_fastapi.__dev__:cli"
 dev = [
     "httpx>=0.27.0",
     "nox>=2024.4.15",
-    "mypy>=1.13.0",
-    "pre-commit>=4.1.0",
-    "pre-commit-hooks>=4.6.0",
     "pydantic-settings>=2.2.1",
-    "pymarkdownlnt>=0.9.25",
     "pyrfc3339>=1.1",
-    "pytest>=8.1.1",
-    "pytest-coverage>=0.0",
     "types-pyRFC3339>=1.1.1",
     "uvicorn>=0.29.0",
 ]
