@@ -19,6 +19,9 @@ docs = [
     "mkdocs-material>=9.6.11",
 ]
 
+[tool.uv]
+default-groups = ["dev", "docs"]
+
 [tool.uv.workspace]
 members = ["stapi-pydantic"]
 
