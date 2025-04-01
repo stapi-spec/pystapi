@@ -17,7 +17,7 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         id: split
-        run: echo "repo_name=${TAG%%/*}"
+        run: echo "repo_name=${TAG%%/*}" >> $GITHUB_OUTPUT
   release:
     name: Release ${{ needs.repo_name.outputs.repo_name }}
     runs-on: ubuntu-latest
