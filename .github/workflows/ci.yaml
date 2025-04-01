@@ -20,7 +20,7 @@ jobs:
       - name: Sync
         run: uv sync
       - name: Pre-Commit Hooks
-        run: pre-commit run --all-files
+        run: uv run pre-commit run --all-files
       - name: Test
         run: uv run pytest
       - name: Docs
