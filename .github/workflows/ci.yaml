@@ -39,6 +39,32 @@ jobs:
         with:
           path: site/
 
+  docker:
+    name: Docker Image
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.12"
+          - "3.13"
+
+    steps:
+#      -
+#        name: Login to Docker Hub
+#        uses: docker/login-action@v3
+#        with:
+#          username: ${{ vars.DOCKERHUB_USERNAME }}
+#          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      -
+        name: Build and Push
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          tags: user/app:latest
+
   docs:
     name: Deploy docs
     runs-on: ubuntu-latest
