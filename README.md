@@ -1,6 +1,9 @@
 # pystapi
 
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/stapi-spec/pystapi/ci.yaml?style=for-the-badge)](https://github.com/stapi-spec/pystapi/actions/workflows/ci.yaml)
+
 Monorepo for Python Satellite Tasking API (STAPI) Specification packages.
+For more, see our [docs](https://stapi-spec.github.io/pystapi/).
 
 ## Development
 
