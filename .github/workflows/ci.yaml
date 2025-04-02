@@ -63,7 +63,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ github.repository }}/stapi-fastapi:${{ github.ref_name }}
+          tags: stapi-spec/stapi-fastapi:${{ github.ref_name }}
           build-args: |
             PYTHON_VERSION="3.12"
 
