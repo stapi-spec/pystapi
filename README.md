@@ -30,6 +30,8 @@ If you don't want to type `uv run` all the time:
 source .venv/bin/activate
 ```
 
+See our [contribution guidelines](./CONTRIBUTING.md) for information on contributing any changes, fixes, or features.
+
 ### stapi-fastapi server
 
 A minimal test implementation is provided in [stapi-fastapi/tests/application.py](stapi-fastapi/tests/application.py).
