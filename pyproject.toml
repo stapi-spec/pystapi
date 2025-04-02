@@ -78,7 +78,7 @@ filterwarnings = [
     "error",
     "ignore:The 'app' shortcut is now deprecated.:DeprecationWarning",
     "ignore:Pydantic serializer warnings:UserWarning",
-    "ignore:jsonschema.exceptions.RefResolutionError is deprecated:DeprecationWarning",
+    "ignore:jsonschema.RefResolver is deprecated as of v4.18.0:DeprecationWarning",
 ]
 markers = [
     "mock_products",
