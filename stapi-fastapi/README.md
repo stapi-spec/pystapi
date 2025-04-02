@@ -29,21 +29,6 @@ returned indicates there are no further records available.
 
 ADRs can be found in in the [adrs](./adrs/README.md) directory.
 
-## Dev Server
-
-This project cannot be run on its own because it does not have any backend
-implementations. However, a minimal test implementation is provided in
-[`./tests/application.py`](./tests/application.py). It can be run with
-`uvicorn` as a way to interact with the API and to view the OpenAPI
-documentation. Run it like so from the project root:
-
-```commandline
-uvicorn application:app --app-dir ./tests --reload
-```
-
-With the `uvicorn` defaults the app should be accessible at
-`http://localhost:8000`.
-
 ### Implementing a backend
 
 - The test suite assumes the backend can be instantiated without any parameters
