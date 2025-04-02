@@ -151,9 +151,7 @@ class StapiIO:
         except Exception as err:
             raise APIError(str(err))
 
-    def _read_json(
-        self, endpoint: str, method: str = "GET", parameters: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    def read_json(self, endpoint: str, method: str = "GET", parameters: dict[str, Any] | None = None) -> dict[str, Any]:
         """Read JSON from a URL.
 
         Args:
@@ -188,7 +186,7 @@ class StapiIO:
         if not lookup_key:
             lookup_key = "features"
 
-        page = self._read_json(url, method=method, parameters=parameters)
+        page = self.read_json(url, method=method, parameters=parameters)
         if not (page.get(lookup_key)):
             return None
         yield page
@@ -196,7 +194,7 @@ class StapiIO:
         next_link = next((link for link in page.get("links", []) if link["rel"] == "next"), None)
         while next_link:
             link = Link.model_validate(next_link)
-            page = self._read_json(str(link.href), method=link.method or "GET")
+            page = self.read_json(str(link.href), method=link.method or "GET")
             if not (page.get(lookup_key)):
                 return None
             yield page

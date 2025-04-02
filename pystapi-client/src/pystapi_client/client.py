@@ -7,7 +7,7 @@ from typing import (
     Any,
 )
 
-from httpx import Request
+from httpx import URL, Request
 from httpx._types import TimeoutTypes
 from pydantic import AnyUrl
 from stapi_pydantic import Link, Order, OrderCollection, Product, ProductsCollection
@@ -39,8 +39,11 @@ class Client:
     """
 
     stapi_io: StapiIO
-    _conforms_to: list[str]
-    _links: list[Link]
+    conforms_to: list[str]
+    links: list[Link]
+
+    def __init__(self, stapi_io: StapiIO) -> None:
+        self.stapi_io = stapi_io
 
     def __repr__(self) -> str:
         return f"<Client {self.stapi_io.root_url}>"
@@ -80,14 +83,14 @@ class Client:
         Return:
             client : A :class:`Client` instance for this STAPI API
         """
-        client = Client()
-        client.stapi_io = StapiIO(
+        stapi_io = StapiIO(
             root_url=AnyUrl(url),
             headers=headers,
             parameters=parameters,
             request_modifier=request_modifier,
             timeout=timeout,
         )
+        client = Client(stapi_io=stapi_io)
 
         client.read_links()
         client.read_conformance()
@@ -117,13 +120,13 @@ class Client:
                 this object.
         """
         if rel is None and media_type is None:
-            return next(iter(self._links), None)
+            return next(iter(self.links), None)
         if media_type and isinstance(media_type, str):
             media_type = [media_type]
         return next(
             (
                 link
-                for link in self._links
+                for link in self.links
                 if (rel is None or link.rel == rel) and (media_type is None or (link.type or "") in media_type)
             ),
             None,
@@ -133,12 +136,12 @@ class Client:
         """Read the API links from the root of the STAPI API
 
         The links are stored in `Client._links`."""
-        links = self.stapi_io._read_json("/").get("links", [])
+        links = self.stapi_io.read_json("/").get("links", [])
         if links:
-            self._links = [Link(**link) for link in links]
+            self.links = [Link(**link) for link in links]
         else:
             warnings.warn("No links found in the root of the STAPI API")
-            self._links = [
+            self.links = [
                 Link(
                     href=urllib.parse.urljoin(str(self.stapi_io.root_url), link["endpoint"]),
                     rel=link["rel"],
@@ -151,7 +154,7 @@ class Client:
         conformance: list[str] = []
         for endpoint in ["/conformance", "/"]:
             try:
-                conformance = self.stapi_io._read_json("conformance").get("conformsTo", [])
+                conformance = self.stapi_io.read_json(endpoint).get("conformsTo", [])
                 break
             except APIError:
                 continue
@@ -161,7 +164,7 @@ class Client:
 
     def has_conforms_to(self) -> bool:
         """Whether server contains list of ``"conformsTo"`` URIs"""
-        return bool(self._conforms_to)
+        return bool(self.conforms_to)
 
     def get_conforms_to(self) -> list[str]:
         """List of ``"conformsTo"`` URIs
@@ -169,7 +172,7 @@ class Client:
         Return:
             list[str]: List of  URIs that the server conforms to
         """
-        return self._conforms_to.copy()
+        return self.conforms_to.copy()
 
     def set_conforms_to(self, conformance_uris: list[str]) -> None:
         """Set list of ``"conformsTo"`` URIs
@@ -177,7 +180,7 @@ class Client:
         Args:
             conformance_uris : URIs indicating what the server conforms to
         """
-        self._conforms_to = conformance_uris
+        self.conforms_to = conformance_uris
 
     def clear_conforms_to(self) -> None:
         """Clear list of ``"conformsTo"`` urls
@@ -185,7 +188,7 @@ class Client:
         Removes the entire list, so :py:meth:`has_conforms_to` will
         return False after using this method.
         """
-        self._conforms_to = []
+        self.conforms_to = []
 
     def add_conforms_to(self, name: str) -> None:
         """Add ``"conformsTo"`` by name.
@@ -195,7 +198,7 @@ class Client:
         """
         conformance_class = ConformanceClasses.get_by_name(name)
 
-        if not self.conforms_to(conformance_class):
+        if not self.has_conformance(conformance_class):
             self.set_conforms_to([*self.get_conforms_to(), conformance_class.valid_uri])
 
     def remove_conforms_to(self, name: str) -> None:
@@ -208,7 +211,7 @@ class Client:
 
         self.set_conforms_to([uri for uri in self.get_conforms_to() if not re.match(conformance_class.pattern, uri)])
 
-    def conforms_to(self, conformance_class: ConformanceClasses | str) -> bool:
+    def has_conformance(self, conformance_class: ConformanceClasses | str) -> bool:
         """Checks whether the API conforms to the given standard.
 
         This method only checks
@@ -229,10 +232,10 @@ class Client:
         return any(re.match(conformance_class.pattern, uri) for uri in self.get_conforms_to())
 
     def _supports_opportunities(self) -> bool:
-        return self.conforms_to(ConformanceClasses.OPPORTUNITIES)
+        return self.has_conformance(ConformanceClasses.OPPORTUNITIES)
 
     def _supports_async_opportunities(self) -> bool:
-        return self.conforms_to(ConformanceClasses.ASYNC_OPPORTUNITIES)
+        return self.has_conformance(ConformanceClasses.ASYNC_OPPORTUNITIES)
 
     def get_products(self, limit: int | None = None) -> Iterator[ProductsCollection]:
         """Get all products from this STAPI API
@@ -267,7 +270,7 @@ class Client:
         """
 
         product_endpoint = self._get_products_href(product_id)
-        product_json = self.stapi_io._read_json(product_endpoint)
+        product_json = self.stapi_io.read_json(product_endpoint)
 
         if product_json is None:
             raise ValueError(f"Product {product_id} not found")
@@ -275,12 +278,13 @@ class Client:
         return Product.model_validate(product_json)
 
     def _get_products_href(self, product_id: str | None = None) -> str:
-        href = self.get_single_link("products")
-        if href is None:
+        product_link = self.get_single_link("products")
+        if product_link is None:
             raise ValueError("No products link found")
+        product_url = URL(str(product_link.href))
         if product_id is not None:
-            return urllib.parse.urljoin(str(href.href), product_id)
-        return str(href.href)
+            product_url = product_url.copy_with(path=f"{product_url.path}/{product_id}")
+        return str(product_url)
 
     def get_orders(self, limit: int | None = None) -> Iterator[OrderCollection]:  # type: ignore[type-arg]
         # TODO Update return type after the pydantic model generic type is fixed
@@ -317,7 +321,7 @@ class Client:
         """
 
         order_endpoint = self._get_orders_href(order_id)
-        order_json = self.stapi_io._read_json(order_endpoint)
+        order_json = self.stapi_io.read_json(order_endpoint)
 
         if order_json is None:
             raise ValueError(f"Order {order_id} not found")
@@ -325,9 +329,10 @@ class Client:
         return Order.model_validate(order_json)
 
     def _get_orders_href(self, order_id: str | None = None) -> str:
-        href = self.get_single_link("orders")
-        if href is None:
+        order_link = self.get_single_link("orders")
+        if order_link is None:
             raise ValueError("No orders link found")
+        order_url = URL(str(order_link.href))
         if order_id is not None:
-            return urllib.parse.urljoin(str(href.href), order_id)
-        return str(href.href)
+            order_url = order_url.copy_with(path=f"{order_url.path}/{order_id}")
+        return str(order_url)
