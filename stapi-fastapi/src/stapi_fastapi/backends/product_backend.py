@@ -42,7 +42,7 @@ Returns:
 
 Note:
     Backends must validate search constraints and return
-    returns.result.Failure[stapi_fastapi.exceptions.ConstraintsException] if not valid.
+    returns.result.Failure[stapi_fastapi.errors.ConstraintsError] if not valid.
 """
 
 SearchOpportunitiesAsync = Callable[
@@ -63,7 +63,7 @@ Returns:
     - Returning returns.result.Failure[Exception] will result in a 500.
 
 Backends must validate search constraints and return
-returns.result.Failure[stapi_fastapi.exceptions.ConstraintsException] if not valid.
+returns.result.Failure[stapi_fastapi.errors.ConstraintsError] if not valid.
 """
 
 GetOpportunityCollection = Callable[
@@ -104,5 +104,5 @@ Returns:
 
 Note:
     Backends must validate order payload and return
-    returns.result.Failure[stapi_fastapi.exceptions.ConstraintsException] if not valid.
+    returns.result.Failure[stapi_fastapi.errors.ConstraintsError] if not valid.
 """

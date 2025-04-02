@@ -19,7 +19,7 @@ from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
 
 from stapi_fastapi.constants import TYPE_JSON
-from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
+from stapi_fastapi.errors import ConstraintsError, NotFoundError
 from stapi_fastapi.models.opportunity import (
     OpportunityCollection,
     OpportunityPayload,
@@ -275,7 +275,7 @@ class ProductRouter(APIRouter):
                         links.append(self.pagination_link(request, search, x))
                     case Maybe.empty:
                         pass
-            case Failure(e) if isinstance(e, ConstraintsException):
+            case Failure(e) if isinstance(e, ConstraintsError):
                 raise e
             case Failure(e):
                 logger.error(
@@ -314,7 +314,7 @@ class ProductRouter(APIRouter):
                     content=search_record.model_dump(mode="json"),
                     headers=headers,
                 )
-            case Failure(e) if isinstance(e, ConstraintsException):
+            case Failure(e) if isinstance(e, ConstraintsError):
                 raise e
             case Failure(e):
                 logger.error(
@@ -354,7 +354,7 @@ class ProductRouter(APIRouter):
                 location = str(self.root_router.generate_order_href(request, order.id))
                 response.headers["Location"] = location
                 return order  # type: ignore
-            case Failure(e) if isinstance(e, ConstraintsException):
+            case Failure(e) if isinstance(e, ConstraintsError):
                 raise e
             case Failure(e):
                 logger.error(
@@ -418,7 +418,7 @@ class ProductRouter(APIRouter):
                 )
                 return opportunity_collection  # type: ignore
             case Success(Maybe.empty):
-                raise NotFoundException("Opportunity Collection not found")
+                raise NotFoundError("Opportunity Collection not found")
             case Failure(e):
                 logger.error(
                     "An error occurred while fetching opportunity collection: '%s': %s",

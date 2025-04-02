@@ -3,15 +3,15 @@ from typing import Any
 from fastapi import HTTPException, status
 
 
-class StapiException(HTTPException):
+class StapiError(HTTPException):
     pass
 
 
-class ConstraintsException(StapiException):
+class ConstraintsError(StapiError):
     def __init__(self, detail: Any) -> None:
         super().__init__(status.HTTP_422_UNPROCESSABLE_ENTITY, detail)
 
 
-class NotFoundException(StapiException):
+class NotFoundError(StapiError):
     def __init__(self, detail: Any | None = None) -> None:
         super().__init__(status.HTTP_404_NOT_FOUND, detail)
