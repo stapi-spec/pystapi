@@ -70,8 +70,9 @@ module = "pygeofilter.parsers.*"
 ignore_missing_imports = true
 
 [tool.pymarkdown]
-plugins.md013.line_length = 120
+plugins.md013.enabled = false  # @gadomski likes to do one-line-per-sentence in markdown
 plugins.md024.enabled = false  # duplicate headers in changelog
+plugins.md041.enabled = false  # github templates don't start with an h1
 
 [tool.coverage.report]
 show_missing = true
