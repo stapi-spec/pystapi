@@ -23,6 +23,7 @@ dependencies = [
     "pyrfc3339>=1.1",
     "types-pyRFC3339>=1.1.1",
     "uvicorn>=0.29.0",
+    "schemathesis==3.37.0",
 ]
 
 [tool.hatch.build.targets.sdist]

@@ -5,6 +5,7 @@ from typing import Any
 from urllib.parse import urljoin
 
 import pytest
+import schemathesis
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from stapi_fastapi.models.product import (
@@ -182,3 +183,33 @@ def opportunity_search(limit) -> dict[str, Any]:
         },
         "limit": limit,
     }
+
+@pytest.fixture
+def stapi_app(
+    mock_products: list[Product],
+    base_url: str,
+    mock_opportunities: list[Opportunity],
+):
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, Any]]:
+        try:
+            yield {
+                "_orders_db": InMemoryOrderDB(),
+                "_opportunities": mock_opportunities,
+            }
+        finally:
+            pass
+
+    root_router = RootRouter(
+        get_orders=mock_get_orders,
+        get_order=mock_get_order,
+        get_order_statuses=mock_get_order_statuses,
+        conformances=[CORE],
+    )
+
+    for mock_product in mock_products:
+        root_router.add_product(mock_product)
+
+    app = FastAPI(lifespan=lifespan)
+    app.include_router(root_router, prefix="")
+    return schemathesis.from_dict(app.openapi())

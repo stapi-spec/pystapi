@@ -1342,15 +1342,15 @@ wheels = [
 
 [[package]]
 name = "pytest-subtests"
-version = "0.14.1"
+version = "0.13.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
     { name = "pytest" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c0/4c/ba9eab21a2250c2d46c06c0e3cd316850fde9a90da0ac8d0202f074c6817/pytest_subtests-0.14.1.tar.gz", hash = "sha256:350c00adc36c3aff676a66135c81aed9e2182e15f6c3ec8721366918bbbf7580", size = 17632 }
+sdist = { url = "https://files.pythonhosted.org/packages/67/fe/e691d2f4ce061a475f488cad1ef58431556affea323dde5c764fd7515a70/pytest_subtests-0.13.1.tar.gz", hash = "sha256:989e38f0f1c01bc7c6b2e04db7d9fd859db35d77c2c1a430c831a70cbf3fde2d", size = 15936 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a9/b7/7ca948d35642ae72500efda6ba6fa61dcb6683feb596d19c4747c63c0789/pytest_subtests-0.14.1-py3-none-any.whl", hash = "sha256:e92a780d98b43118c28a16044ad9b841727bd7cb6a417073b38fd2d7ccdf052d", size = 8833 },
+    { url = "https://files.pythonhosted.org/packages/f5/ac/fc132cb88e8f2042cebcb6ef0ffac40017c514fbadf3931e0b4bcb4bdfb6/pytest_subtests-0.13.1-py3-none-any.whl", hash = "sha256:ab616a22f64cd17c1aee65f18af94dbc30c444f8683de2b30895c3778265e3bd", size = 8038 },
 ]
 
 [[package]]
@@ -1669,7 +1669,7 @@ wheels = [
 
 [[package]]
 name = "schemathesis"
-version = "3.39.14"
+version = "3.37.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "backoff" },
@@ -1694,9 +1694,9 @@ dependencies = [
     { name = "werkzeug" },
     { name = "yarl" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0d/82/910978b34e32394037c476acf91c0ce8844f55a35f621e73e9eba5f197a6/schemathesis-3.39.14.tar.gz", hash = "sha256:131e74fea4871e01eb0d1f54278932e1284f83205a88f198ebdf7dd0b1814b36", size = 57910047 }
+sdist = { url = "https://files.pythonhosted.org/packages/66/94/4c76a7621d01562d6157be4f339a2c7a5827c091267b64750c1026fd5657/schemathesis-3.37.0.tar.gz", hash = "sha256:0333141cba48f8a9fc15894d57078b1baaac36e2582199113899840685005dfa", size = 57891641 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8f/54/5cf43bfd34eb597f6eccc87bbd94da4d86a4d64f53ee65420360d1136f0a/schemathesis-3.39.14-py3-none-any.whl", hash = "sha256:b0089e8f169c3bcd168d9a1e3cb8669dfd7597af0c5c096e3bab9b7a01ada304", size = 332145 },
+    { url = "https://files.pythonhosted.org/packages/15/f1/d8dca3a77bbf6cd1ac9b931ce83cdc426b3519beb10156338abd69ab9273/schemathesis-3.37.0-py3-none-any.whl", hash = "sha256:9a7c4f8c2a855c6fa8fa36eba80977d7cbc21157b18d2c6297e264b74e2daeba", size = 321643 },
 ]
 
 [[package]]
@@ -1749,6 +1749,7 @@ dependencies = [
     { name = "pygeofilter" },
     { name = "pyrfc3339" },
     { name = "returns" },
+    { name = "schemathesis" },
     { name = "types-pyrfc3339" },
     { name = "uvicorn" },
 ]
@@ -1764,6 +1765,7 @@ requires-dist = [
     { name = "pygeofilter", specifier = ">=0.2" },
     { name = "pyrfc3339", specifier = ">=1.1" },
     { name = "returns", specifier = ">=0.23" },
+    { name = "schemathesis", specifier = "==3.37.0" },
     { name = "types-pyrfc3339", specifier = ">=1.1.1" },
     { name = "uvicorn", specifier = ">=0.29.0" },
 ]
