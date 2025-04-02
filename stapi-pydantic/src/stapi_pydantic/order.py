@@ -43,6 +43,13 @@ class OrderStatusCode(StrEnum):
     tasked = "tasked"
     user_canceled = "user_canceled"
 
+    pending = "pending"
+    in_progress = "in_progress"
+    pending_cancellation = "pending_cancellation"
+    expired = "expired"
+    requested = "requested"
+    failed = "failed"
+
 
 class OrderStatus(BaseModel):
     timestamp: AwareDatetime
