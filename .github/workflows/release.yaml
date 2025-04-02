@@ -19,7 +19,7 @@ jobs:
         id: split
         run: echo "package_name=${TAG%%/*}" >> $GITHUB_OUTPUT
 
-  pypi-release:
+  release:
     name: Release ${{ needs.package_name.outputs.package_name }}
     runs-on: ubuntu-latest
     needs: package_name
