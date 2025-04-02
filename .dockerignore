@@ -13,3 +13,8 @@
 !/stapi-pydantic/README.md
 !/stapi-pydantic/src/*
 !/stapi-pydantic/tests/*
+
+!/pystapi-validator/pyproject.toml
+!/pystapi-validator/README.md
+!/pystapi-validator/src/*
+!/pystapi-validator/tests/*
