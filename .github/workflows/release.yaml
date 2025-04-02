@@ -70,5 +70,4 @@ jobs:
         with:
           push: true
           tags: stapi-spec/stapi-fastapi:${{ github.ref_name }}
-          build-args: |
-            PYTHON_VERSION="3.12"
+          build-args: PYTHON_VERSION='3.12'

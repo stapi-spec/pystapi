@@ -44,7 +44,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: false
-          build-args: ${{ matrix.python-version }}
+          build-args: PYTHON_VERSION=${{ matrix.python-version }}
 
   docs:
     name: Deploy docs
