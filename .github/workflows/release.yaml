@@ -45,7 +45,7 @@ jobs:
           packages-dir: ${{ needs.package_name.outputs.package_name}}/dist
 
   docker:
-    name: Docker Image
+    name: Build Docker image
     runs-on: ubuntu-latest
 
     permissions:
