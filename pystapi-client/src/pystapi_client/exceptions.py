@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from httpx import Response
 
 
@@ -7,7 +9,7 @@ class APIError(Exception):
     status_code: int | None
 
     @classmethod
-    def from_response(cls, response: Response) -> "APIError":
+    def from_response(cls, response: Response) -> APIError:
         error = cls(response.text)
         error.status_code = response.status_code
         return error

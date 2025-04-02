@@ -25,8 +25,8 @@ class ConformanceClasses(Enum):
 
     @property
     def valid_uri(self) -> str:
-        return f"https://stapi.example.com/v0.1.*{self.value}"
+        return f"https://stapi.example.com/v*{self.value}"
 
     @property
     def pattern(self) -> re.Pattern[str]:
-        return re.compile(rf"{re.escape('https://stapi.example.com/v0.1.')}(.*){re.escape(self.value)}")
+        return re.compile(rf"{re.escape('https://stapi.example.com/v')}(.*){re.escape(self.value)}")

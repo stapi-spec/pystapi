@@ -5,10 +5,10 @@ import warnings
 from collections.abc import Callable, Iterable, Iterator
 from typing import (
     Any,
-    cast,
 )
 
-import httpx
+from httpx import Request
+from httpx._types import TimeoutTypes
 from pydantic import AnyUrl
 from stapi_pydantic import Link, Product
 from stapi_pydantic.product import ProductsCollection
@@ -36,13 +36,12 @@ class Client:
     """A Client for interacting with the root of a STAPI
 
     Instances of the ``Client`` class provide a convenient way of interacting
-    with STAPI APIs that conform to the `STAPI API spec
-    <https://github.com/stapi-spec/stapi-spec>`_.
+    with STAPI APIs that conform to the [STAPI API spec](https://github.com/stapi-spec/stapi-spec).
     """
 
     _stapi_io: StapiIO
-    _conforms_to: list[str] = []
-    _extra_fields: dict[str, Any] = {}
+    _conforms_to: list[str]
+    _links: list[Link]
 
     def __repr__(self) -> str:
         return f"<Client {self._stapi_io.root_url}>"
@@ -50,11 +49,11 @@ class Client:
     @classmethod
     def open(
         cls,
-        url: AnyUrl,
+        url: str,
         headers: dict[str, str] | None = None,
         parameters: dict[str, Any] | None = None,
-        request_modifier: Callable[[httpx.Request], httpx.Request] | None = None,
-        timeout: httpx._types.TimeoutTypes | None = None,
+        request_modifier: Callable[[Request], Request] | None = None,
+        timeout: TimeoutTypes | None = None,
     ) -> "Client":
         """Opens a STAPI API client
 
@@ -84,7 +83,7 @@ class Client:
         """
         client = Client()
         client._stapi_io = StapiIO(
-            root_url=url,
+            root_url=AnyUrl(url),
             headers=headers,
             parameters=parameters,
             request_modifier=request_modifier,
@@ -119,26 +118,28 @@ class Client:
                 this object.
         """
         if rel is None and media_type is None:
-            return next(iter(self._extra_fields["links"]), None)
+            return next(iter(self._links), None)
         if media_type and isinstance(media_type, str):
             media_type = [media_type]
         return next(
             (
                 link
-                for link in self._extra_fields["links"]
-                if (rel is None or link.rel == rel) and (media_type is None or link.media_type in media_type)
+                for link in self._links
+                if (rel is None or link.rel == rel) and (media_type is None or (link.type or "") in media_type)
             ),
             None,
         )
 
     def read_links(self) -> None:
-        """ """
+        """Read the API links from the root of the STAPI API
+
+        The links are stored in `Client._links`."""
         links = self._stapi_io._read_json("/").get("links", [])
         if links:
-            self._extra_fields["links"] = [Link(**link) for link in links]
+            self._links = [Link(**link) for link in links]
         else:
             warnings.warn("No links found in the root of the STAPI API")
-            self._extra_fields["links"] = [
+            self._links = [
                 Link(
                     href=urllib.parse.urljoin(str(self._stapi_io.root_url), link["endpoint"]),
                     rel=link["rel"],
@@ -161,15 +162,15 @@ class Client:
 
     def has_conforms_to(self) -> bool:
         """Whether server contains list of ``"conformsTo"`` URIs"""
-        return "conformsTo" in self._extra_fields
+        return bool(self._conforms_to)
 
     def get_conforms_to(self) -> list[str]:
         """List of ``"conformsTo"`` URIs
 
         Return:
-            List[str]: List of  URIs that the server conforms to
+            list[str]: List of  URIs that the server conforms to
         """
-        return cast(list[str], self._extra_fields.get("conformsTo", []).copy())
+        return self._conforms_to.copy()
 
     def set_conforms_to(self, conformance_uris: list[str]) -> None:
         """Set list of ``"conformsTo"`` URIs
@@ -177,7 +178,7 @@ class Client:
         Args:
             conformance_uris : URIs indicating what the server conforms to
         """
-        self._extra_fields["conformsTo"] = conformance_uris
+        self._conforms_to = conformance_uris
 
     def clear_conforms_to(self) -> None:
         """Clear list of ``"conformsTo"`` urls
@@ -185,7 +186,7 @@ class Client:
         Removes the entire list, so :py:meth:`has_conforms_to` will
         return False after using this method.
         """
-        self._extra_fields.pop("conformsTo", None)
+        self._conforms_to = []
 
     def add_conforms_to(self, name: str) -> None:
         """Add ``"conformsTo"`` by name.
@@ -240,7 +241,7 @@ class Client:
         Returns:
             ProductsCollection: A collection of STAPI Products
         """
-        products_endpoint = self._products_href()
+        products_endpoint = self._get_products_href()
 
         if limit is None:
             parameters = {}
@@ -266,7 +267,7 @@ class Client:
             ValueError if product_id does not exist.
         """
 
-        product_endpoint = self._products_href(product_id)
+        product_endpoint = self._get_products_href(product_id)
         product_json = self._stapi_io._read_json(product_endpoint)
 
         if product_json is None:
@@ -274,7 +275,7 @@ class Client:
 
         return Product.model_validate(product_json)
 
-    def _products_href(self, product_id: str | None = None) -> str:
+    def _get_products_href(self, product_id: str | None = None) -> str:
         href = self.get_single_link("products")
         if href is None:
             raise ValueError("No products link found")

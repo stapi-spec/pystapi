@@ -35,9 +35,9 @@ members = ["pystapi-validator", "stapi-pydantic", "pystapi-client", "stapi-fasta
 
 [tool.uv.sources]
 pystapi-client.workspace = true
-stapi-fastapi.workspace = true
 pystapi-validator.workspace = true
 stapi-pydantic.workspace = true
+stapi-fastapi.workspace = true
 
 [tool.ruff]
 line-length = 120
