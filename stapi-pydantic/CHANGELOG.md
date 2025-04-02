@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `stapi_type` and `stapi_version` ([#54](https://github.com/stapi-spec/pystapi/pull/54))
+
 ### Changed
 
 - Added more top-level imports, removed conformance urls ([#51](https://github.com/stapi-spec/pystapi/pull/51))
