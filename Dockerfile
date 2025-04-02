@@ -6,6 +6,6 @@ FROM ${BASE_IMAGE} as base
 WORKDIR /app
 COPY . /app
 
-RUN uv sync --frozen 
+RUN uv sync --frozen
 
 CMD ["uv", "run", "fastapi", "dev", "/app/stapi-fastapi/tests/application.py", "--host", "0.0.0.0", "--port", "80"]
