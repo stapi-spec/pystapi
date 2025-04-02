@@ -42,19 +42,19 @@ jobs:
   docker:
     name: Docker Image
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version:
-          - "3.12"
-          - "3.13"
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
 
     steps:
-#      -
-#        name: Login to Docker Hub
-#        uses: docker/login-action@v3
-#        with:
-#          username: ${{ vars.DOCKERHUB_USERNAME }}
-#          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -62,10 +62,10 @@ jobs:
         name: Build and Push
         uses: docker/build-push-action@v6
         with:
-          push: false
-          tags: user/app:latest
+          push: true
+          tags: ${{ github.repository }}/stapi-fastapi:${{ github.ref_name }}
           build-args: |
-            PYTHON_VERSION=${{ matrix.python-version }}
+            PYTHON_VERSION="3.12"
 
   docs:
     name: Deploy docs
