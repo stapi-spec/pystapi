@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from geojson_pydantic import Point
 from geojson_pydantic.types import Position2D
 from httpx import Response
-from stapi_pydantic.order import Order, OrderPayload, OrderStatus, OrderStatusCode
+from stapi_pydantic import Order, OrderPayload, OrderStatus, OrderStatusCode
 
 from .shared import MyOrderParameters, find_link, pagination_tester
 

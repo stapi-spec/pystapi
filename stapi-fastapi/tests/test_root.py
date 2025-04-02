@@ -1,6 +1,6 @@
 from fastapi import status
 from fastapi.testclient import TestClient
-from stapi_pydantic.conformance import CORE
+from stapi_fastapi.conformance import CORE
 
 
 def test_root(stapi_client: TestClient, assert_link) -> None:
