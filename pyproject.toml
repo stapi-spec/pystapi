@@ -6,8 +6,9 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "pystapi-client",
+    "pystapi-validator",
     "stapi-pydantic",
-    "stapi-fastapi",
+    "stapi-fastapi"
 ]
 
 [dependency-groups]
@@ -20,6 +21,7 @@ dev = [
     "pymarkdownlnt>=0.9.25",
     "pre-commit>=4.2.0",
     "pre-commit-hooks>=5.0.0",
+    "fastapi[standard]>=0.115.12",
 ]
 docs = [
     "mkdocs-material>=9.6.11",
@@ -30,11 +32,12 @@ docs = [
 default-groups = ["dev", "docs"]
 
 [tool.uv.workspace]
-members = ["stapi-pydantic", "pystapi-client", "stapi-fastapi"]
+members = ["pystapi-validator", "stapi-pydantic", "pystapi-client", "stapi-fastapi"]
 
 [tool.uv.sources]
 pystapi-client.workspace = true
 stapi-fastapi.workspace = true
+pystapi-validator.workspace = true
 stapi-pydantic.workspace = true
 
 [tool.ruff]
@@ -60,6 +63,7 @@ max-complexity = 8  # default 10
 strict = true
 files = [
     "pystapi-client/src/pystapi_client/**/*.py",
+    "pystapi-validator/src/pystapi_validator/**/*.py",
     "stapi-pydantic/src/stapi_pydantic/**/*.py",
     "stapi-fastapi/src/stapi_fastapi/**/*.py"
 ]
@@ -69,8 +73,9 @@ module = "pygeofilter.parsers.*"
 ignore_missing_imports = true
 
 [tool.pymarkdown]
-plugins.md013.line_length = 120
+plugins.md013.enabled = false  # @gadomski likes to do one-line-per-sentence in markdown
 plugins.md024.enabled = false  # duplicate headers in changelog
+plugins.md041.enabled = false  # github templates don't start with an h1
 
 [tool.coverage.report]
 show_missing = true
