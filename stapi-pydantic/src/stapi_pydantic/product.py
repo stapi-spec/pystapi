@@ -31,8 +31,8 @@ class Provider(BaseModel):
 
 
 class Product(BaseModel):
-    type_: Literal["Product"] = Field(default="Product", alias="type")
-    stapi_type: Literal["Order"] = "Order"
+    type_: Literal["Collection"] = Field(default="Collection", alias="type")
+    stapi_type: Literal["Product"] = "Product"
     stapi_version: str = STAPI_VERSION
     conformsTo: list[str] = Field(default_factory=list)
     id: str
