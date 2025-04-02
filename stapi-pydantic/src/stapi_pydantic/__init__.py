@@ -1,4 +1,5 @@
 from .conformance import Conformance
+from .constraints import Constraints
 from .datetime_interval import DatetimeInterval
 from .json_schema_model import JsonSchemaModel
 from .opportunity import (
@@ -29,6 +30,7 @@ from .shared import Link
 
 __all__ = [
     "Conformance",
+    "Constraints",
     "DatetimeInterval",
     "JsonSchemaModel",
     "Link",
