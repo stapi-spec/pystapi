@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from stapi_pydantic.product import Product as BaseProduct
+from stapi_pydantic import Product as BaseProduct
 
 if TYPE_CHECKING:
     from stapi_fastapi.backends.product_backend import (
