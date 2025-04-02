@@ -13,7 +13,6 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=8.1.1",
-    "pytest-coverage>=0.0",
     "mypy>=1.15.0",
     "pytest>=8.3.5",
     "ruff>=0.11.2",
@@ -74,20 +73,12 @@ plugins.md013.enabled = false  # @gadomski likes to do one-line-per-sentence in 
 plugins.md024.enabled = false  # duplicate headers in changelog
 plugins.md041.enabled = false  # github templates don't start with an h1
 
-[tool.coverage.report]
-show_missing = true
-skip_empty = true
-sort = "Cover"
-omit = [
-    "stapi-pydantic/tests/**/*.py",
-    "stapi-fastapi/tests/**/*.py",
-]
-
 [tool.pytest.ini_options]
-addopts="--cov=stapi-pydantic/src/stapi_pydantic --cov=stapi-fastapi/src/stapi_fastapi"
 filterwarnings = [
+    "error",
     "ignore:The 'app' shortcut is now deprecated.:DeprecationWarning",
     "ignore:Pydantic serializer warnings:UserWarning",
+    "ignore:jsonschema.exceptions.RefResolutionError is deprecated:DeprecationWarning",
 ]
 markers = [
     "mock_products",
