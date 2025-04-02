@@ -17,15 +17,17 @@ from fastapi.responses import JSONResponse
 from geojson_pydantic.geometries import Geometry
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
-from stapi_pydantic.json_schema_model import JsonSchemaModel
-from stapi_pydantic.opportunity import (
+from stapi_pydantic import (
+    JsonSchemaModel,
+    Link,
     OpportunityCollection,
     OpportunityPayload,
     OpportunitySearchRecord,
+    Order,
+    OrderPayload,
+    OrderStatus,
     Prefer,
 )
-from stapi_pydantic.order import Order, OrderPayload, OrderStatus
-from stapi_pydantic.shared import Link
 
 from stapi_fastapi.constants import TYPE_JSON
 from stapi_fastapi.exceptions import ConstraintsException, NotFoundException

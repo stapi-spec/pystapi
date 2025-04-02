@@ -7,12 +7,12 @@ from urllib.parse import urljoin
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from stapi_fastapi.conformance import ASYNC_OPPORTUNITIES, CORE, OPPORTUNITIES
 from stapi_fastapi.models.product import (
     Product,
 )
 from stapi_fastapi.routers.root_router import RootRouter
-from stapi_pydantic.conformance import ASYNC_OPPORTUNITIES, CORE, OPPORTUNITIES
-from stapi_pydantic.opportunity import (
+from stapi_pydantic import (
     Opportunity,
 )
 

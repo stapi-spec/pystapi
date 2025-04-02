@@ -6,23 +6,18 @@ from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.datastructures import URL
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
-from stapi_pydantic.conformance import (
-    ASYNC_OPPORTUNITIES,
-    CORE,
+from stapi_pydantic import (
     Conformance,
-)
-from stapi_pydantic.opportunity import (
+    Link,
     OpportunitySearchRecord,
     OpportunitySearchRecords,
-)
-from stapi_pydantic.order import (
     Order,
     OrderCollection,
     OrderStatus,
     OrderStatuses,
+    ProductsCollection,
+    RootResponse,
 )
-from stapi_pydantic.product import ProductsCollection
-from stapi_pydantic.shared import Link
 
 from stapi_fastapi.backends.root_backend import (
     GetOpportunitySearchRecord,
@@ -31,10 +26,10 @@ from stapi_fastapi.backends.root_backend import (
     GetOrders,
     GetOrderStatuses,
 )
+from stapi_fastapi.conformance import ASYNC_OPPORTUNITIES, CORE
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
 from stapi_fastapi.exceptions import NotFoundException
 from stapi_fastapi.models.product import Product
-from stapi_fastapi.models.root import RootResponse
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_fastapi.routers.route_names import (

@@ -4,8 +4,8 @@ from typing import Any, TypeVar
 from fastapi import Request
 from returns.maybe import Maybe
 from returns.result import ResultE
-from stapi_pydantic.opportunity import OpportunitySearchRecord
-from stapi_pydantic.order import (
+from stapi_pydantic import (
+    OpportunitySearchRecord,
     Order,
     OrderStatus,
 )
