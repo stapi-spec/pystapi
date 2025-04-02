@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Changed
 
 - stapi-fastapi is now using stapi-pydantic models, deduplicating code
-- Product in stapu-fastapi is now subclass of Product from stapi-pydantic
+- Product in stapi-fastapi is now subclass of Product from stapi-pydantic
 
 ## [v0.6.0] - 2025-02-11
 
