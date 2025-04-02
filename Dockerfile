@@ -8,4 +8,4 @@ COPY . /app
 
 RUN uv sync --frozen 
 
-CMD ["uv", "run", "fastapi", "dev", "tests/application.py", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uv", "run", "fastapi", "dev", "/app/stapi-fastapi/tests/application.py", "--host", "0.0.0.0", "--port", "80"]
