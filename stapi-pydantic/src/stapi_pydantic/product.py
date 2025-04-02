@@ -3,6 +3,7 @@ from typing import Any, Literal, Self
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
+from .constants import STAPI_VERSION
 from .opportunity import OpportunityProperties
 from .order import OrderParameters
 from .shared import Link
@@ -31,6 +32,8 @@ class Provider(BaseModel):
 
 class Product(BaseModel):
     type_: Literal["Product"] = Field(default="Product", alias="type")
+    stapi_type: Literal["Order"] = "Order"
+    stapi_version: str = STAPI_VERSION
     conformsTo: list[str] = Field(default_factory=list)
     id: str
     title: str = ""
