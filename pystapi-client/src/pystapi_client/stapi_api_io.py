@@ -1,7 +1,8 @@
 import json
 import logging
+import urllib
+import urllib.parse
 from collections.abc import Callable, Iterator
-from copy import deepcopy
 from typing import Any
 
 import httpx
@@ -9,8 +10,6 @@ from httpx import Client as Session
 from httpx import Request
 from pydantic import AnyUrl
 from stapi_pydantic import Link
-
-from pystapi_client._utils import urljoin
 
 from .exceptions import APIError
 
@@ -23,7 +22,7 @@ class StapiIO:
         root_url: AnyUrl,
         headers: dict[str, str] | None = None,
         parameters: dict[str, Any] | None = None,
-        request_modifier: Callable[[Request], Request | None] | None = None,
+        request_modifier: Callable[[Request], Request] | None = None,
         timeout: httpx._types.TimeoutTypes | None = None,
         max_retries: int | None = 5,
     ):
@@ -44,7 +43,7 @@ class StapiIO:
               disable retries.
 
         Return:
-            StacApiIO : StacApiIO instance
+            StapiIO : StapiIO instance
         """
         self.root_url = root_url
         transport = None
@@ -62,9 +61,9 @@ class StapiIO:
         self,
         headers: dict[str, str] | None = None,
         parameters: dict[str, Any] | None = None,
-        request_modifier: Callable[[Request], Request | None] | None = None,
+        request_modifier: Callable[[Request], Request] | None = None,
     ) -> None:
-        """Updates this StacApi's headers, parameters, and/or request_modifier.
+        """Updates this Stapi's headers, parameters, and/or request_modifier.
 
         Args:
             headers : Optional dictionary of headers to include in all requests
@@ -97,19 +96,12 @@ class StapiIO:
         them to allow us to handle different response status codes as needed.
         """
 
-        # If "POST" use the body object that and respect the "merge" property.
-        if method == "POST":
-            parameters = {**(parameters or {})}
-        else:
-            # parameters are already in the link href
-            parameters = {}
-
-        return self.request(href, method=method, headers=headers, parameters=parameters)
+        return self.request(href, method=method, headers=headers, parameters=parameters if parameters else None)
 
     def request(
         self,
         href: str,
-        method: str | None = None,
+        method: str,
         headers: dict[str, str] | None = None,
         parameters: dict[str, Any] | None = None,
     ) -> str:
@@ -133,30 +125,22 @@ class StapiIO:
         if method == "POST":
             request = Request(method=method, url=href, headers=headers, json=parameters)
         else:
-            params = deepcopy(parameters) or {}
-            request = Request(method="GET", url=href, headers=headers, params=params)
+            request = Request(method=method, url=href, headers=headers, params=parameters if parameters else None)
 
-        modified = self._req_modifier(request) if self._req_modifier else None
+        modified = self._req_modifier(request) if self._req_modifier else request
 
         # Log the request details
         # NOTE can we mask header values?
-        msg = f"{request.method} {request.url} Headers: {request.headers}"
-        if method == "POST" and hasattr(request, "json"):
-            msg += f" Payload: {json.dumps(request.json)}"
+        msg = f"{modified.method} {modified.url} Headers: {modified.headers}"
+        if method == "POST" and hasattr(modified, "json"):
+            msg += f" Payload: {json.dumps(modified.json)}"
         logger.debug(msg)
 
         try:
-            # Send the request
-            if modified:
-                resp = self.session.send(modified)
-            else:
-                if method == "POST" and parameters:
-                    resp = self.session.post(href, headers=headers, json=parameters)
-                else:
-                    resp = self.session.get(href, headers=headers, params=parameters)
+            resp = self.session.send(modified)
         except Exception as err:
             logger.debug(err)
-            raise APIError(str(err))
+            raise APIError.from_response(resp)
 
         # NOTE what about other successful status codes?
         if resp.status_code != 200:
@@ -180,7 +164,7 @@ class StapiIO:
         Returns:
             The parsed JSON response
         """
-        href = urljoin(str(self.root_url), endpoint)
+        href = urllib.parse.urljoin(str(self.root_url), endpoint)
         text = self._read_text(href, method=method, parameters=parameters)
         return json.loads(text)  # type: ignore[no-any-return]
 
@@ -189,6 +173,7 @@ class StapiIO:
         url: str,
         method: str = "GET",
         parameters: dict[str, Any] | None = None,
+        lookup_key: str | None = None,
     ) -> Iterator[dict[str, Any]]:
         """Iterator that yields dictionaries for each page at a STAPI paging
         endpoint.
@@ -198,17 +183,21 @@ class StapiIO:
         Return:
             dict[str, Any] : JSON content from a single page
         """
-        page = self._read_json(url, method=method, parameters=parameters)
         # TODO update this
-        if not (page.get("features") or page.get("collections")):
+
+        if not lookup_key:
+            lookup_key = "features"
+
+        page = self._read_json(url, method=method, parameters=parameters)
+        if not (page.get(lookup_key)):
             return None
         yield page
 
         next_link = next((link for link in page.get("links", []) if link["rel"] == "next"), None)
         while next_link:
             link = Link.model_validate(next_link)
-            page = self._read_json(str(link.href), parameters=parameters)
-            if not (page.get("features") or page.get("collections")):
+            page = self._read_json(str(link.href), method=link.method or "GET")
+            if not (page.get(lookup_key)):
                 return None
             yield page
 

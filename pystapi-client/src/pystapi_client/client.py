@@ -1,6 +1,8 @@
 import re
+import urllib
+import urllib.parse
 import warnings
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
 from typing import (
     Any,
     cast,
@@ -11,10 +13,8 @@ from pydantic import AnyUrl
 from stapi_pydantic import Link, Product
 from stapi_pydantic.product import ProductsCollection
 
-from pystapi_client._utils import urljoin
 from pystapi_client.conformance import ConformanceClasses
 from pystapi_client.exceptions import APIError
-from pystapi_client.layout import APILayoutStrategy
 from pystapi_client.stapi_api_io import StapiIO
 from pystapi_client.warnings import NoConformsTo
 
@@ -33,7 +33,7 @@ DEFAULT_LINKS = [
 
 
 class Client:
-    """A Client for interacting with the root of a STAC Catalog or API
+    """A Client for interacting with the root of a STAPI
 
     Instances of the ``Client`` class provide a convenient way of interacting
     with STAPI APIs that conform to the `STAPI API spec
@@ -41,15 +41,8 @@ class Client:
     """
 
     _stapi_io: StapiIO
-    _fallback_strategy: APILayoutStrategy = APILayoutStrategy()
     _conforms_to: list[str] = []
     _extra_fields: dict[str, Any] = {}
-
-    def __init__(
-        self,
-        strategy: APILayoutStrategy | None = None,
-    ):
-        self.strategy = strategy
 
     def __repr__(self) -> str:
         return f"<Client {self._stapi_io.root_url}>"
@@ -60,11 +53,10 @@ class Client:
         url: AnyUrl,
         headers: dict[str, str] | None = None,
         parameters: dict[str, Any] | None = None,
-        request_modifier: Callable[[httpx.Request], httpx.Request | None] | None = None,
+        request_modifier: Callable[[httpx.Request], httpx.Request] | None = None,
         timeout: httpx._types.TimeoutTypes | None = None,
     ) -> "Client":
-        """Opens a STAPI API
-        This function will read the root catalog of a STAPI API
+        """Opens a STAPI API client
 
         Args:
             url : The URL of a STAPI API.
@@ -141,7 +133,6 @@ class Client:
 
     def read_links(self) -> None:
         """ """
-
         links = self._stapi_io._read_json("/").get("links", [])
         if links:
             self._extra_fields["links"] = [Link(**link) for link in links]
@@ -149,15 +140,18 @@ class Client:
             warnings.warn("No links found in the root of the STAPI API")
             self._extra_fields["links"] = [
                 Link(
-                    href=urljoin(str(self._stapi_io.root_url), link["endpoint"]), rel=link["rel"], method=link["method"]
+                    href=urllib.parse.urljoin(str(self._stapi_io.root_url), link["endpoint"]),
+                    rel=link["rel"],
+                    method=link["method"],
                 )
                 for link in DEFAULT_LINKS
             ]
 
     def read_conformance(self) -> None:
+        conformance: list[str] = []
         for endpoint in ["/conformance", "/"]:
             try:
-                conformance: list[str] = self._stapi_io._read_json(endpoint).get("conformsTo", [])
+                conformance = self._stapi_io._read_json("conformance").get("conformsTo", [])
                 break
             except APIError:
                 continue
@@ -240,15 +234,24 @@ class Client:
     def _supports_async_opportunities(self) -> bool:
         return self.conforms_to(ConformanceClasses.ASYNC_OPPORTUNITIES)
 
-    def get_products(self) -> ProductsCollection:
+    def get_products(self, limit: int | None = None) -> Iterator[ProductsCollection]:
         """Get all products from this STAPI API
 
         Returns:
             ProductsCollection: A collection of STAPI Products
         """
         products_endpoint = self._products_href()
-        products_json = self._stapi_io._read_json(products_endpoint)
-        return ProductsCollection.model_validate(products_json)
+
+        if limit is None:
+            parameters = {}
+        else:
+            parameters = {"limit": limit}
+
+        products_collection_iterator = self._stapi_io.get_pages(
+            products_endpoint, parameters=parameters, lookup_key="products"
+        )
+        for products_collection in products_collection_iterator:
+            yield ProductsCollection.model_validate(products_collection)
 
     def get_product(self, product_id: str) -> Product:
         """Get a single product from this STAPI API
@@ -276,5 +279,5 @@ class Client:
         if href is None:
             raise ValueError("No products link found")
         if product_id is not None:
-            return urljoin(str(href.href), product_id)
+            return urllib.parse.urljoin(str(href.href), product_id)
         return str(href.href)
