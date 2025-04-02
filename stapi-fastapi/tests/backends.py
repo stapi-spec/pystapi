@@ -5,15 +5,13 @@ from fastapi import Request
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, ResultE, Success
 from stapi_fastapi.routers.product_router import ProductRouter
-from stapi_pydantic.opportunity import (
+from stapi_pydantic import (
     Opportunity,
     OpportunityCollection,
     OpportunityPayload,
     OpportunitySearchRecord,
     OpportunitySearchStatus,
     OpportunitySearchStatusCode,
-)
-from stapi_pydantic.order import (
     Order,
     OrderPayload,
     OrderProperties,

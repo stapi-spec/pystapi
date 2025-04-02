@@ -6,13 +6,13 @@ from uuid import uuid4
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
-from stapi_pydantic.opportunity import (
+from stapi_pydantic import (
+    Link,
     OpportunityCollection,
     OpportunitySearchRecord,
     OpportunitySearchStatus,
     OpportunitySearchStatusCode,
 )
-from stapi_pydantic.shared import Link
 
 from .shared import (
     create_mock_opportunity,
