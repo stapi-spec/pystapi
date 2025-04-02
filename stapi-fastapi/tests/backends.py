@@ -4,15 +4,14 @@ from uuid import uuid4
 from fastapi import Request
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, ResultE, Success
-from stapi_fastapi.models.opportunity import (
+from stapi_fastapi.routers.product_router import ProductRouter
+from stapi_pydantic import (
     Opportunity,
     OpportunityCollection,
     OpportunityPayload,
     OpportunitySearchRecord,
     OpportunitySearchStatus,
     OpportunitySearchStatusCode,
-)
-from stapi_fastapi.models.order import (
     Order,
     OrderPayload,
     OrderProperties,
@@ -20,7 +19,6 @@ from stapi_fastapi.models.order import (
     OrderStatus,
     OrderStatusCode,
 )
-from stapi_fastapi.routers.product_router import ProductRouter
 
 
 async def mock_get_orders(next: str | None, limit: int, request: Request) -> ResultE[tuple[list[Order], Maybe[str]]]:

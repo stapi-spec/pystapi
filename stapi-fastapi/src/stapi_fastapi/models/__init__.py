@@ -1,11 +1,3 @@
-from .opportunity import OpportunityProperties
-from .product import Product, Provider, ProviderRole
-from .shared import Link
+from .product import Product
 
-__all__ = [
-    "Link",
-    "OpportunityProperties",
-    "Product",
-    "Provider",
-    "ProviderRole",
-]
+__all__ = ["Product"]

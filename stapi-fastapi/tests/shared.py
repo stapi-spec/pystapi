@@ -12,19 +12,15 @@ from geojson_pydantic.types import Position2D
 from httpx import Response
 from pydantic import BaseModel, Field, model_validator
 from pytest import fail
-from stapi_fastapi.models.opportunity import (
+from stapi_fastapi.models.product import Product
+from stapi_pydantic import (
     Opportunity,
     OpportunityCollection,
     OpportunityProperties,
     OpportunitySearchRecord,
-)
-from stapi_fastapi.models.order import (
     Order,
     OrderParameters,
     OrderStatus,
-)
-from stapi_fastapi.models.product import (
-    Product,
     Provider,
     ProviderRole,
 )

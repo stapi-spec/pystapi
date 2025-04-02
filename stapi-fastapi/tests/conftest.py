@@ -7,14 +7,14 @@ from urllib.parse import urljoin
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from stapi_fastapi.models.conformance import ASYNC_OPPORTUNITIES, CORE, OPPORTUNITIES
-from stapi_fastapi.models.opportunity import (
-    Opportunity,
-)
+from stapi_fastapi.conformance import ASYNC_OPPORTUNITIES, CORE, OPPORTUNITIES
 from stapi_fastapi.models.product import (
     Product,
 )
 from stapi_fastapi.routers.root_router import RootRouter
+from stapi_pydantic import (
+    Opportunity,
+)
 
 from .backends import (
     mock_get_opportunity_search_record,

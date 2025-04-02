@@ -8,7 +8,7 @@ from fastapi import FastAPI
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from stapi_fastapi.models.conformance import CORE, OPPORTUNITIES
+from stapi_fastapi.conformance import CORE, OPPORTUNITIES
 from stapi_fastapi.routers.root_router import RootRouter
 
 from tests.backends import (

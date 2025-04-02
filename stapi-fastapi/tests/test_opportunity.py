@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from stapi_fastapi.models.opportunity import (
+from stapi_pydantic import (
     OpportunityCollection,
 )
 

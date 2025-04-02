@@ -6,14 +6,15 @@ from typing import Any
 from fastapi import Request
 from returns.maybe import Maybe
 from returns.result import ResultE
-
-from stapi_fastapi.models.opportunity import (
+from stapi_pydantic import (
     Opportunity,
     OpportunityCollection,
     OpportunityPayload,
     OpportunitySearchRecord,
+    Order,
+    OrderPayload,
 )
-from stapi_fastapi.models.order import Order, OrderPayload
+
 from stapi_fastapi.routers.product_router import ProductRouter
 
 SearchOpportunities = Callable[
