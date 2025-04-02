@@ -6,7 +6,7 @@ on:
       - "*/v*"
 
 jobs:
-  pypi-package-name:
+  package-name:
     name: Get package name
     runs-on: ubuntu-latest
     outputs:
@@ -18,19 +18,20 @@ jobs:
           TAG: ${{ github.ref_name }}
         id: split
         run: echo "package_name=${TAG%%/*}" >> $GITHUB_OUTPUT
+
   pypi-release:
-    name: Release ${{ needs.pypi-package-name.outputs.package_name }}
+    name: Release ${{ needs.package-name.outputs.package_name }}
     runs-on: ubuntu-latest
-    needs: pypi-package-name
+    needs: package-name
     environment:
       name: pypi
-      url: https://pypi.org/p/${{ needs.pypi-package-name.outputs.package_name }}
+      url: https://pypi.org/p/${{ needs.package-name.outputs.package_name }}
     permissions:
       id-token: write
     if: ${{ github.repository }} == 'stapi-spec/pystapi'
     defaults:
       run:
-        working-directory: ${{ needs.pypi-package-name.outputs.package_name }}
+        working-directory: ${{ needs.package-name.outputs.package_name }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -47,6 +48,8 @@ jobs:
   docker:
     name: Build Docker image
     runs-on: ubuntu-latest
+    needs: package-name
+    if: ${{ needs.package-name.outputs.package_name }} == 'stapi-fastapi'
 
     permissions:
       contents: read
