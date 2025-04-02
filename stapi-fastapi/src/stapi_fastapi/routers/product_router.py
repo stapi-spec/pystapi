@@ -17,18 +17,19 @@ from fastapi.responses import JSONResponse
 from geojson_pydantic.geometries import Geometry
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
-
-from stapi_fastapi.constants import TYPE_JSON
-from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
-from stapi_fastapi.models.opportunity import (
+from stapi_pydantic.json_schema_model import JsonSchemaModel
+from stapi_pydantic.opportunity import (
     OpportunityCollection,
     OpportunityPayload,
     OpportunitySearchRecord,
     Prefer,
 )
-from stapi_fastapi.models.order import Order, OrderPayload
+from stapi_pydantic.order import Order, OrderPayload, OrderStatus
+from stapi_pydantic.shared import Link
+
+from stapi_fastapi.constants import TYPE_JSON
+from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
 from stapi_fastapi.models.product import Product
-from stapi_fastapi.models.shared import Link
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_fastapi.routers.route_names import (
     CREATE_ORDER,
@@ -38,7 +39,6 @@ from stapi_fastapi.routers.route_names import (
     GET_PRODUCT,
     SEARCH_OPPORTUNITIES,
 )
-from stapi_fastapi.types.json_schema_model import JsonSchemaModel
 
 if TYPE_CHECKING:
     from stapi_fastapi.routers import RootRouter
@@ -115,7 +115,7 @@ class ProductRouter(APIRouter):
             payload: OrderPayload,  # type: ignore
             request: Request,
             response: Response,
-        ) -> Order:
+        ) -> Order[OrderStatus]:
             return await self.create_order(payload, request, response)
 
         _create_order.__annotations__["payload"] = OrderPayload[

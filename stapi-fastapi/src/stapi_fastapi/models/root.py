@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
-
-from stapi_fastapi.models.shared import Link
+from stapi_pydantic.shared import Link
 
 
 class RootResponse(BaseModel):
