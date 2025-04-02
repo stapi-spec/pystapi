@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- Added some more models from **stapi-fastapi**, removed conformance urls ([#51](https://github.com/stapi-spec/pystapi/pull/51))
+- Added more top-level imports, removed conformance urls ([#51](https://github.com/stapi-spec/pystapi/pull/51))
 
 ## [0.0.1] - 2025-04-01
 
