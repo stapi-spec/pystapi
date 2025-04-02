@@ -1,4 +1,3 @@
-<!-- pyml disable-next-line first-line-heading -->
 ## What I'm changing
 
 - <!-- a list of changes, including any issues this might close or reference -->
