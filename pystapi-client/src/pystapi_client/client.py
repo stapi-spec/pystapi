@@ -10,8 +10,7 @@ from typing import (
 from httpx import Request
 from httpx._types import TimeoutTypes
 from pydantic import AnyUrl
-from stapi_pydantic import Link, Product
-from stapi_pydantic.product import ProductsCollection
+from stapi_pydantic import Link, Order, OrderCollection, Product, ProductsCollection
 
 from pystapi_client.conformance import ConformanceClasses
 from pystapi_client.exceptions import APIError
@@ -39,12 +38,12 @@ class Client:
     with STAPI APIs that conform to the [STAPI API spec](https://github.com/stapi-spec/stapi-spec).
     """
 
-    _stapi_io: StapiIO
+    stapi_io: StapiIO
     _conforms_to: list[str]
     _links: list[Link]
 
     def __repr__(self) -> str:
-        return f"<Client {self._stapi_io.root_url}>"
+        return f"<Client {self.stapi_io.root_url}>"
 
     @classmethod
     def open(
@@ -82,7 +81,7 @@ class Client:
             client : A :class:`Client` instance for this STAPI API
         """
         client = Client()
-        client._stapi_io = StapiIO(
+        client.stapi_io = StapiIO(
             root_url=AnyUrl(url),
             headers=headers,
             parameters=parameters,
@@ -134,14 +133,14 @@ class Client:
         """Read the API links from the root of the STAPI API
 
         The links are stored in `Client._links`."""
-        links = self._stapi_io._read_json("/").get("links", [])
+        links = self.stapi_io._read_json("/").get("links", [])
         if links:
             self._links = [Link(**link) for link in links]
         else:
             warnings.warn("No links found in the root of the STAPI API")
             self._links = [
                 Link(
-                    href=urllib.parse.urljoin(str(self._stapi_io.root_url), link["endpoint"]),
+                    href=urllib.parse.urljoin(str(self.stapi_io.root_url), link["endpoint"]),
                     rel=link["rel"],
                     method=link["method"],
                 )
@@ -152,7 +151,7 @@ class Client:
         conformance: list[str] = []
         for endpoint in ["/conformance", "/"]:
             try:
-                conformance = self._stapi_io._read_json("conformance").get("conformsTo", [])
+                conformance = self.stapi_io._read_json("conformance").get("conformsTo", [])
                 break
             except APIError:
                 continue
@@ -248,7 +247,7 @@ class Client:
         else:
             parameters = {"limit": limit}
 
-        products_collection_iterator = self._stapi_io.get_pages(
+        products_collection_iterator = self.stapi_io.get_pages(
             products_endpoint, parameters=parameters, lookup_key="products"
         )
         for products_collection in products_collection_iterator:
@@ -268,7 +267,7 @@ class Client:
         """
 
         product_endpoint = self._get_products_href(product_id)
-        product_json = self._stapi_io._read_json(product_endpoint)
+        product_json = self.stapi_io._read_json(product_endpoint)
 
         if product_json is None:
             raise ValueError(f"Product {product_id} not found")
@@ -281,4 +280,54 @@ class Client:
             raise ValueError("No products link found")
         if product_id is not None:
             return urllib.parse.urljoin(str(href.href), product_id)
+        return str(href.href)
+
+    def get_orders(self, limit: int | None = None) -> Iterator[OrderCollection]:  # type: ignore[type-arg]
+        # TODO Update return type after the pydantic model generic type is fixed
+        """Get orders from this STAPI API
+
+        Returns:
+            OrderCollection: A collection of STAPI Orders
+        """
+        orders_endpoint = self._get_orders_href()
+
+        if limit is None:
+            parameters = {}
+        else:
+            parameters = {"limit": limit}
+
+        orders_collection_iterator = self.stapi_io.get_pages(
+            orders_endpoint, parameters=parameters, lookup_key="features"
+        )
+        for orders_collection in orders_collection_iterator:
+            yield OrderCollection.model_validate(orders_collection)
+
+    def get_order(self, order_id: str) -> Order:  # type: ignore[type-arg]
+        # TODO Update return type after the pydantic model generic type is fixed
+        """Get a single order from this STAPI API
+
+        Args:
+            order_id: The Order ID to get
+
+        Returns:
+            Order: A STAPI Order
+
+        Raises:
+            ValueError if order_id does not exist.
+        """
+
+        order_endpoint = self._get_orders_href(order_id)
+        order_json = self.stapi_io._read_json(order_endpoint)
+
+        if order_json is None:
+            raise ValueError(f"Order {order_id} not found")
+
+        return Order.model_validate(order_json)
+
+    def _get_orders_href(self, order_id: str | None = None) -> str:
+        href = self.get_single_link("orders")
+        if href is None:
+            raise ValueError("No orders link found")
+        if order_id is not None:
+            return urllib.parse.urljoin(str(href.href), order_id)
         return str(href.href)
