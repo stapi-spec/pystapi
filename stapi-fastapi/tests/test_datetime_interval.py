@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 from pydantic import BaseModel, ValidationError
 from pyrfc3339.utils import format_timezone
 from pytest import mark, raises
-from stapi_fastapi.types.datetime_interval import DatetimeInterval
+from stapi_pydantic.datetime_interval import DatetimeInterval
 
 EUROPE_BERLIN = ZoneInfo("Europe/Berlin")
 

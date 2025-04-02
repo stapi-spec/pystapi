@@ -4,16 +4,15 @@ from typing import Any, TypeVar
 from fastapi import Request
 from returns.maybe import Maybe
 from returns.result import ResultE
-
-from stapi_fastapi.models.opportunity import OpportunitySearchRecord
-from stapi_fastapi.models.order import (
+from stapi_pydantic.opportunity import OpportunitySearchRecord
+from stapi_pydantic.order import (
     Order,
     OrderStatus,
 )
 
 GetOrders = Callable[
     [str | None, int, Request],
-    Coroutine[Any, Any, ResultE[tuple[list[Order], Maybe[str]]]],
+    Coroutine[Any, Any, ResultE[tuple[list[Order[OrderStatus]], Maybe[str]]]],
 ]
 """
 Type alias for an async function that returns a list of existing Orders.
@@ -33,7 +32,7 @@ Returns:
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
 
-GetOrder = Callable[[str, Request], Coroutine[Any, Any, ResultE[Maybe[Order]]]]
+GetOrder = Callable[[str, Request], Coroutine[Any, Any, ResultE[Maybe[Order[OrderStatus]]]]]
 """
 Type alias for an async function that gets details for the order with `order_id`.
 

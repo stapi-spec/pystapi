@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Changed
 
 - Renamed all exceptions to errors ([#41](https://github.com/stapi-spec/pystapi/pull/41))
+- stapi-fastapi is now using stapi-pydantic models, deduplicating code
+- Product in stapi-fastapi is now subclass of Product from stapi-pydantic
 
 ## [v0.6.0] - 2025-02-11
 
