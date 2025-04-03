@@ -7,7 +7,7 @@ class StapiError(HTTPException):
     pass
 
 
-class ConstraintsError(StapiError):
+class QueryablesError(StapiError):
     def __init__(self, detail: Any) -> None:
         super().__init__(status.HTTP_422_UNPROCESSABLE_ENTITY, detail)
 

@@ -90,7 +90,7 @@ class InMemoryOpportunityDB:
         self._collections[collection.id] = deepcopy(collection)
 
 
-class MyProductConstraints(BaseModel):
+class MyProductQueryables(BaseModel):
     off_nadir: int
 
 
@@ -134,7 +134,7 @@ product_test_spotlight = Product(
     search_opportunities=None,
     search_opportunities_async=None,
     get_opportunity_collection=None,
-    constraints=MyProductConstraints,
+    queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
 )
@@ -151,7 +151,7 @@ product_test_spotlight_sync_opportunity = Product(
     search_opportunities=mock_search_opportunities,
     search_opportunities_async=None,
     get_opportunity_collection=None,
-    constraints=MyProductConstraints,
+    queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
 )
@@ -169,7 +169,7 @@ product_test_spotlight_async_opportunity = Product(
     search_opportunities=None,
     search_opportunities_async=mock_search_opportunities_async,
     get_opportunity_collection=mock_get_opportunity_collection,
-    constraints=MyProductConstraints,
+    queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
 )
@@ -186,7 +186,7 @@ product_test_spotlight_sync_async_opportunity = Product(
     search_opportunities=mock_search_opportunities,
     search_opportunities_async=mock_search_opportunities_async,
     get_opportunity_collection=mock_get_opportunity_collection,
-    constraints=MyProductConstraints,
+    queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
 )
@@ -203,7 +203,7 @@ product_test_satellite_provider_sync_opportunity = Product(
     search_opportunities=mock_search_opportunities,
     search_opportunities_async=None,
     get_opportunity_collection=None,
-    constraints=MyProductConstraints,
+    queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
 )

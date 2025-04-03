@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- `s/constraints/queryables/` ([#74](https://github.com/stapi-spec/pystapi/pull/74))
 - `s/canceled/cancelled/` ([#75](https://github.com/stapi-spec/pystapi/pull/75))
 
 ## [0.0.2] - 2025-04-02

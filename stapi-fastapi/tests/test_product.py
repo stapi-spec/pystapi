@@ -36,7 +36,7 @@ def test_product_response_links(
     assert_link(
         url, body, "conformance", f"/products/{product_id}/conformance"
     )  # https://github.com/stapi-spec/stapi-spec/issues/253
-    assert_link(url, body, "constraints", f"/products/{product_id}/constraints")
+    assert_link(url, body, "queryables", f"/products/{product_id}/queryables")
     assert_link(url, body, "order-parameters", f"/products/{product_id}/order-parameters")
     assert_link(url, body, "opportunities", f"/products/{product_id}/opportunities")
     assert_link(url, body, "create-order", f"/products/{product_id}/orders", method="POST")
@@ -47,7 +47,7 @@ def test_product_conformance_response(
     product_id: str,
     stapi_client: TestClient,
 ):
-    res = stapi_client.get(f"/products/{product_id}/constraints")
+    res = stapi_client.get(f"/products/{product_id}/conformance")
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/json"
 
@@ -56,11 +56,11 @@ def test_product_conformance_response(
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
-def test_product_constraints_response(
+def test_product_queryables_response(
     product_id: str,
     stapi_client: TestClient,
 ):
-    res = stapi_client.get(f"/products/{product_id}/constraints")
+    res = stapi_client.get(f"/products/{product_id}/queryables")
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/json"
 
@@ -106,8 +106,8 @@ def test_get_products_pagination(
                     "type": "application/json",
                 },
                 {
-                    "href": f"http://stapiserver/products/{product_id}/constraints",
-                    "rel": "constraints",
+                    "href": f"http://stapiserver/products/{product_id}/queryables",
+                    "rel": "queryables",
                     "type": "application/json",
                 },
                 {
