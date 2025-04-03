@@ -1,6 +1,6 @@
 from fastapi import status
 from fastapi.testclient import TestClient
-from stapi_fastapi.conformance import CORE
+from stapi_fastapi.conformance import API
 
 
 def test_root(stapi_client: TestClient, assert_link) -> None:
@@ -11,7 +11,7 @@ def test_root(stapi_client: TestClient, assert_link) -> None:
 
     body = res.json()
 
-    assert body["conformsTo"] == [CORE]
+    assert body["conformsTo"] == [API["core"]]
 
     assert_link("GET /", body, "self", "/")
     assert_link("GET /", body, "service-description", "/openapi.json")

@@ -1,6 +1,6 @@
 from fastapi import status
 from fastapi.testclient import TestClient
-from stapi_fastapi.conformance import CORE
+from stapi_fastapi.conformance import API
 
 
 def test_conformance(stapi_client: TestClient) -> None:
@@ -11,4 +11,4 @@ def test_conformance(stapi_client: TestClient) -> None:
 
     body = res.json()
 
-    assert body["conformsTo"] == [CORE]
+    assert body["conformsTo"] == [API["core"]]

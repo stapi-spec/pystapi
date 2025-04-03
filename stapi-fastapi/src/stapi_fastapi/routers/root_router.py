@@ -28,7 +28,7 @@ from stapi_fastapi.backends.root_backend import (
     GetOrders,
     GetOrderStatuses,
 )
-from stapi_fastapi.conformance import ASYNC_OPPORTUNITIES, CORE
+from stapi_fastapi.conformance import API as API_CONFORMANCE
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
 from stapi_fastapi.exceptions import NotFoundException
 from stapi_fastapi.models.product import Product
@@ -58,7 +58,7 @@ class RootRouter(APIRouter):
         get_opportunity_search_records: GetOpportunitySearchRecords | None = None,
         get_opportunity_search_record: GetOpportunitySearchRecord | None = None,
         get_opportunity_search_record_statuses: GetOpportunitySearchRecordStatuses | None = None,
-        conformances: list[str] = [CORE],
+        conformances: list[str] = [API_CONFORMANCE["core"]],
         name: str = "root",
         openapi_endpoint_name: str = "openapi",
         docs_endpoint_name: str = "swagger_ui_html",
@@ -67,13 +67,10 @@ class RootRouter(APIRouter):
     ) -> None:
         super().__init__(*args, **kwargs)
 
-        if ASYNC_OPPORTUNITIES in conformances and (
-            not get_opportunity_search_records or not get_opportunity_search_record
-        ):
-            raise ValueError(
-                "`get_opportunity_search_records` and `get_opportunity_search_record` "
-                "are required when advertising async opportunity search conformance"
-            )
+        api_conformances = set(API_CONFORMANCE.values())
+        for conformance in conformances:
+            if conformance not in api_conformances:
+                raise ValueError(f"{conformance} is not a valid API conformance")
 
         self._get_orders = get_orders
         self._get_order = get_order
@@ -143,7 +140,7 @@ class RootRouter(APIRouter):
             tags=["Orders"],
         )
 
-        if ASYNC_OPPORTUNITIES in conformances:
+        if API_CONFORMANCE["searches-opportunity"] in conformances:
             self.add_api_route(
                 "/searches/opportunities",
                 self.get_opportunity_search_records,
@@ -162,6 +159,7 @@ class RootRouter(APIRouter):
                 tags=["Opportunities"],
             )
 
+        if API_CONFORMANCE["searches-opportunity-statuses"] in conformances:
             self.add_api_route(
                 "/searches/opportunities/{search_record_id}/statuses",
                 self.get_opportunity_search_record_statuses,
@@ -489,7 +487,7 @@ class RootRouter(APIRouter):
     @property
     def supports_async_opportunity_search(self) -> bool:
         return (
-            ASYNC_OPPORTUNITIES in self.conformances
+            API_CONFORMANCE["searches-opportunity"] in self.conformances
             and self._get_opportunity_search_records is not None
             and self._get_opportunity_search_record is not None
         )

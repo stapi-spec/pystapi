@@ -33,6 +33,7 @@ from stapi_pydantic import (
     Product as ProductPydantic,
 )
 
+from stapi_fastapi.conformance import PRODUCT as PRODUCT_CONFORMANCE
 from stapi_fastapi.constants import TYPE_JSON
 from stapi_fastapi.exceptions import NotFoundException, QueryablesException
 from stapi_fastapi.models.product import Product
@@ -67,7 +68,8 @@ def get_prefer(prefer: str | None = Header(None)) -> str | None:
 
 
 class ProductRouter(APIRouter):
-    def __init__(
+    # FIXME ruff is complaining that the init is too complex
+    def __init__(  # noqa
         self,
         product: Product,
         root_router: RootRouter,
@@ -80,6 +82,16 @@ class ProductRouter(APIRouter):
             raise ValueError(
                 f"Product '{product.id}' must support async opportunity search since the root router does",
             )
+
+        product_conformances = set(PRODUCT_CONFORMANCE.values())
+        has_geosjon = False
+        for conformance in product.conformsTo:
+            if conformance not in product_conformances:
+                raise ValueError(f"{conformance} is not a valid product conformance")
+            elif conformance.startswith("https://geojson.org/schema/"):  # FIXME total hack
+                has_geosjon = True
+        if not has_geosjon:
+            raise ValueError("product conformance does not contain at least one geojson conformance")
 
         self.product = product
         self.root_router = root_router

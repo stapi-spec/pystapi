@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Any
 from stapi_pydantic import OpportunityProperties, OrderParameters, Queryables
 from stapi_pydantic import Product as BaseProduct
 
+from ..conformance import PRODUCT as PRODUCT_CONFORMANCE
+
 if TYPE_CHECKING:
     from stapi_fastapi.backends.product_backend import (
         CreateOrder,
@@ -77,11 +79,16 @@ class Product(BaseProduct):
 
     @property
     def supports_opportunity_search(self) -> bool:
-        return self._search_opportunities is not None
+        return self._search_opportunities is not None and PRODUCT_CONFORMANCE["opportunities"] in self.conformsTo
 
     @property
     def supports_async_opportunity_search(self) -> bool:
-        return self._search_opportunities_async is not None and self._get_opportunity_collection is not None
+        # TODO add conformsTo check
+        return (
+            self._search_opportunities_async is not None
+            and self._get_opportunity_collection is not None
+            and PRODUCT_CONFORMANCE["opportunities-async"] in self.conformsTo
+        )
 
     @property
     def queryables(self) -> type[Queryables]:
