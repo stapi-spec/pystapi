@@ -2,14 +2,6 @@ import json
 
 import pytest
 import schemathesis
-from schemathesis.checks import (
-    content_type_conformance,
-    negative_data_rejection,
-    not_a_server_error,
-    response_headers_conformance,
-    response_schema_conformance,
-    status_code_conformance,
-)
 
 schemathesis.experimental.OPEN_API_3_1.enable()
 
@@ -21,19 +13,11 @@ BASE_URL = "http://localhost:8000"
 
 @schema.parametrize()
 def test_api(case):
-    response = case.call_and_validate(base_url=BASE_URL)
-    case.validate_response(response)
-
-    not_a_server_error(response, case)
-    status_code_conformance(response, case)
-    content_type_conformance(response, case)
-    response_schema_conformance(response, case)
-    response_headers_conformance(response, case)
-    negative_data_rejection(response, case)
+    case.call_and_validate(base_url=BASE_URL)
 
 
 def test_openapi_specification():
-    assert schema.validate()
+    schema.validate()
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
