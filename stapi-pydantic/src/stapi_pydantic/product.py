@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 from enum import StrEnum
-from typing import Any, Literal, TypeAlias
+from typing import Any, Literal, Self, TypeAlias
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
@@ -43,7 +41,7 @@ class Product(BaseModel):
     providers: list[Provider] = Field(default_factory=list)
     links: list[Link] = Field(default_factory=list)
 
-    def with_links(self: Product, links: list[Link] | None = None) -> Product:
+    def with_links(self, links: list[Link] | None = None) -> Self:
         if not links:
             return self
 

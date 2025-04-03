@@ -26,7 +26,6 @@ from .shared import (
 from .test_datetime_interval import rfc3339_strftime
 
 
-
 @pytest.mark.mock_products([product_test_spotlight])
 def test_no_opportunity_search_advertised(stapi_client: TestClient) -> None:
     product_id = "test-spotlight"

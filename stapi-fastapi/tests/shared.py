@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 from collections import defaultdict
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
-from typing import Any, Literal, TypeAlias
+from typing import Any, Literal, Self
 from urllib.parse import parse_qs, urlparse
 from uuid import uuid4
 
@@ -34,7 +32,7 @@ from .backends import (
     mock_search_opportunities_async,
 )
 
-link_dict: TypeAlias = dict[str, Any]
+type link_dict = dict[str, Any]
 
 
 def find_link(links: list[link_dict], rel: str) -> link_dict | None:
@@ -94,7 +92,7 @@ class OffNadirRange(BaseModel):
     maximum: int = Field(ge=0, le=45)
 
     @model_validator(mode="after")
-    def validate_range(self) -> OffNadirRange:
+    def validate_range(self) -> Self:
         if self.minimum > self.maximum:
             raise ValueError("range minimum cannot be greater than maximum")
         return self
