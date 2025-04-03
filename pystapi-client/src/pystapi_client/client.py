@@ -432,10 +432,6 @@ class Client:
 
         order_endpoint = self._get_orders_href(order_id)
         order_json = self.stapi_io.read_json(order_endpoint)
-
-        if order_json is None:
-            raise ValueError(f"Order {order_id} not found")
-
         return Order.model_validate(order_json)
 
     def _get_orders_href(self, order_id: str | None = None) -> str:
