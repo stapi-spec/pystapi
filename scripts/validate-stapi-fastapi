@@ -9,13 +9,16 @@ uv run fastapi dev "$root/stapi-fastapi/tests/application.py" >/dev/null 2>&1 &
 server_pid=$!
 
 set +e
-"$scripts"/wait-for-it.sh localhost:8000 -- test 0 # TODO update to validate
-result=$?
+"$scripts"/wait-for-it.sh localhost:8000 -- test 0
+wait_result=$?
+
+uv run pystapi-validator/tests/validate_api.py --html=validation-report.html --self-contained-html
+validation_result=$?
 set -e
 
 kill $(pgrep -P $server_pid)
-if [ $result ]; then
+if [ $wait_result -eq 0 ] && [ $validation_result -eq 0 ]; then
     echo "Validated OK!"
 else
-    exit $result
+    exit 1
 fi
