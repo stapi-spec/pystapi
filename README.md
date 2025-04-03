@@ -35,7 +35,6 @@ source .venv/bin/activate
 
 See our [contribution guidelines](./CONTRIBUTING.md) for information on contributing any changes, fixes, or features.
 
-
 ## Packages
 
 ```mermaid

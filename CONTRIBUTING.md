@@ -44,10 +44,9 @@ Some projects are not quite ready for `strict` mode, but we want to get them the
 
 ## Docs
 
-We use [mkdocs](https://www.mkdocs.org/) for our [documentation](/docs/). 
+We use [mkdocs](https://www.mkdocs.org/) for our [documentation](/docs/).
 To build the docs, run `uv run mkdocs build`.
 To serve the docs locally, run `uv run mkdocs serve`.
-
 
 ## Lints and checks
 
