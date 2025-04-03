@@ -3,7 +3,7 @@ name = "pystapi"
 version = "0.0.0" # This package should never be released, only the workspace members should be
 description = "Monorepo for Satellite Tasking API (STAPI) Specification Python packages"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "pystapi-client",
     "pystapi-validator",
