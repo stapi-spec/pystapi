@@ -8,10 +8,10 @@ authors = [
     { name = "Tobias Rohnstock", email = "tobias.rohnstock@live-eo.com" },
 ]
 requires-python = ">=3.10"
-dependencies = []
+dependencies = ["PyYAML>=6"]
 
 [project.scripts]
-
+stapi-schema-generator = "pystapi_schema_generator.application:main"
 
 [build-system]
 requires = ["hatchling"]
