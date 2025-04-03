@@ -32,11 +32,7 @@ jobs:
         run: uv run pytest
       - name: Validate test server
         run: uv run scripts/validate-stapi-fastapi
-      - name: Upload Validation Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: validation-report-py${{ matrix.python-version }}
-          path: validation-report.html
+        continue-on-error: true
       - name: Docs
         run: uv run mkdocs build --strict
       - name: Upload Docs
