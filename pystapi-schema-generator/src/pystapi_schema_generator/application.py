@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from stapi_fastapi.conformance import CORE, OPPORTUNITIES
-from stapi_fastapi.routers.root_router import RootRouter
 
 from .backend import stapi_get_order, stapi_get_order_statuses, stapi_get_orders
 from .product import example_product
+from .router import RootRouter
 
 router = RootRouter(
     get_orders=stapi_get_orders,
