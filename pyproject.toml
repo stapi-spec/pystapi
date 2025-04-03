@@ -7,6 +7,7 @@ requires-python = ">=3.10"
 dependencies = [
     "pystapi-client",
     "pystapi-validator",
+    "pystapi-schema-generator",
     "stapi-pydantic",
     "stapi-fastapi"
 ]
@@ -31,11 +32,18 @@ docs = [
 default-groups = ["dev", "docs"]
 
 [tool.uv.workspace]
-members = ["pystapi-validator", "stapi-pydantic", "pystapi-client", "stapi-fastapi"]
+members = [
+    "pystapi-client",
+    "pystapi-validator",
+    "pystapi-schema-generator",
+    "stapi-pydantic",
+    "stapi-fastapi"
+]
 
 [tool.uv.sources]
 pystapi-client.workspace = true
 pystapi-validator.workspace = true
+pystapi-schema-generator.workspace = true
 stapi-pydantic.workspace = true
 stapi-fastapi.workspace = true
 
@@ -63,6 +71,7 @@ strict = true
 files = [
     "pystapi-client/src/pystapi_client/**/*.py",
     "pystapi-validator/src/pystapi_validator/**/*.py",
+    "pystapi-schema-generator/src/pystapi_schema_generator/**/*.py",
     "stapi-pydantic/src/stapi_pydantic/**/*.py",
     "stapi-fastapi/src/stapi_fastapi/**/*.py"
 ]

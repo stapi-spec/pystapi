@@ -1,0 +1,18 @@
+[project]
+name = "pystapi-schema-generator"
+version = "0.0.1"
+description = "Schema Generator for the Satellite Tasking API (STAPI) Specification"
+readme = "README.md"
+authors = [
+    { name = "Justin Trautmann", email = "justin@live-eo.com" },
+    { name = "Tobias Rohnstock", email = "tobias.rohnstock@live-eo.com" },
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
