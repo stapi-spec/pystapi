@@ -1,15 +1,5 @@
-import sys
 from collections.abc import Iterator
-from enum import Enum
 from typing import Any, Generic, Literal, TypeVar
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-
-    class StrEnum(str, Enum):
-        pass
-
 
 from geojson_pydantic.base import _GeoJsonBase
 from geojson_pydantic.geometries import Geometry
@@ -22,6 +12,7 @@ from pydantic import (
     field_validator,
 )
 
+from .compatibility import StrEnum
 from .constants import STAPI_VERSION
 from .datetime_interval import DatetimeInterval
 from .filter import CQL2Filter

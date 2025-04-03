@@ -1,19 +1,10 @@
-import sys
-from enum import Enum
 from typing import Any, Literal, TypeVar
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-
-    class StrEnum(str, Enum):
-        pass
-
 
 from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
+from .compatibility import StrEnum
 from .datetime_interval import DatetimeInterval
 from .filter import CQL2Filter
 from .shared import Link
