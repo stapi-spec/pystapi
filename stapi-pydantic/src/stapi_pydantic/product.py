@@ -3,6 +3,7 @@ from typing import Any, Literal, Self
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
+from .constants import STAPI_VERSION
 from .shared import Link
 
 type Constraints = BaseModel
@@ -28,7 +29,9 @@ class Provider(BaseModel):
 
 
 class Product(BaseModel):
-    type_: Literal["Product"] = Field(default="Product", alias="type")
+    type_: Literal["Collection"] = Field(default="Collection", alias="type")
+    stapi_type: Literal["Product"] = "Product"
+    stapi_version: str = STAPI_VERSION
     conformsTo: list[str] = Field(default_factory=list)
     id: str
     title: str = ""
