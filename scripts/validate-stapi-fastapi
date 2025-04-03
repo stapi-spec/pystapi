@@ -22,7 +22,7 @@ fi
 
 set +e
 echo "Validating API"
-uv run pystapi-validator/tests/validate_api.py --html=validation-report.html --self-contained-html
+uv run pytest "$root/pystapi-validator/tests/validate_api.py" --html=validation-report.html --self-contained-html
 validation_result=$?
 set -e
 
