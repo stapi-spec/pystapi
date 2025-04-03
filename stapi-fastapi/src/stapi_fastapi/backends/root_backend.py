@@ -115,7 +115,7 @@ GetOpportunitySearchRecordStatuses = Callable[
     [str, Request], Coroutine[Any, Any, ResultE[Maybe[list[OpportunitySearchStatus]]]]
 ]
 """
-Type alias for an async function that gets the statuses of aOpportunitySearchRecord with
+Type alias for an async function that gets the statuses of a OpportunitySearchRecord with
 `search_record_id`.
 
 Args:
