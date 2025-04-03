@@ -20,7 +20,7 @@ class OpportunityProperties(BaseModel):
 class OpportunityPayload(BaseModel):
     datetime: DatetimeInterval
     geometry: Geometry
-    filter: CQL2Filter | None = None
+    filter: CQL2Filter | None = None  # type: ignore [type-arg]
 
     next: str | None = None
     limit: int = 10

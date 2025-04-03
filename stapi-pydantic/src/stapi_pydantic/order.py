@@ -55,7 +55,10 @@ class OrderStatus(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
-class OrderStatuses[T: OrderStatus](BaseModel):
+T = TypeVar("T", bound=OrderStatus)
+
+
+class OrderStatuses(BaseModel, Generic[T]):
     statuses: list[T]
     links: list[Link] = Field(default_factory=list)
 
@@ -64,10 +67,10 @@ class OrderSearchParameters(BaseModel):
     datetime: DatetimeInterval
     geometry: Geometry
     # TODO: validate the CQL2 filter?
-    filter: CQL2Filter | None = None
+    filter: CQL2Filter | None = None  # type: ignore [type-arg]
 
 
-class OrderProperties[T: OrderStatus](BaseModel):
+class OrderProperties(BaseModel, Generic[T]):
     product_id: str
     created: AwareDatetime
     status: T
@@ -80,7 +83,7 @@ class OrderProperties[T: OrderStatus](BaseModel):
 
 
 # derived from geojson_pydantic.Feature
-class Order[T: OrderStatus](_GeoJsonBase):
+class Order(_GeoJsonBase, Generic[T]):
     # We need to enforce that orders have an id defined, as that is required to
     # retrieve them via the API
     id: StrictStr
@@ -105,7 +108,7 @@ class Order[T: OrderStatus](_GeoJsonBase):
 
 
 # derived from geojson_pydantic.FeatureCollection
-class OrderCollection[T: OrderStatus](_GeoJsonBase):
+class OrderCollection(_GeoJsonBase, Generic[T]):
     type: Literal["FeatureCollection"] = "FeatureCollection"
     features: list[Order[T]]
     links: list[Link] = Field(default_factory=list)
@@ -127,7 +130,7 @@ class OrderPayload(BaseModel, Generic[ORP]):
     datetime: DatetimeInterval
     geometry: Geometry
     # TODO: validate the CQL2 filter?
-    filter: CQL2Filter | None = None
+    filter: CQL2Filter | None = None  # type: ignore [type-arg]
 
     order_parameters: ORP
 
