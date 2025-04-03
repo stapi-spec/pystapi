@@ -173,14 +173,28 @@ class StapiIO:
             The parsed JSON response
         """
         href = urllib.parse.urljoin(str(self.root_url), endpoint)
+
+        if method == "POST" and parameters is None:
+            parameters = {}
+
         text = self._read_text(href, method=method, parameters=parameters)
         return json.loads(text)  # type: ignore[no-any-return]
 
+    def _get_next_page(self, link: Link, lookup_key: str) -> tuple[dict[str, Any] | None, Link | None]:
+        page = self.read_json(str(link.href), method=link.method or "GET", parameters=link.body)
+        next_link = next((link for link in page.get("links", []) if link["rel"] == "next"), None)
+
+        if next_link is not None:
+            next_link = Link.model_validate(next_link)
+
+        if page.get(lookup_key):
+            return page, next_link
+
+        return None, None
+
     def get_pages(
         self,
-        url: str,
-        method: str = "GET",
-        parameters: dict[str, Any] | None = None,
+        link: Link,
         lookup_key: str | None = None,
     ) -> Iterator[dict[str, Any]]:
         """Iterator that yields dictionaries for each page at a STAPI paging
@@ -199,23 +213,17 @@ class StapiIO:
         Returns:
             Iterator that yields dictionaries for each page
         """
-        # TODO update this
-
         if not lookup_key:
             lookup_key = "features"
 
-        page = self.read_json(url, method=method, parameters=parameters)
-        if not (page.get(lookup_key)):
+        first_page, next_link = self._get_next_page(link, lookup_key)
+
+        if first_page is None:
             return None
-        yield page
+        yield first_page
 
-        next_link = next((link for link in page.get("links", []) if link["rel"] == "next"), None)
         while next_link:
-            link = Link.model_validate(next_link)
-            page = self.read_json(str(link.href), method=link.method or "GET")
-            if not (page.get(lookup_key)):
+            next_page, next_link = self._get_next_page(next_link, lookup_key)
+            if next_page is None:
                 return None
-            yield page
-
-            # get the next link and make the next request
-            next_link = next((link for link in page.get("links", []) if link["rel"] == "next"), None)
+            yield next_page
