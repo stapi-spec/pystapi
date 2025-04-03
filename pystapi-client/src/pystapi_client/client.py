@@ -60,8 +60,8 @@ class Client:
         """Opens a STAPI API client
 
         Args:
-            url : The URL of a STAPI API.
-            headers : A dictionary of additional headers to use in all requests
+            url: The URL of a STAPI API.
+            headers: A dictionary of additional headers to use in all requests
                 made to any part of this STAPI API.
             parameters: Optional dictionary of query string parameters to
                 include in all requests.
@@ -71,14 +71,17 @@ class Client:
                 using AWS SigV4).
 
                 The callable should expect a single argument, which will be an instance
-                of :class:`requests.Request`.
+                of :class:`httpx.Request`.
 
-                If the callable returns a `requests.Request`, that will be used.
+                If the callable returns a `httpx.Request`, that will be used.
                 Alternately, the callable may simply modify the provided request object
                 and return `None`.
-            timeout: Optional float or (float, float) tuple following the semantics
-              defined by `Requests
-              <https://requests.readthedocs.io/en/latest/api/#main-interface>`__.
+            timeout: Optional timeout configuration. Can be:
+              - None to disable timeouts
+              - float or None for a default timeout
+              - tuple of (connect, read, write, pool) timeouts, each being float or None
+              - httpx.Timeout instance for fine-grained control
+              See `httpx timeouts <https://www.python-httpx.org/advanced/timeouts/>`__ for details.
 
         Return:
             client : A :class:`Client` instance for this STAPI API
@@ -108,11 +111,11 @@ class Client:
         """Get a single :class:`~stapi_pydantic.Link` instance associated with this object.
 
         Args:
-            rel : If set, filter links such that only those
-                matching this relationship are returned.
-            media_type: If set, filter the links such that only
-                those matching media_type are returned. media_type can
-                be a single value or a list of values.
+            rel: Optional relationship filter. If set, only links matching this
+                relationship are considered.
+            media_type: Optional media type filter. If set, only links matching
+                this media type are considered. Can be a single value or an
+                iterable of values.
 
         Returns:
             :class:`~stapi_pydantic.Link` | None: First link that matches ``rel``
@@ -151,6 +154,13 @@ class Client:
             ]
 
     def read_conformance(self) -> None:
+        """Read the API conformance from the root of the STAPI API
+
+        The conformance is stored in `Client.conforms_to`.
+
+        Raises:
+            No exceptions (silently continues if endpoints return APIError)
+        """
         conformance: list[str] = []
         for endpoint in ["/conformance", "/"]:
             try:
@@ -163,14 +173,18 @@ class Client:
             self.set_conforms_to(conformance)
 
     def has_conforms_to(self) -> bool:
-        """Whether server contains list of ``"conformsTo"`` URIs"""
+        """Whether server contains list of ``"conformsTo"`` URIs
+
+        Return:
+            Whether the server contains list of ``"conformsTo"`` URIs
+        """
         return bool(self.conforms_to)
 
     def get_conforms_to(self) -> list[str]:
         """List of ``"conformsTo"`` URIs
 
         Return:
-            list[str]: List of  URIs that the server conforms to
+            List of URIs that the server conforms to
         """
         return self.conforms_to.copy()
 
@@ -178,7 +192,7 @@ class Client:
         """Set list of ``"conformsTo"`` URIs
 
         Args:
-            conformance_uris : URIs indicating what the server conforms to
+            conformance_uris: URIs indicating what the server conforms to
         """
         self.conforms_to = conformance_uris
 
@@ -194,7 +208,7 @@ class Client:
         """Add ``"conformsTo"`` by name.
 
         Args:
-            name : name of :py:class:`ConformanceClasses` keys to add.
+            name: Name of :py:class:`ConformanceClasses` keys to add.
         """
         conformance_class = ConformanceClasses.get_by_name(name)
 
@@ -205,7 +219,7 @@ class Client:
         """Remove ``"conformsTo"`` by name.
 
         Args:
-            name : name of :py:class:`ConformanceClasses` keys to remove.
+            name: Name of :py:class:`ConformanceClasses` keys to remove.
         """
         conformance_class = ConformanceClasses.get_by_name(name)
 
@@ -220,11 +234,11 @@ class Client:
         provides such an endpoint.
 
         Args:
-            name : name of :py:class:`ConformanceClasses` keys to check
+            name: Name of :py:class:`ConformanceClasses` keys to check
                 conformance against.
 
         Return:
-            bool: Indicates if the API conforms to the given spec or URI.
+            Indicates if the API conforms to the given spec or URI.
         """
         if isinstance(conformance_class, str):
             conformance_class = ConformanceClasses.get_by_name(conformance_class)
@@ -232,9 +246,11 @@ class Client:
         return any(re.match(conformance_class.pattern, uri) for uri in self.get_conforms_to())
 
     def _supports_opportunities(self) -> bool:
+        """Check if the API supports opportunities"""
         return self.has_conformance(ConformanceClasses.OPPORTUNITIES)
 
     def _supports_async_opportunities(self) -> bool:
+        """Check if the API supports asynchronous opportunities"""
         return self.has_conformance(ConformanceClasses.ASYNC_OPPORTUNITIES)
 
     def get_products(self, limit: int | None = None) -> Iterator[ProductsCollection]:
@@ -278,6 +294,17 @@ class Client:
         return Product.model_validate(product_json)
 
     def _get_products_href(self, product_id: str | None = None) -> str:
+        """Get the href for the products endpoint
+
+        Args:
+            product_id: Optional product ID to get the href for
+
+        Returns:
+            str: The href for the products endpoint
+
+        Raises:
+            ValueError if no products link is found
+        """
         product_link = self.get_single_link("products")
         if product_link is None:
             raise ValueError("No products link found")
@@ -289,6 +316,9 @@ class Client:
     def get_orders(self, limit: int | None = None) -> Iterator[OrderCollection]:  # type: ignore[type-arg]
         # TODO Update return type after the pydantic model generic type is fixed
         """Get orders from this STAPI API
+
+        Args:
+            limit: Optional limit on the number of orders to return
 
         Returns:
             OrderCollection: A collection of STAPI Orders
@@ -329,6 +359,18 @@ class Client:
         return Order.model_validate(order_json)
 
     def _get_orders_href(self, order_id: str | None = None) -> str:
+        """Get the href for the orders endpoint
+
+        Args:
+            order_id: Optional order ID to get the href for
+
+        Returns:
+            The href for the orders endpoint
+
+        Raises:
+            ValueError if no orders link is found
+        """
+
         order_link = self.get_single_link("orders")
         if order_link is None:
             raise ValueError("No orders link found")

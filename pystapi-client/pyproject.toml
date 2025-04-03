@@ -5,7 +5,8 @@ description = "Python library for searching Satellite Tasking API (STAPI) APIs."
 readme = "README.md"
 authors = [
     { name = "Kaveh Karimi-Asli", email = "ka7eh@pm.me" },
-    { name = "Philip Weiss", email = "philip.weiss@orbitalsidekick.com" }
+    { name = "Philip Weiss", email = "philip.weiss@orbitalsidekick.com" },
+    { name = "Stella Reinhardt", email = "stella@stellamaria.de"}
 ]
 maintainers = [{ name = "Pete Gadomski", email = "pete.gadomski@gmail.com" }]
 keywords = ["stapi"]
