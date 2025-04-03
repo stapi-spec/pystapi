@@ -1,14 +1,7 @@
-import sys
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import uuid4
-
-if sys.version_info >= (3, 11):
-    from datetime import UTC
-else:
-    UTC = timezone.utc
-
 
 import pytest
 from fastapi import status
@@ -32,6 +25,7 @@ from .shared import (
 )
 from .test_datetime_interval import rfc3339_strftime
 
+UTC = timezone.utc
 
 @pytest.mark.mock_products([product_test_spotlight])
 def test_no_opportunity_search_advertised(stapi_client: TestClient) -> None:

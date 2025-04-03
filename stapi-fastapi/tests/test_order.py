@@ -1,10 +1,4 @@
-import sys
 from datetime import datetime, timedelta, timezone
-
-if sys.version_info >= (3, 11):
-    from datetime import UTC
-else:
-    UTC = timezone.utc
 
 import pytest
 from fastapi import status
@@ -16,6 +10,7 @@ from stapi_pydantic import Order, OrderPayload, OrderStatus, OrderStatusCode
 
 from .shared import MyOrderParameters, find_link, pagination_tester
 
+UTC = timezone.utc
 NOW = datetime.now(UTC)
 START = NOW
 END = START + timedelta(days=5)

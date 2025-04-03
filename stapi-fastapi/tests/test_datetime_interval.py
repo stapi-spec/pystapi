@@ -1,18 +1,13 @@
-import sys
 from datetime import datetime, timedelta, timezone
 from itertools import product
 from zoneinfo import ZoneInfo
-
-if sys.version_info >= (3, 11):
-    from datetime import UTC
-else:
-    UTC = timezone.utc
 
 from pydantic import BaseModel, ValidationError
 from pyrfc3339.utils import format_timezone
 from pytest import mark, raises
 from stapi_pydantic import DatetimeInterval
 
+UTC = timezone.utc
 EUROPE_BERLIN = ZoneInfo("Europe/Berlin")
 
 

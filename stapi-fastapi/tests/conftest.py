@@ -1,14 +1,8 @@
-import sys
 from collections.abc import AsyncIterator, Callable, Generator, Iterator
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import urljoin
-
-if sys.version_info >= (3, 11):
-    from datetime import UTC
-else:
-    UTC = timezone.utc
 
 import pytest
 from fastapi import FastAPI
@@ -38,6 +32,8 @@ from .shared import (
     product_test_spotlight_sync_opportunity,
 )
 from .test_datetime_interval import rfc3339_strftime
+
+UTC = timezone.utc
 
 
 @pytest.fixture(scope="session")
