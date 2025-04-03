@@ -43,7 +43,7 @@ Returns:
 
 Note:
     Backends must validate search queryables and return
-    returns.result.Failure[stapi_fastapi.exceptions.QueryablesException] if not valid.
+    returns.result.Failure[stapi_fastapi.errors.QueryablesError] if not valid.
 """
 
 SearchOpportunitiesAsync = Callable[
@@ -63,8 +63,8 @@ Returns:
     - Should return returns.result.Success[OpportunitySearchRecord]
     - Returning returns.result.Failure[Exception] will result in a 500.
 
-Backends must validate search queryables and return
-returns.result.Failure[stapi_fastapi.exceptions.QueryablesException] if not valid.
+    Backends must validate search queryables and return
+returns.result.Failure[stapi_fastapi.errors.QueryablesError] if not valid.
 """
 
 GetOpportunityCollection = Callable[
@@ -105,5 +105,5 @@ Returns:
 
 Note:
     Backends must validate order payload and return
-    returns.result.Failure[stapi_fastapi.exceptions.QueryablesException] if not valid.
+    returns.result.Failure[stapi_fastapi.errors.QueryablesError] if not valid.
 """
