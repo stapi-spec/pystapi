@@ -24,7 +24,7 @@ uv run pytest
 Check formatting and other lints:
 
 ```shell
-uv run pre-commit --all-files
+uv run pre-commit run --all
 ```
 
 If you don't want to type `uv run` all the time:

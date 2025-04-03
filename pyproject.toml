@@ -8,7 +8,8 @@ dependencies = [
     "pystapi-client",
     "pystapi-validator",
     "stapi-pydantic",
-    "stapi-fastapi"
+    "stapi-fastapi",
+    "types-click>=7.1.8",
 ]
 
 [dependency-groups]
@@ -21,6 +22,7 @@ dev = [
     "pre-commit>=4.2.0",
     "pre-commit-hooks>=5.0.0",
     "fastapi[standard]>=0.115.12",
+    "types-click>=7.1.8",
 ]
 docs = [
     "mkdocs-material>=9.6.11",
