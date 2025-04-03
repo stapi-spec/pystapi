@@ -245,7 +245,8 @@ class Client:
         provides such an endpoint.
 
         Args:
-            conformance_class: Either a ConformanceClasses enum member or a string name of a conformance class to check against
+            conformance_class: Either a ConformanceClasses enum member or a
+                string name of a conformance class to check against
 
 
         Return:
