@@ -231,6 +231,13 @@ def test_async_opportunity_search_to_completion(
     retrieved_search_record = OpportunitySearchRecord(**retrieved_search_response.json())
     assert retrieved_search_record.status.status_code == OpportunitySearchStatusCode.completed
 
+    url = f"/searches/opportunities/{search_record.id}/statuses"
+    retrieved_statuses_response = stapi_client_async_opportunity.get(url)
+    assert retrieved_statuses_response.status_code == 200
+    retrieved_statuses = [OpportunitySearchStatus(d) for d in retrieved_statuses_response.json()]
+    assert len(retrieved_statuses) >= 1
+    assert retrieved_statuses[-1].status_code == OpportunitySearchStatusCode.completed
+
     # Verify we can retrieve the OpportunityCollection from the
     # OpportunitySearchRecord's `opportunities` link; verify the retrieved
     # OpportunityCollection contains an order link and a link pointing back to the

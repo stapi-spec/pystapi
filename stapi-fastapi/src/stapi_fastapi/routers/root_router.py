@@ -11,6 +11,7 @@ from stapi_pydantic import (
     Link,
     OpportunitySearchRecord,
     OpportunitySearchRecords,
+    OpportunitySearchStatus,
     Order,
     OrderCollection,
     OrderStatus,
@@ -35,6 +36,7 @@ from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_fastapi.routers.route_names import (
     CONFORMANCE,
     GET_OPPORTUNITY_SEARCH_RECORD,
+    GET_OPPORTUNITY_SEARCH_RECORD_STATUSES,
     GET_ORDER,
     LIST_OPPORTUNITY_SEARCH_RECORDS,
     LIST_ORDER_STATUSES,
@@ -154,6 +156,15 @@ class RootRouter(APIRouter):
                 methods=["GET"],
                 name=f"{self.name}:{GET_OPPORTUNITY_SEARCH_RECORD}",
                 summary="Get an Opportunity Search Record by ID",
+                tags=["Opportunities"],
+            )
+
+            self.add_api_route(
+                "/searches/opportunities/{search_record_id}/statuses",
+                self.get_opportunity_search_record_statuses,
+                methods=["GET"],
+                name=f"{self.name}:{GET_OPPORTUNITY_SEARCH_RECORD_STATUSES}",
+                summary="Get an Opportunity Search Record statuses by ID",
                 tags=["Opportunities"],
             )
 
@@ -414,6 +425,14 @@ class RootRouter(APIRouter):
                 )
             case _:
                 raise AssertionError("Expected code to be unreachable")
+
+    async def get_opportunity_search_record_statuses(
+        self, search_record_id: str, request: Request
+    ) -> list[OpportunitySearchStatus]:
+        """
+        Get the Opportunity Search Record statuses with `search_record_id`.
+        """
+        raise NotImplementedError
 
     def generate_opportunity_search_record_href(self, request: Request, search_record_id: str) -> URL:
         return request.url_for(
