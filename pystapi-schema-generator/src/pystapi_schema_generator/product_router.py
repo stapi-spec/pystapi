@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import (
     APIRouter,
@@ -21,7 +21,8 @@ from stapi_pydantic import (
     Product,
 )
 
-from .router import RootRouter
+if TYPE_CHECKING:
+    from .router import RootRouter
 
 
 class ProductRouter(APIRouter):
