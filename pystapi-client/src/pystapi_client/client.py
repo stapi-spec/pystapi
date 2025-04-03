@@ -25,7 +25,7 @@ from stapi_pydantic import (
 from pystapi_client.conformance import ConformanceClasses
 from pystapi_client.exceptions import APIError
 from pystapi_client.stapi_api_io import StapiIO
-from pystapi_client.warnings import NoConformsTo
+from pystapi_client.warns import NoConformsTo
 
 DEFAULT_LINKS = [
     {
