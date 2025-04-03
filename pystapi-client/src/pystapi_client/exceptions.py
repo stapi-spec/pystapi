@@ -1,0 +1,19 @@
+from __future__ import annotations
+
+from httpx import Response
+
+
+class APIError(Exception):
+    """Raised when unexpected server error."""
+
+    status_code: int | None
+
+    @classmethod
+    def from_response(cls, response: Response) -> APIError:
+        error = cls(response.text)
+        error.status_code = response.status_code
+        return error
+
+
+class ParametersError(Exception):
+    """Raised when invalid parameters are used in a query"""
