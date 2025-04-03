@@ -1,7 +1,7 @@
 from collections import defaultdict
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
-from typing import Any, Literal, Self
+from typing import Any, Literal, Self, TypeAlias
 from urllib.parse import parse_qs, urlparse
 from uuid import uuid4
 
@@ -32,7 +32,7 @@ from .backends import (
     mock_search_opportunities_async,
 )
 
-type link_dict = dict[str, Any]
+link_dict: TypeAlias = dict[str, Any]
 
 
 def find_link(links: list[link_dict], rel: str) -> link_dict | None:
