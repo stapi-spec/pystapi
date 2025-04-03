@@ -28,6 +28,9 @@ from stapi_pydantic import (
     OrderStatus,
     Prefer,
 )
+from stapi_pydantic import (
+    Product as ProductPydantic,
+)
 
 from stapi_fastapi.constants import TYPE_JSON
 from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
@@ -168,7 +171,7 @@ class ProductRouter(APIRouter):
                 tags=["Products"],
             )
 
-    def get_product(self, request: Request) -> Product:
+    def get_product(self, request: Request) -> ProductPydantic:
         links = [
             Link(
                 href=str(

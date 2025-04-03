@@ -76,7 +76,7 @@ class OrderSearchParameters(BaseModel):
     datetime: DatetimeInterval
     geometry: Geometry
     # TODO: validate the CQL2 filter?
-    filter: CQL2Filter | None = None
+    filter: CQL2Filter | None = None  # type: ignore [type-arg]
 
 
 class OrderProperties(BaseModel, Generic[T]):
@@ -139,7 +139,7 @@ class OrderPayload(BaseModel, Generic[ORP]):
     datetime: DatetimeInterval
     geometry: Geometry
     # TODO: validate the CQL2 filter?
-    filter: CQL2Filter | None = None
+    filter: CQL2Filter | None = None  # type: ignore [type-arg]
 
     order_parameters: ORP
 
