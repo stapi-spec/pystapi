@@ -1,8 +1,13 @@
 from collections.abc import AsyncIterator, Callable, Generator, Iterator
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import urljoin
+
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = timezone.utc
 
 import pytest
 from fastapi import FastAPI

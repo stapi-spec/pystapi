@@ -34,7 +34,7 @@ def serialize(
     return f"{value[0].isoformat()}/{value[1].isoformat()}"
 
 
-type DatetimeInterval = Annotated[
+DatetimeInterval = Annotated[
     tuple[AwareDatetime, AwareDatetime],
     BeforeValidator(validate_before),
     AfterValidator(validate_after),

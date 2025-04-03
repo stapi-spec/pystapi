@@ -1,6 +1,12 @@
+from enum import Enum
 from collections.abc import Iterator
-from enum import StrEnum
 from typing import Any, Generic, Literal, TypeVar
+
+try:
+    from enum import StrEnum
+except ImportError:
+    class StrEnum(str, Enum):
+        pass
 
 from geojson_pydantic.base import _GeoJsonBase
 from geojson_pydantic.geometries import Geometry

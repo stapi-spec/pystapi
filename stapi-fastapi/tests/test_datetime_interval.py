@@ -1,6 +1,11 @@
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from itertools import product
 from zoneinfo import ZoneInfo
+
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = timezone.utc
 
 from pydantic import BaseModel, ValidationError
 from pyrfc3339.utils import format_timezone

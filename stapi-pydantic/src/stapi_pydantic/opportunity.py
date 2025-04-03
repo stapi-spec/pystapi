@@ -1,5 +1,11 @@
-from enum import StrEnum
+from enum import Enum
 from typing import Any, Literal, TypeVar
+
+try:
+    from enum import StrEnum
+except ImportError:
+    class StrEnum(str, Enum):
+        pass
 
 from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry

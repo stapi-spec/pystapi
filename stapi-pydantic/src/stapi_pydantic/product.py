@@ -1,5 +1,11 @@
-from enum import StrEnum
+from enum import Enum
 from typing import Any, Literal, Self
+
+try:
+    from enum import StrEnum
+except ImportError:
+    class StrEnum(str, Enum):
+        pass
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
