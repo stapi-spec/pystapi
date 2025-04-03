@@ -42,7 +42,7 @@ Returns:
     - Returning returns.result.Failure[Exception] will result in a 500.
 
 Note:
-    Backends must validate search constraints and return
+    Backends must validate search queryables and return
     returns.result.Failure[stapi_fastapi.errors.QueryablesError] if not valid.
 """
 
