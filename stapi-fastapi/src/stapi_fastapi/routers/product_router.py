@@ -18,6 +18,7 @@ from geojson_pydantic.geometries import Geometry
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
 from stapi_pydantic import (
+    Conformance,
     JsonSchemaModel,
     Link,
     OpportunityCollection,
@@ -33,15 +34,16 @@ from stapi_pydantic import (
 )
 
 from stapi_fastapi.constants import TYPE_JSON
-from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
+from stapi_fastapi.exceptions import NotFoundException, QueryablesException
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_fastapi.routers.route_names import (
+    CONFORMANCE,
     CREATE_ORDER,
-    GET_CONSTRAINTS,
     GET_OPPORTUNITY_COLLECTION,
     GET_ORDER_PARAMETERS,
     GET_PRODUCT,
+    GET_QUERYABLES,
     SEARCH_OPPORTUNITIES,
 )
 
@@ -92,11 +94,20 @@ class ProductRouter(APIRouter):
         )
 
         self.add_api_route(
-            path="/constraints",
-            endpoint=self.get_product_constraints,
-            name=f"{self.root_router.name}:{self.product.id}:{GET_CONSTRAINTS}",
+            path="/conformance",
+            endpoint=self.get_product_conformance,
+            name=f"{self.root_router.name}:{self.product.id}:{CONFORMANCE}",
             methods=["GET"],
-            summary="Get constraints for the product",
+            summary="Get conformance urls for the product",
+            tags=["Products"],
+        )
+
+        self.add_api_route(
+            path="/queryables",
+            endpoint=self.get_product_queryables,
+            name=f"{self.root_router.name}:{self.product.id}:{GET_QUERYABLES}",
+            methods=["GET"],
+            summary="Get queryables for the product",
             tags=["Products"],
         )
 
@@ -145,7 +156,7 @@ class ProductRouter(APIRouter):
                 name=f"{self.root_router.name}:{self.product.id}:{SEARCH_OPPORTUNITIES}",
                 methods=["POST"],
                 response_class=GeoJSONResponse,
-                # unknown why mypy can't see the constraints property on Product, ignoring
+                # unknown why mypy can't see the queryables property on Product, ignoring
                 response_model=OpportunityCollection[
                     Geometry,
                     self.product.opportunity_properties,  # type: ignore
@@ -185,10 +196,19 @@ class ProductRouter(APIRouter):
             Link(
                 href=str(
                     request.url_for(
-                        f"{self.root_router.name}:{self.product.id}:{GET_CONSTRAINTS}",
+                        f"{self.root_router.name}:{self.product.id}:{CONFORMANCE}",
                     ),
                 ),
-                rel="constraints",
+                rel="conformance",
+                type=TYPE_JSON,
+            ),
+            Link(
+                href=str(
+                    request.url_for(
+                        f"{self.root_router.name}:{self.product.id}:{GET_QUERYABLES}",
+                    ),
+                ),
+                rel="queryables",
                 type=TYPE_JSON,
             ),
             Link(
@@ -235,7 +255,7 @@ class ProductRouter(APIRouter):
         prefer: Prefer | None = Depends(get_prefer),
     ) -> OpportunityCollection | Response:  # type: ignore
         """
-        Explore the opportunities available for a particular set of constraints
+        Explore the opportunities available for a particular set of queryables
         """
         # sync
         if not self.root_router.supports_async_opportunity_search or (
@@ -280,7 +300,7 @@ class ProductRouter(APIRouter):
                         links.append(self.pagination_link(request, search, x))
                     case Maybe.empty:
                         pass
-            case Failure(e) if isinstance(e, ConstraintsException):
+            case Failure(e) if isinstance(e, QueryablesException):
                 raise e
             case Failure(e):
                 logger.error(
@@ -319,7 +339,7 @@ class ProductRouter(APIRouter):
                     content=search_record.model_dump(mode="json"),
                     headers=headers,
                 )
-            case Failure(e) if isinstance(e, ConstraintsException):
+            case Failure(e) if isinstance(e, QueryablesException):
                 raise e
             case Failure(e):
                 logger.error(
@@ -333,15 +353,21 @@ class ProductRouter(APIRouter):
             case x:
                 raise AssertionError(f"Expected code to be unreachable: {x}")
 
-    def get_product_constraints(self) -> JsonSchemaModel:
+    def get_product_conformance(self) -> Conformance:
         """
-        Return supported constraints of a specific product
+        Return conformance urls of a specific product
         """
-        return self.product.constraints
+        return Conformance.model_validate({"conforms_to": self.product.conformsTo})
+
+    def get_product_queryables(self) -> JsonSchemaModel:
+        """
+        Return supported queryables of a specific product
+        """
+        return self.product.queryables
 
     def get_product_order_parameters(self) -> JsonSchemaModel:
         """
-        Return supported constraints of a specific product
+        Return supported order parameters of a specific product
         """
         return self.product.order_parameters
 
@@ -359,7 +385,7 @@ class ProductRouter(APIRouter):
                 location = str(self.root_router.generate_order_href(request, order.id))
                 response.headers["Location"] = location
                 return order  # type: ignore
-            case Failure(e) if isinstance(e, ConstraintsException):
+            case Failure(e) if isinstance(e, QueryablesException):
                 raise e
             case Failure(e):
                 logger.error(

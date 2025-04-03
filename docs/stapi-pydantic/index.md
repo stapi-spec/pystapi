@@ -5,4 +5,4 @@
 !!! note
 
     This repository intentionally has no input/output (IO) functionality.
-    For making requests to a STAPI API, use **pystapi-client**.
+    For making requests to a STAPI API, use **[pystapi-client](../pystapi-client/index.md)**.

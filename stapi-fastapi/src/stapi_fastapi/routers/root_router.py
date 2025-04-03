@@ -11,6 +11,7 @@ from stapi_pydantic import (
     Link,
     OpportunitySearchRecord,
     OpportunitySearchRecords,
+    OpportunitySearchStatus,
     Order,
     OrderCollection,
     OrderStatus,
@@ -22,6 +23,7 @@ from stapi_pydantic import (
 from stapi_fastapi.backends.root_backend import (
     GetOpportunitySearchRecord,
     GetOpportunitySearchRecords,
+    GetOpportunitySearchRecordStatuses,
     GetOrder,
     GetOrders,
     GetOrderStatuses,
@@ -35,6 +37,7 @@ from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_fastapi.routers.route_names import (
     CONFORMANCE,
     GET_OPPORTUNITY_SEARCH_RECORD,
+    GET_OPPORTUNITY_SEARCH_RECORD_STATUSES,
     GET_ORDER,
     LIST_OPPORTUNITY_SEARCH_RECORDS,
     LIST_ORDER_STATUSES,
@@ -54,6 +57,7 @@ class RootRouter(APIRouter):
         get_order_statuses: GetOrderStatuses,  # type: ignore
         get_opportunity_search_records: GetOpportunitySearchRecords | None = None,
         get_opportunity_search_record: GetOpportunitySearchRecord | None = None,
+        get_opportunity_search_record_statuses: GetOpportunitySearchRecordStatuses | None = None,
         conformances: list[str] = [CORE],
         name: str = "root",
         openapi_endpoint_name: str = "openapi",
@@ -76,6 +80,7 @@ class RootRouter(APIRouter):
         self._get_order_statuses = get_order_statuses
         self.__get_opportunity_search_records = get_opportunity_search_records
         self.__get_opportunity_search_record = get_opportunity_search_record
+        self.__get_opportunity_search_record_statuses = get_opportunity_search_record_statuses
         self.conformances = conformances
         self.name = name
         self.openapi_endpoint_name = openapi_endpoint_name
@@ -154,6 +159,15 @@ class RootRouter(APIRouter):
                 methods=["GET"],
                 name=f"{self.name}:{GET_OPPORTUNITY_SEARCH_RECORD}",
                 summary="Get an Opportunity Search Record by ID",
+                tags=["Opportunities"],
+            )
+
+            self.add_api_route(
+                "/searches/opportunities/{search_record_id}/statuses",
+                self.get_opportunity_search_record_statuses,
+                methods=["GET"],
+                name=f"{self.name}:{GET_OPPORTUNITY_SEARCH_RECORD_STATUSES}",
+                summary="Get an Opportunity Search Record statuses by ID",
                 tags=["Opportunities"],
             )
 
@@ -415,6 +429,30 @@ class RootRouter(APIRouter):
             case _:
                 raise AssertionError("Expected code to be unreachable")
 
+    async def get_opportunity_search_record_statuses(
+        self, search_record_id: str, request: Request
+    ) -> list[OpportunitySearchStatus]:
+        """
+        Get the Opportunity Search Record statuses with `search_record_id`.
+        """
+        match await self._get_opportunity_search_record_statuses(search_record_id, request):
+            case Success(Some(search_record_statuses)):
+                return search_record_statuses  # type: ignore
+            case Success(Maybe.empty):
+                raise NotFoundException("Opportunity Search Record not found")
+            case Failure(e):
+                logger.error(
+                    "An error occurred while retrieving opportunity search record statuses '%s': %s",
+                    search_record_id,
+                    traceback.format_exception(e),
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Error finding Opportunity Search Record statuses",
+                )
+            case _:
+                raise AssertionError("Expected code to be unreachable")
+
     def generate_opportunity_search_record_href(self, request: Request, search_record_id: str) -> URL:
         return request.url_for(
             f"{self.name}:{GET_OPPORTUNITY_SEARCH_RECORD}",
@@ -441,6 +479,12 @@ class RootRouter(APIRouter):
         if not self.__get_opportunity_search_record:
             raise AttributeError("Root router does not support async opportunity search")
         return self.__get_opportunity_search_record
+
+    @property
+    def _get_opportunity_search_record_statuses(self) -> GetOpportunitySearchRecordStatuses:
+        if not self.__get_opportunity_search_record_statuses:
+            raise AttributeError("Root router does not support async opportunity search")
+        return self.__get_opportunity_search_record_statuses
 
     @property
     def supports_async_opportunity_search(self) -> bool:

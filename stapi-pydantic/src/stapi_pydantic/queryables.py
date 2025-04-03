@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
 
 
-class Constraints(BaseModel):
+class Queryables(BaseModel):
     model_config = ConfigDict(extra="allow")

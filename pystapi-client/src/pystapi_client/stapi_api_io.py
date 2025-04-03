@@ -8,6 +8,7 @@ from typing import Any
 import httpx
 from httpx import Client as Session
 from httpx import Request
+from httpx._types import TimeoutTypes
 from pydantic import AnyUrl
 from stapi_pydantic import Link
 
@@ -23,27 +24,29 @@ class StapiIO:
         headers: dict[str, str] | None = None,
         parameters: dict[str, Any] | None = None,
         request_modifier: Callable[[Request], Request] | None = None,
-        timeout: httpx._types.TimeoutTypes | None = None,
+        timeout: TimeoutTypes | None = None,
         max_retries: int | None = 5,
-    ):
-        """Initialize class for API IO
+    ) -> None:
+        """Initialize class for API IO.
 
         Args:
-            headers : Optional dictionary of headers to include in all requests
+            root_url: The root URL of the STAPI API
+            headers: Optional dictionary of headers to include in all requests
             parameters: Optional dictionary of query string parameters to
-              include in all requests.
+                    include in all requests
             request_modifier: Optional callable that can be used to modify Request
-              objects before they are sent. If provided, the callable receives a
-              `request.Request` and must either modify the object directly or return
-              a new / modified request instance.
-            timeout: Optional float or (float, float) tuple following the semantics
-              defined by `Requests
-              <https://requests.readthedocs.io/en/latest/api/#main-interface>`__.
-            max_retries: The number of times to retry requests. Set to ``None`` to
-              disable retries.
-
-        Return:
-            StapiIO : StapiIO instance
+                    objects before they are sent. If provided, the callable receives a
+                    `httpx.Request` and must either modify the object directly or return
+                    a new / modified request instance
+            timeout: Optional timeout configuration. Can be:
+                    - None to disable timeouts
+                    - float for a default timeout
+                    - tuple of (connect, read, write, pool) timeouts, each being float or None
+                    - httpx.Timeout instance for fine-grained control
+                    See `httpx timeouts <https://www.python-httpx.org/advanced/timeouts/>`__
+                    for details
+            max_retries: Optional number of times to retry requests. Set to ``None`` to
+                    disable retries. Defaults to 5
         """
         self.root_url = root_url
         transport = None
@@ -66,16 +69,14 @@ class StapiIO:
         """Updates this Stapi's headers, parameters, and/or request_modifier.
 
         Args:
-            headers : Optional dictionary of headers to include in all requests
+            headers: Optional dictionary of headers to include in all requests
             parameters: Optional dictionary of query string parameters to
-              include in all requests.
+                    include in all requests
             request_modifier: Optional callable that can be used to modify Request
-              objects before they are sent. If provided, the callable receives a
-              `request.Request` and must either modify the object directly or return
-              a new / modified request instance.
-            timeout: Optional float or (float, float) tuple following the semantics
-              defined by `Requests
-              <https://requests.readthedocs.io/en/latest/api/#main-interface>`__.
+                    objects before they are sent. If provided, the callable receives a
+                    `httpx.Request` and must either modify the object directly or return
+                    a new / modified request instance
+
         """
         self.session.headers.update(headers or {})
         self.session.params.merge(parameters or {})
@@ -90,10 +91,17 @@ class StapiIO:
     ) -> str:
         """Read text from the given URI.
 
-        Overwrites the default method for reading text from a URL or file to allow
-        :class:`urllib.request.Request` instances as input. This method also raises
-        any :exc:`urllib.error.HTTPError` exceptions rather than catching
-        them to allow us to handle different response status codes as needed.
+        Args:
+            href: The URL to read from
+            method: The HTTP method to use. Defaults to "GET"
+            headers: Optional dictionary of additional headers to include in the request
+            parameters: Optional dictionary of parameters to include in the request.
+                For GET requests, these are added as query parameters.
+                For POST requests, these are sent as JSON in the request body
+
+
+        Returns:
+            str: The response text from the server
         """
 
         return self.request(href, method=method, headers=headers, parameters=parameters if parameters else None)
@@ -108,19 +116,18 @@ class StapiIO:
         """Makes a request to an http endpoint
 
         Args:
-            href (str): The request URL
-            method (Optional[str], optional): The http method to use, 'GET' or 'POST'.
-              Defaults to None, which will result in 'GET' being used.
-            headers (Optional[Dict[str, str]], optional): Additional headers to include
-                in request. Defaults to None.
-            parameters (Optional[Dict[str, Any]], optional): parameters to send with
-                request. Defaults to None.
+            href: The request URL
+            method: The http method to use, 'GET' or 'POST'. Defaults to None, which will result in 'GET' being used.
+            headers: Additional headers to include in request. Defaults to None.
+            parameters: Optional dictionary of parameters to include in the request.
+                For GET requests, these are added as query parameters.
+                For POST requests, these are sent as JSON in the request body.
 
         Raises:
             APIError: raised if the server returns an error response
 
-        Return:
-            str: The decoded response from the endpoint
+        Returns:
+            The decoded response text from the endpoint
         """
         if method == "POST":
             request = Request(method=method, url=href, headers=headers, json=parameters)
@@ -155,9 +162,11 @@ class StapiIO:
         """Read JSON from a URL.
 
         Args:
-            url: The URL to read from
-            method: The HTTP method to use
-            parameters: Parameters to include in the request
+            endpoint: The URL to read from
+            method: The HTTP method to use. Defaults to "GET"
+            parameters: Optional dictionary of parameters to include in the request.
+                For GET requests, these are added as query parameters.
+                For POST requests, these are sent as JSON in the request body
 
         Returns:
             The parsed JSON response
@@ -190,10 +199,14 @@ class StapiIO:
         """Iterator that yields dictionaries for each page at a STAPI paging
         endpoint.
 
+        Args:
+            link: The link to read from
+            lookup_key: The key in the response JSON that contains the iterable data.
+
         # TODO update endpoint examples
 
-        Return:
-            dict[str, Any] : JSON content from a single page
+        Returns:
+            Iterator that yields dictionaries for each page
         """
         if not lookup_key:
             lookup_key = "features"
