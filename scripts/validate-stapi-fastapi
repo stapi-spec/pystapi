@@ -11,13 +11,22 @@ server_pid=$!
 set +e
 "$scripts"/wait-for-it.sh localhost:8000 -- test 0
 wait_result=$?
+set -e
 
+if [ $wait_result -ne 0 ]; then
+    echo "Failed to start test server"
+    kill $(pgrep -P $server_pid)
+    exit 1
+fi
+
+set +e
 uv run pystapi-validator/tests/validate_api.py --html=validation-report.html --self-contained-html
 validation_result=$?
 set -e
 
 kill $(pgrep -P $server_pid)
-if [ $wait_result -eq 0 ] && [ $validation_result -eq 0 ]; then
+
+if [ $validation_result -eq 0 ]; then
     echo "Validated OK!"
 else
     exit 1
