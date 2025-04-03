@@ -17,8 +17,6 @@ nav:
   - stapi-pydantic:
       - stapi-pydantic/index.md
       - stapi-pydantic/api.md
-  - stapi-client:
-      - stapi-client/index.md
 
 plugins:
   - mkdocstrings:
