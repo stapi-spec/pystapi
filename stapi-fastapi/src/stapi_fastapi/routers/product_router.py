@@ -34,7 +34,7 @@ from stapi_pydantic import (
 )
 
 from stapi_fastapi.constants import TYPE_JSON
-from stapi_fastapi.errors import QueryablesError, NotFoundError
+from stapi_fastapi.errors import NotFoundError, QueryablesError
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_fastapi.routers.route_names import (

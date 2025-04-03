@@ -439,7 +439,7 @@ class RootRouter(APIRouter):
             case Success(Some(search_record_statuses)):
                 return search_record_statuses  # type: ignore
             case Success(Maybe.empty):
-                raise NotFoundException("Opportunity Search Record not found")
+                raise NotFoundError("Opportunity Search Record not found")
             case Failure(e):
                 logger.error(
                     "An error occurred while retrieving opportunity search record statuses '%s': %s",
