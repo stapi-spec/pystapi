@@ -52,7 +52,7 @@ def get_prefer(prefer: str | None = Header(None)) -> str | None:
     if prefer is None:
         return None
 
-    if prefer not in Prefer:
+    if prefer not in Prefer._value2member_map_:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid Prefer header value: {prefer}",

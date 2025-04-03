@@ -11,12 +11,18 @@ from pydantic import (
 )
 
 
+def from_iso_z(dt_str: str) -> datetime:
+    if dt_str.endswith("Z"):
+        dt_str = dt_str.replace("Z", "+00:00")
+    return datetime.fromisoformat(dt_str)
+
+
 def validate_before(
     value: str | tuple[datetime, datetime],
 ) -> tuple[datetime, datetime]:
     if isinstance(value, str):
         start, end = value.split("/", 1)
-        return (datetime.fromisoformat(start), datetime.fromisoformat(end))
+        return (from_iso_z(start), from_iso_z(end))
     return value
 
 
