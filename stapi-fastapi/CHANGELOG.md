@@ -2,8 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
@@ -14,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Added
 
 - Add constants for route names to be used in link href generation
+- Opportunity search statuses ([#78](https://github.com/stapi-spec/pystapi/pull/78))
 - Conformance url to product ([#85](https://github.com/stapi-spec/pystapi/pull/85))
 
 ## Changed
@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - stapi-fastapi is now using stapi-pydantic models, deduplicating code
 - Product in stapi-fastapi is now subclass of Product from stapi-pydantic
 
-## [v0.6.0] - 2025-02-11
+## [0.6.0] - 2025-02-11
 
 ### Added
 
@@ -54,7 +54,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Opportunities Search result now has the search body in the `create-order` link.
 
-## [v0.5.0] - 2025-01-08
+## [0.5.0] - 2025-01-08
 
 ### Added
 
@@ -67,10 +67,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - OrderRequest renamed to OrderPayload
 
-### Deprecated
-
-none
-
 ### Removed
 
 - Endpoint `/orders/{order_id}/statuses` supporting `POST` for updating current status was added and then
@@ -81,42 +77,14 @@ none
 
 - Exception logging
 
-### Security
-
-none
-
-## [v0.4.0] - 2024-12-11
-
-### Added
-
-none
+## [0.4.0] - 2024-12-11
 
 ### Changed
 
 - The concepts of Opportunity search Constraint and Opportunity search result Opportunity Properties are now separate,
   recognizing that they have related attributes, but not neither the same attributes or the same values for those attributes.
 
-### Deprecated
-
-none
-
-### Removed
-
-none
-
-### Fixed
-
-none
-
-### Security
-
-none
-
-## [v0.3.0] - 2024-12-6
-
-### Added
-
-none
+## [0.3.0] - 2024-12-6
 
 ### Changed
 
@@ -125,27 +93,7 @@ none
 - Order and OrderCollection extend \_GeoJsonBase instead of Feature and FeatureCollection, to allow for tighter
   constraints on fields
 
-### Deprecated
-
-none
-
-### Removed
-
-none
-
-### Fixed
-
-none
-
-### Security
-
-none
-
-## [v0.2.0] - 2024-11-23
-
-### Added
-
-none
+## [0.2.0] - 2024-11-23
 
 ### Changed
 
@@ -156,23 +104,7 @@ none
   order ID may an integral numeric value, it is not a "number" in the sense that math will be performed
   order ID values, so string represents this better.
 
-### Deprecated
-
-none
-
-### Removed
-
-none
-
-### Fixed
-
-none
-
-### Security
-
-none
-
-## [v0.1.0] - 2024-11-15
+## [0.1.0] - 2024-11-15
 
 Initial release
 
@@ -186,10 +118,9 @@ Initial release
 - Add links `opportunities` and `create-order` to Product
 - Add link `create-order` to OpportunityCollection
 
-<!-- [unreleased]: https://github.com/stapi-spec/stapi-fastapi/compare/v0.5.0...main -->
-[v0.6.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.6.0
-[v0.5.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.5.0
-[v0.4.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.4.0
-[v0.3.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.3.0
-[v0.2.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.2.0
-[v0.1.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.1.0
+[0.6.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.6.0
+[0.5.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.5.0
+[0.4.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.4.0
+[0.3.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.3.0
+[0.2.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.2.0
+[0.1.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.1.0

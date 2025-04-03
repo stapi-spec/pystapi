@@ -21,6 +21,7 @@ dev = [
     "pre-commit>=4.2.0",
     "pre-commit-hooks>=5.0.0",
     "fastapi[standard]>=0.115.12",
+    "pygithub>=2.6.1",
 ]
 docs = [
     "mkdocs-material>=9.6.11",
@@ -75,6 +76,7 @@ ignore_missing_imports = true
 plugins.md013.enabled = false  # @gadomski likes to do one-line-per-sentence in markdown
 plugins.md024.enabled = false  # duplicate headers in changelog
 plugins.md041.enabled = false  # github templates don't start with an h1
+plugins.md046.enabled = false  # code block style (we use both for mkdocs)
 
 [tool.pytest.ini_options]
 filterwarnings = [
