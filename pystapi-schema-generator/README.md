@@ -1,2 +1,1 @@
 # pystapi-schema-generator
-
