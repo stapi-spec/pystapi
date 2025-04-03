@@ -1,13 +1,8 @@
-import os
-import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from stapi_fastapi.conformance import CORE, OPPORTUNITIES
 from stapi_fastapi.routers.root_router import RootRouter
 
