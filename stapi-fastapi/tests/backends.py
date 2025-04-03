@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from fastapi import Request
@@ -81,7 +81,7 @@ async def mock_create_order(product_router: ProductRouter, payload: OrderPayload
     """
     try:
         status = OrderStatus(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             status_code=OrderStatusCode.received,
         )
         order = Order(
@@ -89,7 +89,7 @@ async def mock_create_order(product_router: ProductRouter, payload: OrderPayload
             geometry=payload.geometry,
             properties=OrderProperties(
                 product_id=product_router.product.id,
-                created=datetime.now(timezone.utc),
+                created=datetime.now(UTC),
                 status=status,
                 search_parameters=OrderSearchParameters(
                     geometry=payload.geometry,
@@ -140,7 +140,7 @@ async def mock_search_opportunities_async(
 ) -> ResultE[OpportunitySearchRecord]:
     try:
         received_status = OpportunitySearchStatus(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             status_code=OpportunitySearchStatusCode.received,
         )
         search_record = OpportunitySearchRecord(
@@ -194,5 +194,16 @@ async def mock_get_opportunity_search_record(
 ) -> ResultE[Maybe[OpportunitySearchRecord]]:
     try:
         return Success(Maybe.from_optional(request.state._opportunities_db.get_search_record(search_record_id)))
+    except Exception as e:
+        return Failure(e)
+
+
+async def mock_get_opportunity_search_record_statuses(
+    search_record_id: str, request: Request
+) -> ResultE[Maybe[list[OpportunitySearchStatus]]]:
+    try:
+        return Success(
+            Maybe.from_optional(request.state._opportunities_db.get_search_record_statuses(search_record_id))
+        )
     except Exception as e:
         return Failure(e)

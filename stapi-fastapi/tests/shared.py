@@ -1,7 +1,7 @@
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
-from typing import Any, Literal, Self
+from datetime import UTC, datetime, timedelta
+from typing import Any, Literal, Self, TypeAlias
 from urllib.parse import parse_qs, urlparse
 from uuid import uuid4
 
@@ -18,6 +18,7 @@ from stapi_pydantic import (
     OpportunityCollection,
     OpportunityProperties,
     OpportunitySearchRecord,
+    OpportunitySearchStatus,
     Order,
     OrderParameters,
     OrderStatus,
@@ -32,7 +33,7 @@ from .backends import (
     mock_search_opportunities_async,
 )
 
-type link_dict = dict[str, Any]
+link_dict: TypeAlias = dict[str, Any]
 
 
 def find_link(links: list[link_dict], rel: str) -> link_dict | None:
@@ -67,6 +68,12 @@ class InMemoryOpportunityDB:
 
     def get_search_record(self, search_id: str) -> OpportunitySearchRecord | None:
         return deepcopy(self._search_records.get(search_id))
+
+    def get_search_record_statuses(self, search_id: str) -> list[OpportunitySearchStatus] | None:
+        if search_record := self.get_search_record(search_id):
+            return [deepcopy(search_record.status)]
+        else:
+            return None
 
     def get_search_records(self) -> list[OpportunitySearchRecord]:
         return deepcopy(list(self._search_records.values()))
@@ -203,7 +210,7 @@ product_test_satellite_provider_sync_opportunity = Product(
 
 
 def create_mock_opportunity() -> Opportunity:
-    now = datetime.now(timezone.utc)  # Use timezone-aware datetime
+    now = datetime.now(UTC)  # Use timezone-aware datetime
     start = now
     end = start + timedelta(days=5)
 
