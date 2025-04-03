@@ -11,6 +11,9 @@ theme:
 
 nav:
   - index.md
+  - pystapi-client:
+      - pystapi-client/index.md
+      - pystapi-client/api.md
   - stapi-pydantic:
       - stapi-pydantic/index.md
       - stapi-pydantic/api.md
