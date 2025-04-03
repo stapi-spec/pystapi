@@ -6,8 +6,6 @@ from pydantic import AnyHttpUrl, BaseModel, Field
 from .constants import STAPI_VERSION
 from .shared import Link
 
-type Constraints = BaseModel
-
 
 class ProviderRole(StrEnum):
     licensor = "licensor"
