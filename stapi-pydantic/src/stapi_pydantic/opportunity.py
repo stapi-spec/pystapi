@@ -53,7 +53,7 @@ class OpportunitySearchStatusCode(StrEnum):
     received = "received"
     in_progress = "in_progress"
     failed = "failed"
-    canceled = "canceled"
+    cancelled = "cancelled"
     completed = "completed"
 
 
