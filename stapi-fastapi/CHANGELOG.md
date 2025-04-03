@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## Changed
 
+- Renamed all exceptions to errors ([#41](https://github.com/stapi-spec/pystapi/pull/41))
 - stapi-fastapi is now using stapi-pydantic models, deduplicating code
 - Product in stapi-fastapi is now subclass of Product from stapi-pydantic
 
