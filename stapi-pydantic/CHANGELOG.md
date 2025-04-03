@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - `stapi_type` and `stapi_version` ([#54](https://github.com/stapi-spec/pystapi/pull/54))
 
+### Changed
+
+- `s/constraints/queryables/` ([#74](https://github.com/stapi-spec/pystapi/pull/74))
+
 ## [0.0.2] - 2025-04-02
 
 ### Changed
