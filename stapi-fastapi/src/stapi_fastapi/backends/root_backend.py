@@ -6,6 +6,7 @@ from returns.maybe import Maybe
 from returns.result import ResultE
 from stapi_pydantic import (
     OpportunitySearchRecord,
+    OpportunitySearchStatus,
     Order,
     OrderStatus,
 )
@@ -105,6 +106,26 @@ Args:
 
 Returns:
     - Should return returns.result.Success[returns.maybe.Some[OpportunitySearchRecord]] if the search record is found.
+    - Should return returns.result.Success[returns.maybe.Nothing] if the search record is not found or
+      if access is denied.
+    - Returning returns.result.Failure[Exception] will result in a 500.
+"""
+
+GetOpportunitySearchRecordStatuses = Callable[
+    [str, Request], Coroutine[Any, Any, ResultE[Maybe[list[OpportunitySearchStatus]]]]
+]
+"""
+Type alias for an async function that gets the statuses of aOpportunitySearchRecord with
+`search_record_id`.
+
+Args:
+    search_record_id (str): The ID of the OpportunitySearchRecord.
+    request (Request): FastAPI's Request object.
+
+Returns:
+    - Should return
+      returns.result.Success[returns.maybe.Some[list[OpportunitySearchStatus]]] if
+      the search record is found.
     - Should return returns.result.Success[returns.maybe.Nothing] if the search record is not found or
       if access is denied.
     - Returning returns.result.Failure[Exception] will result in a 500.

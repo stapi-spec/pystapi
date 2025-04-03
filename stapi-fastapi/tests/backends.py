@@ -196,3 +196,14 @@ async def mock_get_opportunity_search_record(
         return Success(Maybe.from_optional(request.state._opportunities_db.get_search_record(search_record_id)))
     except Exception as e:
         return Failure(e)
+
+
+async def mock_get_opportunity_search_record_statuses(
+    search_record_id: str, request: Request
+) -> ResultE[Maybe[list[OpportunitySearchStatus]]]:
+    try:
+        return Success(
+            Maybe.from_optional(request.state._opportunities_db.get_search_record_statuses(search_record_id))
+        )
+    except Exception as e:
+        return Failure(e)

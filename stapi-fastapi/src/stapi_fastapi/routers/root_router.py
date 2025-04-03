@@ -23,6 +23,7 @@ from stapi_pydantic import (
 from stapi_fastapi.backends.root_backend import (
     GetOpportunitySearchRecord,
     GetOpportunitySearchRecords,
+    GetOpportunitySearchRecordStatuses,
     GetOrder,
     GetOrders,
     GetOrderStatuses,
@@ -56,6 +57,7 @@ class RootRouter(APIRouter):
         get_order_statuses: GetOrderStatuses,  # type: ignore
         get_opportunity_search_records: GetOpportunitySearchRecords | None = None,
         get_opportunity_search_record: GetOpportunitySearchRecord | None = None,
+        get_opportunity_search_record_statuses: GetOpportunitySearchRecordStatuses | None = None,
         conformances: list[str] = [CORE],
         name: str = "root",
         openapi_endpoint_name: str = "openapi",
@@ -78,6 +80,7 @@ class RootRouter(APIRouter):
         self._get_order_statuses = get_order_statuses
         self.__get_opportunity_search_records = get_opportunity_search_records
         self.__get_opportunity_search_record = get_opportunity_search_record
+        self.__get_opportunity_search_record_statuses = get_opportunity_search_record_statuses
         self.conformances = conformances
         self.name = name
         self.openapi_endpoint_name = openapi_endpoint_name
@@ -432,7 +435,23 @@ class RootRouter(APIRouter):
         """
         Get the Opportunity Search Record statuses with `search_record_id`.
         """
-        raise NotImplementedError
+        match await self._get_opportunity_search_record_statuses(search_record_id, request):
+            case Success(Some(search_record_statuses)):
+                return search_record_statuses  # type: ignore
+            case Success(Maybe.empty):
+                raise NotFoundException("Opportunity Search Record not found")
+            case Failure(e):
+                logger.error(
+                    "An error occurred while retrieving opportunity search record statuses '%s': %s",
+                    search_record_id,
+                    traceback.format_exception(e),
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Error finding Opportunity Search Record statuses",
+                )
+            case _:
+                raise AssertionError("Expected code to be unreachable")
 
     def generate_opportunity_search_record_href(self, request: Request, search_record_id: str) -> URL:
         return request.url_for(
@@ -460,6 +479,12 @@ class RootRouter(APIRouter):
         if not self.__get_opportunity_search_record:
             raise AttributeError("Root router does not support async opportunity search")
         return self.__get_opportunity_search_record
+
+    @property
+    def _get_opportunity_search_record_statuses(self) -> GetOpportunitySearchRecordStatuses:
+        if not self.__get_opportunity_search_record_statuses:
+            raise AttributeError("Root router does not support async opportunity search")
+        return self.__get_opportunity_search_record_statuses
 
     @property
     def supports_async_opportunity_search(self) -> bool:
