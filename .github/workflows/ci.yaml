@@ -17,6 +17,7 @@ jobs:
     strategy:
       matrix:
         python-version:
+          - "3.11"
           - "3.12"
           - "3.13"
     steps:
@@ -38,6 +39,13 @@ jobs:
         if: ${{ matrix.python-version == '3.12' }}
         with:
           path: site/
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          build-args: PYTHON_VERSION=${{ matrix.python-version }}
 
   docs:
     name: Deploy docs

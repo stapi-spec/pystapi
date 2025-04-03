@@ -20,7 +20,7 @@ class OpportunityProperties(BaseModel):
 class OpportunityPayload(BaseModel):
     datetime: DatetimeInterval
     geometry: Geometry
-    filter: CQL2Filter | None = None
+    filter: CQL2Filter | None = None  # type: ignore [type-arg]
 
     next: str | None = None
     limit: int = 10
@@ -53,7 +53,7 @@ class OpportunitySearchStatusCode(StrEnum):
     received = "received"
     in_progress = "in_progress"
     failed = "failed"
-    canceled = "canceled"
+    cancelled = "cancelled"
     completed = "completed"
 
 

@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+
+"""Create a new DRAFT release.
+
+Usage:
+
+    scripts/release pystapi-client  # or another package name
+
+You'll need to set up netrc authentication as described in
+https://pygithub.readthedocs.io/en/stable/examples/Authentication.html#netrc-authentication.
+"""
+
+import sys
+from pathlib import Path
+
+import tomllib
+from github import Auth, Github
+
+ALLOWED_PACKAGE_NAMES = ["pystapi-client", "pystapi-validator", "stapi-fastapi", "stapi-pydantic"]
+
+if len(sys.argv) != 2:
+    print("ERROR: invalid usage", file=sys.stderr)
+    print(f"USAGE: {sys.argv[0]}", "{package_name}", file=sys.stderr)
+    sys.exit(1)
+
+if sys.argv[1] not in ALLOWED_PACKAGE_NAMES:
+    print(f"ERROR: invalid package name: {sys.argv[1]}")
+    print(f"Allowed package names: {','.join(ALLOWED_PACKAGE_NAMES)}")
+    sys.exit(2)
+
+package_name = sys.argv[1]
+
+with open(Path(__file__).parents[1] / package_name / "pyproject.toml", "rb") as f:
+    pyproject_toml = tomllib.load(f)
+
+version = pyproject_toml["project"]["version"]
+tag = f"{package_name}/v{version}"
+
+github = Github(auth=Auth.NetrcAuth())
+print("Logged in as", github.get_user().login)
+repo = github.get_repo("stapi-spec/pystapi")
+print("Next release:", tag)
+# TODO allow for releasing from not the main branch
+target = repo.get_branch("main").commit.sha
+print(f"Target sha (main): {target}")
+git_release = repo.create_git_tag_and_release(
+    tag=tag,
+    tag_message=tag,
+    draft=True,
+    generate_release_notes=False,
+    release_name=tag,
+    release_message=(f"Release created via `scripts/release` by {github.get_user().login}."),
+    object=target,
+    type="commit",
+)
+print(f"Draft release created: {git_release.html_url}")

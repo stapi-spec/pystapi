@@ -1,13 +1,13 @@
 [project]
 name = "stapi-pydantic"
-version = "0.0.1"
+version = "0.0.2"
 description = "Pydantic models for Satellite Tasking API (STAPI) Specification"
 readme = "README.md"
 authors = [
     { name = "Phil Varner", email = "phil@philvarner.com" },
     { name = "Pete Gadomski", email = "pete.gadomski@gmail.com" },
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = ["cql2>=0.3.6", "geojson-pydantic>=1.2.0"]
 
 [project.scripts]

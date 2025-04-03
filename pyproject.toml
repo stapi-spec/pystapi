@@ -3,8 +3,9 @@ name = "pystapi"
 version = "0.0.0" # This package should never be released, only the workspace members should be
 description = "Monorepo for Satellite Tasking API (STAPI) Specification Python packages"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
+    "pystapi-client",
     "pystapi-validator",
     "stapi-pydantic",
     "stapi-fastapi"
@@ -20,6 +21,7 @@ dev = [
     "pre-commit>=4.2.0",
     "pre-commit-hooks>=5.0.0",
     "fastapi[standard]>=0.115.12",
+    "pygithub>=2.6.1",
 ]
 docs = [
     "mkdocs-material>=9.6.11",
@@ -30,9 +32,10 @@ docs = [
 default-groups = ["dev", "docs"]
 
 [tool.uv.workspace]
-members = ["pystapi-validator", "stapi-pydantic", "stapi-fastapi"]
+members = ["pystapi-validator", "stapi-pydantic", "pystapi-client", "stapi-fastapi"]
 
 [tool.uv.sources]
+pystapi-client.workspace = true
 pystapi-validator.workspace = true
 stapi-pydantic.workspace = true
 stapi-fastapi.workspace = true
@@ -59,6 +62,7 @@ max-complexity = 8  # default 10
 [tool.mypy]
 strict = true
 files = [
+    "pystapi-client/src/pystapi_client/**/*.py",
     "pystapi-validator/src/pystapi_validator/**/*.py",
     "stapi-pydantic/src/stapi_pydantic/**/*.py",
     "stapi-fastapi/src/stapi_fastapi/**/*.py"
@@ -72,6 +76,7 @@ ignore_missing_imports = true
 plugins.md013.enabled = false  # @gadomski likes to do one-line-per-sentence in markdown
 plugins.md024.enabled = false  # duplicate headers in changelog
 plugins.md041.enabled = false  # github templates don't start with an h1
+plugins.md046.enabled = false  # code block style (we use both for mkdocs)
 
 [tool.pytest.ini_options]
 filterwarnings = [

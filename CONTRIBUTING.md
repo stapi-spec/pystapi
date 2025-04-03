@@ -42,6 +42,12 @@ We use [mypy](https://mypy-lang.org/) for static typing.
 When possible, projects work in `strict` mode, meaning that type checking is strongly enforced.
 Some projects are not quite ready for `strict` mode, but we want to get them there.
 
+## Docs
+
+We use [mkdocs](https://www.mkdocs.org/) for our [documentation](/docs/).
+To build the docs, run `uv run mkdocs build`.
+To serve the docs locally, run `uv run mkdocs serve`.
+
 ## Lints and checks
 
 We use [pre-commit](https://pre-commit.com/).
