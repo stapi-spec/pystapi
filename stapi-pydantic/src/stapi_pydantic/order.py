@@ -9,9 +9,9 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    StrictStr,
     field_validator,
 )
+from pydantic.json_schema import SkipJsonSchema
 
 from .datetime_interval import DatetimeInterval
 from .filter import CQL2Filter
@@ -31,15 +31,22 @@ ORP = TypeVar("ORP", bound=OrderParameters)
 
 
 class OrderStatusCode(StrEnum):
+    # Required
     received = "received"
     accepted = "accepted"
     rejected = "rejected"
     completed = "completed"
-    canceled = "canceled"
+    canceled = "cancelled"
+    failed = "failed"
+    expired = "expired"
+
+    # Optional
     scheduled = "scheduled"
     held = "held"
     processing = "processing"
     reserved = "reserved"
+
+    # extensions
     tasked = "tasked"
     user_canceled = "user_canceled"
 
@@ -47,11 +54,9 @@ class OrderStatusCode(StrEnum):
 class OrderStatus(BaseModel):
     timestamp: AwareDatetime
     status_code: OrderStatusCode
-    reason_code: str | None = None
-    reason_text: str | None = None
-    links: list[Link] = Field(default_factory=list)
-
-    model_config = ConfigDict(extra="allow")
+    reason_code: str | SkipJsonSchema[None] = None
+    reason_text: str | SkipJsonSchema[None] = None
+    links: list[Link]
 
 
 class OrderStatuses[T: OrderStatus](BaseModel):
@@ -82,13 +87,15 @@ class OrderProperties[T: OrderStatus](BaseModel):
 class Order[T: OrderStatus](_GeoJsonBase):
     # We need to enforce that orders have an id defined, as that is required to
     # retrieve them via the API
-    id: StrictStr
-    type: Literal["Feature"] = "Feature"
+    id: str | SkipJsonSchema[None] = None
+    user: str | SkipJsonSchema[None] = None
+    status: T | SkipJsonSchema[None] = None
+    created: AwareDatetime | SkipJsonSchema[None] = None
+    links: list[Link] = Field(default_factory=list)
 
+    type: Literal["Feature"] = "Feature"
     geometry: Geometry = Field(...)
     properties: OrderProperties[T] = Field(...)
-
-    links: list[Link] = Field(default_factory=list)
 
     __geojson_exclude_if_none__ = {"bbox", "id"}
 
