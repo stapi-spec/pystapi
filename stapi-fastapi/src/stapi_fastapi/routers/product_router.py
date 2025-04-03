@@ -18,6 +18,7 @@ from geojson_pydantic.geometries import Geometry
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
 from stapi_pydantic import (
+    Conformance,
     JsonSchemaModel,
     Link,
     OpportunityCollection,
@@ -37,6 +38,7 @@ from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_fastapi.routers.route_names import (
+    CONFORMANCE,
     CREATE_ORDER,
     GET_CONSTRAINTS,
     GET_OPPORTUNITY_COLLECTION,
@@ -88,6 +90,15 @@ class ProductRouter(APIRouter):
             name=f"{self.root_router.name}:{self.product.id}:{GET_PRODUCT}",
             methods=["GET"],
             summary="Retrieve this product",
+            tags=["Products"],
+        )
+
+        self.add_api_route(
+            path="/conformance",
+            endpoint=self.get_product_conformance,
+            name=f"{self.root_router.name}:{self.product.id}:{CONFORMANCE}",
+            methods=["GET"],
+            summary="Get conformance urls for the product",
             tags=["Products"],
         )
 
@@ -180,6 +191,15 @@ class ProductRouter(APIRouter):
                     ),
                 ),
                 rel="self",
+                type=TYPE_JSON,
+            ),
+            Link(
+                href=str(
+                    request.url_for(
+                        f"{self.root_router.name}:{self.product.id}:{CONFORMANCE}",
+                    ),
+                ),
+                rel="conformance",
                 type=TYPE_JSON,
             ),
             Link(
@@ -332,6 +352,12 @@ class ProductRouter(APIRouter):
                 )
             case x:
                 raise AssertionError(f"Expected code to be unreachable: {x}")
+
+    def get_product_conformance(self) -> Conformance:
+        """
+        Return conformance urls of a specific product
+        """
+        return Conformance.model_validate({"conforms_to": self.product.conformsTo})
 
     def get_product_constraints(self) -> JsonSchemaModel:
         """
