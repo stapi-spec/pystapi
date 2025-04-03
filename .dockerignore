@@ -18,3 +18,8 @@
 !/pystapi-validator/README.md
 !/pystapi-validator/src/*
 !/pystapi-validator/tests/*
+
+!/pystapi-client/pyproject.toml
+!/pystapi-client/README.md
+!/pystapi-client/src/*
+!/pystapi-client/tests/*
