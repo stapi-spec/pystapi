@@ -1,3 +1,5 @@
-CORE = "https://stapi.example.com/v0.1.0/core"
-OPPORTUNITIES = "https://stapi.example.com/v0.1.0/opportunities"
-ASYNC_OPPORTUNITIES = "https://stapi.example.com/v0.1.0/async-opportunities"
+from stapi_pydantic.constants import STAPI_VERSION
+
+CORE = f"https://stapi.example.com/v{STAPI_VERSION}/core"
+OPPORTUNITIES = f"https://stapi.example.com/v{STAPI_VERSION}/opportunities"
+ASYNC_OPPORTUNITIES = f"https://stapi.example.com/v{STAPI_VERSION}/async-opportunities"
