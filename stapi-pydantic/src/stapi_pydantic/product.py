@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from enum import Enum
 from typing import Any, Literal, TypeAlias
@@ -50,7 +52,7 @@ class Product(BaseModel):
     providers: list[Provider] = Field(default_factory=list)
     links: list[Link] = Field(default_factory=list)
 
-    def with_links(self: "Product", links: list[Link] | None = None) -> "Product":
+    def with_links(self: Product, links: list[Link] | None = None) -> Product:
         if not links:
             return self
 

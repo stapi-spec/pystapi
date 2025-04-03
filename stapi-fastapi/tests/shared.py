@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -92,7 +94,7 @@ class OffNadirRange(BaseModel):
     maximum: int = Field(ge=0, le=45)
 
     @model_validator(mode="after")
-    def validate_range(self) -> "OffNadirRange":
+    def validate_range(self) -> OffNadirRange:
         if self.minimum > self.maximum:
             raise ValueError("range minimum cannot be greater than maximum")
         return self
