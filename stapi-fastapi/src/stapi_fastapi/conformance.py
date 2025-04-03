@@ -1,6 +1,6 @@
-from stapi_pydantic.constants import STAPI_VERSION
-
 # TODO make these typed dicts to get type hints
+
+from stapi_pydantic.constants import STAPI_VERSION
 
 API = {
     "core": f"https://stapi.example.com/v{STAPI_VERSION}/core",
@@ -9,7 +9,6 @@ API = {
     "searches-opportunity-statuses": f"https://stapi.example.com/v{STAPI_VERSION}/searches-opportunity-statuses",
 }
 
-# Product Conformance Classes
 PRODUCT = {
     "opportunities": f"https://stapi.example.com/v{STAPI_VERSION}/opportunities",
     "opportunities-async": f"https://stapi.example.com/v{STAPI_VERSION}/opportunities-async",
