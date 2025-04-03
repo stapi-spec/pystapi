@@ -5,6 +5,7 @@ set -e
 scripts="$(cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 root=$(dirname "$scripts")
 
+echo "Starting test server"
 uv run fastapi dev "$root/stapi-fastapi/tests/application.py" >/dev/null 2>&1 &
 server_pid=$!
 
@@ -20,14 +21,17 @@ if [ $wait_result -ne 0 ]; then
 fi
 
 set +e
+echo "Validating API"
 uv run pystapi-validator/tests/validate_api.py --html=validation-report.html --self-contained-html
 validation_result=$?
 set -e
 
+echo "Stopping test server"
 kill $(pgrep -P $server_pid)
 
 if [ $validation_result -eq 0 ]; then
     echo "Validated OK!"
 else
+    echo "Validation failed!"
     exit 1
 fi
