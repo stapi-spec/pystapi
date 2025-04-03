@@ -22,6 +22,7 @@ dev = [
     "pre-commit-hooks>=5.0.0",
     "fastapi[standard]>=0.115.12",
     "pygithub>=2.6.1",
+    "respx>=0.22.0",
 ]
 docs = [
     "mkdocs-material>=9.6.11",
