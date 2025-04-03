@@ -1,10 +1,11 @@
+import sys
 from datetime import datetime, timedelta, timezone
 from itertools import product
 from zoneinfo import ZoneInfo
 
-try:
+if sys.version_info >= (3, 11):
     from datetime import UTC
-except ImportError:
+else:
     UTC = timezone.utc
 
 from pydantic import BaseModel, ValidationError

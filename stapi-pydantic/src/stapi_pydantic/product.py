@@ -1,11 +1,14 @@
+import sys
 from enum import Enum
 from typing import Any, Literal, TypeAlias
 
-try:
+if sys.version_info >= (3, 11):
     from enum import StrEnum
-except ImportError:
+else:
+
     class StrEnum(str, Enum):
         pass
+
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 

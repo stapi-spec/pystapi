@@ -1,12 +1,13 @@
+import sys
 from collections.abc import AsyncIterator, Callable, Generator, Iterator
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import urljoin
 
-try:
+if sys.version_info >= (3, 11):
     from datetime import UTC
-except ImportError:
+else:
     UTC = timezone.utc
 
 import pytest

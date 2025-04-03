@@ -1,8 +1,9 @@
+import sys
 from datetime import datetime, timedelta, timezone
 
-try:
+if sys.version_info >= (3, 11):
     from datetime import UTC
-except ImportError:
+else:
     UTC = timezone.utc
 
 import pytest

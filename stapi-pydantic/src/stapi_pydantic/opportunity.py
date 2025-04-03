@@ -1,11 +1,14 @@
+import sys
 from enum import Enum
 from typing import Any, Literal, TypeVar
 
-try:
+if sys.version_info >= (3, 11):
     from enum import StrEnum
-except ImportError:
+else:
+
     class StrEnum(str, Enum):
         pass
+
 
 from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
