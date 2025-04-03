@@ -8,7 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- python `3.11` support ([#73](https://github.com/stapi-spec/pystapi/pull/73))
 - `stapi_type` and `stapi_version` ([#54](https://github.com/stapi-spec/pystapi/pull/54))
+
+### Changed
+
+- `s/canceled/cancelled/` ([#75](https://github.com/stapi-spec/pystapi/pull/75))
 
 ## [0.0.2] - 2025-04-02
 

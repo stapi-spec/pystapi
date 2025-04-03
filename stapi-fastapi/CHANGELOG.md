@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 - Add constants for route names to be used in link href generation
 - Opportunity search statuses ([#78](https://github.com/stapi-spec/pystapi/pull/78))
+- Conformance url to product ([#85](https://github.com/stapi-spec/pystapi/pull/85))
 
 ## Changed
 

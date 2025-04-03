@@ -2,6 +2,7 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 from stapi_fastapi.models.product import Product
+from stapi_pydantic import Conformance
 
 from .shared import pagination_tester
 
@@ -19,7 +20,7 @@ def test_products_response(stapi_client: TestClient):
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
-def test_product_response_self_link(
+def test_product_response_links(
     product_id: str,
     stapi_client: TestClient,
     assert_link,
@@ -32,10 +33,26 @@ def test_product_response_self_link(
 
     url = "GET /products"
     assert_link(url, body, "self", f"/products/{product_id}")
+    assert_link(
+        url, body, "conformance", f"/products/{product_id}/conformance"
+    )  # https://github.com/stapi-spec/stapi-spec/issues/253
     assert_link(url, body, "constraints", f"/products/{product_id}/constraints")
     assert_link(url, body, "order-parameters", f"/products/{product_id}/order-parameters")
     assert_link(url, body, "opportunities", f"/products/{product_id}/opportunities")
     assert_link(url, body, "create-order", f"/products/{product_id}/orders", method="POST")
+
+
+@pytest.mark.parametrize("product_id", ["test-spotlight"])
+def test_product_conformance_response(
+    product_id: str,
+    stapi_client: TestClient,
+):
+    res = stapi_client.get(f"/products/{product_id}/constraints")
+    assert res.status_code == status.HTTP_200_OK
+    assert res.headers["Content-Type"] == "application/json"
+
+    Conformance.model_validate(res.json())
+    # TODO unsure what conformance products should support, as of yet
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
@@ -81,6 +98,11 @@ def test_get_products_pagination(
                 {
                     "href": f"http://stapiserver/products/{product_id}",
                     "rel": "self",
+                    "type": "application/json",
+                },
+                {
+                    "href": f"http://stapiserver/products/{product_id}/conformance",
+                    "rel": "conformance",
                     "type": "application/json",
                 },
                 {
