@@ -47,7 +47,7 @@ def test_product_conformance_response(
     product_id: str,
     stapi_client: TestClient,
 ):
-    res = stapi_client.get(f"/products/{product_id}/constraints")
+    res = stapi_client.get(f"/products/{product_id}/queryables")
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/json"
 
