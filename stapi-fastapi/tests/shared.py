@@ -18,6 +18,7 @@ from stapi_pydantic import (
     OpportunityCollection,
     OpportunityProperties,
     OpportunitySearchRecord,
+    OpportunitySearchStatus,
     Order,
     OrderParameters,
     OrderStatus,
@@ -67,6 +68,12 @@ class InMemoryOpportunityDB:
 
     def get_search_record(self, search_id: str) -> OpportunitySearchRecord | None:
         return deepcopy(self._search_records.get(search_id))
+
+    def get_search_record_statuses(self, search_id: str) -> list[OpportunitySearchStatus] | None:
+        if search_record := self.get_search_record(search_id):
+            return [deepcopy(search_record.status)]
+        else:
+            return None
 
     def get_search_records(self) -> list[OpportunitySearchRecord]:
         return deepcopy(list(self._search_records.values()))

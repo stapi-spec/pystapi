@@ -18,6 +18,7 @@ from stapi_pydantic import (
 
 from .backends import (
     mock_get_opportunity_search_record,
+    mock_get_opportunity_search_record_statuses,
     mock_get_opportunity_search_records,
     mock_get_order,
     mock_get_order_statuses,
@@ -110,6 +111,7 @@ def stapi_client_async_opportunity(
         get_order_statuses=mock_get_order_statuses,
         get_opportunity_search_records=mock_get_opportunity_search_records,
         get_opportunity_search_record=mock_get_opportunity_search_record,
+        get_opportunity_search_record_statuses=mock_get_opportunity_search_record_statuses,
         conformances=[CORE, OPPORTUNITIES, ASYNC_OPPORTUNITIES],
     )
 
