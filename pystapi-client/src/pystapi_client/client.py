@@ -284,7 +284,7 @@ class Client:
         product_id: str,
         date_range: tuple[str, str],
         geometry: dict[str, Any],
-        cql2_filter: CQL2Filter | None = None,
+        cql2_filter: CQL2Filter | None = None,  # type: ignore[type-arg]
         limit: int = 10,
     ) -> Iterator[Opportunity]:  # type: ignore[type-arg]
         # TODO Update return type after the pydantic model generic type is fixed
