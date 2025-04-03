@@ -26,29 +26,27 @@ class StapiIO:
         request_modifier: Callable[[Request], Request] | None = None,
         timeout: TimeoutTypes | None = None,
         max_retries: int | None = 5,
-    ):
-        """Initialize class for API IO
+    ) -> None:
+        """Initialize class for API IO.
 
         Args:
             root_url: The root URL of the STAPI API
             headers: Optional dictionary of headers to include in all requests
             parameters: Optional dictionary of query string parameters to
-              include in all requests.
+                    include in all requests
             request_modifier: Optional callable that can be used to modify Request
-              objects before they are sent. If provided, the callable receives a
-              `httpx.Request` and must either modify the object directly or return
-              a new / modified request instance.
+                    objects before they are sent. If provided, the callable receives a
+                    `httpx.Request` and must either modify the object directly or return
+                    a new / modified request instance
             timeout: Optional timeout configuration. Can be:
-              - None to disable timeouts
-              - float for a default timeout
-              - tuple of (connect, read, write, pool) timeouts, each being float or None
-              - httpx.Timeout instance for fine-grained control
-              See `httpx timeouts <https://www.python-httpx.org/advanced/timeouts/>`__ for details.
+                    - None to disable timeouts
+                    - float for a default timeout
+                    - tuple of (connect, read, write, pool) timeouts, each being float or None
+                    - httpx.Timeout instance for fine-grained control
+                    See `httpx timeouts <https://www.python-httpx.org/advanced/timeouts/>`__
+                    for details
             max_retries: Optional number of times to retry requests. Set to ``None`` to
-              disable retries. Defaults to 5.
-
-        Return:
-            StapiIO : StapiIO instance
+                    disable retries. Defaults to 5
         """
         self.root_url = root_url
         transport = None
@@ -71,13 +69,14 @@ class StapiIO:
         """Updates this Stapi's headers, parameters, and/or request_modifier.
 
         Args:
-            headers: Optional dictionary of headers to include in all requests.
+            headers: Optional dictionary of headers to include in all requests
             parameters: Optional dictionary of query string parameters to
-              include in all requests.
+                    include in all requests
             request_modifier: Optional callable that can be used to modify Request
-              objects before they are sent. If provided, the callable receives a
-              `httpx.Request` and must either modify the object directly or return
-              a new / modified request instance.
+                    objects before they are sent. If provided, the callable receives a
+                    `httpx.Request` and must either modify the object directly or return
+                    a new / modified request instance
+
         """
         self.session.headers.update(headers or {})
         self.session.params.merge(parameters or {})
@@ -201,11 +200,7 @@ class StapiIO:
         endpoint.
 
         Args:
-            url: The URL to read from
-            method: The HTTP method to use. Defaults to "GET"
-            parameters: Optional dictionary of parameters to include in the request.
-                For GET requests, these are added as query parameters.
-                For POST requests, these are sent as JSON in the request body
+            link: The link to read from
             lookup_key: The key in the response JSON that contains the iterable data.
 
         # TODO update endpoint examples

@@ -67,34 +67,33 @@ class Client:
         request_modifier: Callable[[Request], Request] | None = None,
         timeout: TimeoutTypes | None = None,
     ) -> "Client":
-        """Opens a STAPI API client
+        """Opens a STAPI API client.
 
         Args:
-            url: The URL of a STAPI API.
-            headers: A dictionary of additional headers to use in all requests
-                made to any part of this STAPI API.
+            url: The URL of a STAPI API
+            headers: Optional dictionary of additional headers to use in all requests
+                made to any part of this STAPI API
             parameters: Optional dictionary of query string parameters to
-                include in all requests.
-            request_modifier: A callable that either modifies a `Request` instance or
+                include in all requests
+            request_modifier: Optional callable that modifies a Request instance or
                 returns a new one. This can be useful for injecting Authentication
                 headers and/or signing fully-formed requests (e.g. signing requests
                 using AWS SigV4).
-
                 The callable should expect a single argument, which will be an instance
                 of :class:`httpx.Request`.
-
                 If the callable returns a `httpx.Request`, that will be used.
                 Alternately, the callable may simply modify the provided request object
-                and return `None`.
+                and return `None`
             timeout: Optional timeout configuration. Can be:
-              - None to disable timeouts
-              - float or None for a default timeout
-              - tuple of (connect, read, write, pool) timeouts, each being float or None
-              - httpx.Timeout instance for fine-grained control
-              See `httpx timeouts <https://www.python-httpx.org/advanced/timeouts/>`__ for details.
+                - None to disable timeouts
+                - float for a default timeout
+                - tuple of (connect, read, write, pool) timeouts, each being float or None
+                - httpx.Timeout instance for fine-grained control
+                See `httpx timeouts <https://www.python-httpx.org/advanced/timeouts/>`__
+                for details
 
-        Return:
-            client : A :class:`Client` instance for this STAPI API
+        Returns:
+            Client: A :class:`Client` instance for this STAPI API
         """
         stapi_io = StapiIO(
             root_url=AnyUrl(url),
@@ -164,12 +163,14 @@ class Client:
             ]
 
     def read_conformance(self) -> None:
-        """Read the API conformance from the root of the STAPI API
+        """Read the API conformance from the root of the STAPI API.
 
-        The conformance is stored in `Client.conforms_to`.
+        The conformance is stored in `Client.conforms_to`. This method attempts to read
+        from "/conformance" endpoint first, then falls back to the root endpoint "/".
 
-        Raises:
-            No exceptions (silently continues if endpoints return APIError)
+        Note:
+            This method silently continues if endpoints return APIError, no exceptions
+            are raised.
         """
         conformance: list[str] = []
         for endpoint in ["/conformance", "/"]:
@@ -244,8 +245,8 @@ class Client:
         provides such an endpoint.
 
         Args:
-            name: Name of :py:class:`ConformanceClasses` keys to check
-                conformance against.
+            conformance_class: Either a ConformanceClasses enum member or a string name of a conformance class to check against
+
 
         Return:
             Indicates if the API conforms to the given spec or URI.
@@ -371,7 +372,7 @@ class Client:
             str: The href for the products endpoint
 
         Raises:
-            ValueError if no products link is found
+            ValueError: When no products link is found in the API
         """
         product_link = self.get_single_link("products")
         if product_link is None:
@@ -425,7 +426,7 @@ class Client:
             Order: A STAPI Order
 
         Raises:
-            ValueError if order_id does not exist.
+            ValueError: When the specified order_id does not exist
         """
 
         order_endpoint = self._get_orders_href(order_id)
@@ -446,7 +447,7 @@ class Client:
             The href for the orders endpoint
 
         Raises:
-            ValueError if no orders link is found
+            ValueError: When no orders link is found in the API
         """
 
         order_link = self.get_single_link("orders")

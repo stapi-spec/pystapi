@@ -13,22 +13,11 @@ python -m pip install pystapi-client
 
 ## Currently Supported Endpoints
 
-These endpoints are fully implemented and available in the current version of PySTAPI Client.
-
-| Category | Endpoint | Description |
-|----------|----------|-------------|
-| Root | `/` | Root endpoint (for links and conformance) |
-| Root | `/conformance` | Conformance information |
-| Products | `/products` | List all products |
-| Products | `/products/{product_id}` | Get specific product |
-| Orders | `/orders` | List all orders |
-| Orders | `/orders/{order_id}` | Get specific order |
+STAPI endpoints are available in PySTAPI Client.
 
 ## Usage Example
 
 The `pystapi_client.Client` class is the main interface for working with services that conform to the STAPI API spec.
-
-Pre-request: The app should be accessible at `http://localhost:8000`.
 
 ```python
 from pystapi_client import Client
@@ -40,14 +29,14 @@ client = Client.open("https://api.example.com/stapi")
 products = list(client.get_products())
 
 # Get specific product
-product = client.get_product(product_id="test-spotlight")
+product = client.get_product("test-spotlight")
 
 # List all Opportunities for a Product
-opportunities = client.get_product_opportunities(product_id="test-spotlight")
+opportunities = client.get_product_opportunities("test-spotlight")
 
 # List orders
 orders = client.get_orders()
 
 # Get specific order
-order = client.get_order(order_id="test-order")
+order = client.get_order("test-order")
 ```
