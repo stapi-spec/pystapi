@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -16,7 +16,6 @@ from stapi_pydantic import (
     OrderSearchParameters,
     OrderStatus,
     OrderStatusCode,
-    ProductType,
 )
 
 
@@ -40,7 +39,7 @@ async def stapi_create_order(
     """
     try:
         status = OrderStatus(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             status_code=OrderStatusCode.received,
         )
         order = Order(
@@ -48,7 +47,7 @@ async def stapi_create_order(
             geometry=payload.geometry,
             properties=OrderProperties(
                 product_id=product_router.product.id,
-                created=datetime.now(timezone.utc),
+                created=datetime.now(UTC),
                 status=status,
                 search_parameters=OrderSearchParameters(
                     geometry=payload.geometry,
@@ -72,7 +71,6 @@ async def stapi_create_order(
 
 
 example_product = Product(
-    type=ProductType.product,
     id="{productId}",
     description="An example product",
     license="CC-BY-4.0",

@@ -25,7 +25,7 @@ from .order import (
     OrderStatusCode,
     OrderStatuses,
 )
-from .product import Product, ProductsCollection, ProductType, Provider, ProviderRole
+from .product import Product, ProductsCollection, Provider, ProviderRole
 from .root import RootResponse
 from .shared import Link
 
