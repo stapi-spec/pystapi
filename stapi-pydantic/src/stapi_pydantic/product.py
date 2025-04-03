@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Literal, Self
+from typing import Any, Literal, TypeAlias
 
 try:
     from enum import StrEnum
@@ -12,7 +12,7 @@ from pydantic import AnyHttpUrl, BaseModel, Field
 from .constants import STAPI_VERSION
 from .shared import Link
 
-type Constraints = BaseModel
+Constraints: TypeAlias = BaseModel
 
 
 class ProviderRole(StrEnum):
@@ -47,7 +47,7 @@ class Product(BaseModel):
     providers: list[Provider] = Field(default_factory=list)
     links: list[Link] = Field(default_factory=list)
 
-    def with_links(self, links: list[Link] | None = None) -> Self:
+    def with_links(self: "Product", links: list[Link] | None = None) -> "Product":
         if not links:
             return self
 
