@@ -24,10 +24,7 @@ from tests.shared import (
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, Any]]:
     try:
-        yield {
-            "_orders_db": InMemoryOrderDB(),
-            "_opportunities_db": InMemoryOpportunityDB(),
-        }
+        yield {"_orders_db": InMemoryOrderDB(), "_opportunities_db": InMemoryOpportunityDB(), "_opportunities": []}
     finally:
         pass
 

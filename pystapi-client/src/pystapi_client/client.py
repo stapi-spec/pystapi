@@ -3,14 +3,23 @@ import urllib
 import urllib.parse
 import warnings
 from collections.abc import Callable, Iterable, Iterator
-from typing import (
-    Any,
-)
+from datetime import datetime
+from typing import Any
 
 from httpx import URL, Request
 from httpx._types import TimeoutTypes
 from pydantic import AnyUrl
-from stapi_pydantic import Link, Order, OrderCollection, Product, ProductsCollection
+from stapi_pydantic import (
+    CQL2Filter,
+    Link,
+    OpportunityCollection,
+    OpportunityPayload,
+    Order,
+    OrderCollection,
+    OrderPayload,
+    Product,
+    ProductsCollection,
+)
 
 from pystapi_client.conformance import ConformanceClasses
 from pystapi_client.exceptions import APIError
@@ -241,7 +250,7 @@ class Client:
         """Get all products from this STAPI API
 
         Returns:
-            ProductsCollection: A collection of STAPI Products
+            Iterator[ProductsCollection]: An iterator of STAPI Products Collections
         """
         products_endpoint = self._get_products_href()
 
@@ -250,9 +259,9 @@ class Client:
         else:
             parameters = {"limit": limit}
 
-        products_collection_iterator = self.stapi_io.get_pages(
-            products_endpoint, parameters=parameters, lookup_key="products"
-        )
+        products_link = Link(href=products_endpoint, method="GET", body=parameters, rel="")
+
+        products_collection_iterator = self.stapi_io.get_pages(link=products_link, lookup_key="products")
         for products_collection in products_collection_iterator:
             yield ProductsCollection.model_validate(products_collection)
 
@@ -264,26 +273,97 @@ class Client:
 
         Returns:
             Product: A STAPI Product
+        """
+        product_endpoint = self._get_products_href(product_id)
+        product_json = self.stapi_io.read_json(endpoint=product_endpoint)
+        return Product.model_validate(product_json)
+
+    def get_product_opportunities(
+        self,
+        product_id: str,
+        date_range: tuple[str, str],
+        geometry: dict[str, Any],
+        cql2_filter: CQL2Filter | None = None,
+        limit: int = 10,
+    ) -> Iterator[OpportunityCollection]:  # type: ignore[type-arg]
+        # TODO Update return type after the pydantic model generic type is fixed
+        """Get all opportunities for a product from this STAPI API
+        Args:
+            product_id: The Product ID to get opportunities for
+            opportunity_parameters: The parameters for the opportunities
+
+        Returns:
+            Iterator[OpportunityCollection]: An iterator of STAPI Opportunity Collections
 
         Raises:
             ValueError if product_id does not exist.
         """
+        product_opportunities_endpoint = self._get_products_href(product_id, subpath="opportunities")
 
-        product_endpoint = self._get_products_href(product_id)
-        product_json = self.stapi_io.read_json(product_endpoint)
+        opportunity_parameters = OpportunityPayload.model_validate(
+            {
+                "datetime": (
+                    datetime.fromisoformat(date_range[0]),
+                    datetime.fromisoformat(date_range[1]),
+                ),
+                "geometry": geometry,
+                "filter": cql2_filter,
+                "limit": limit,
+            }
+        )
+        opportunities_first_page_link = Link(
+            href=product_opportunities_endpoint, method="POST", body=opportunity_parameters.model_dump(), rel=""
+        )
+        opportunities_first_page_json, next_link = self.stapi_io._get_next_page(
+            opportunities_first_page_link, "features"
+        )
 
-        if product_json is None:
-            raise ValueError(f"Product {product_id} not found")
+        if opportunities_first_page_json:
+            opportunities_first_page = OpportunityCollection.model_validate(opportunities_first_page_json)  # type:ignore[var-annotated]
+            yield opportunities_first_page
+        else:
+            yield OpportunityCollection(features=[])
 
-        return Product.model_validate(product_json)
+        if not next_link:
+            return
 
-    def _get_products_href(self, product_id: str | None = None) -> str:
+        product_opportunities_json = self.stapi_io.get_pages(link=next_link, lookup_key="features")
+
+        for opportunity_collection in product_opportunities_json:
+            yield OpportunityCollection.model_validate(opportunity_collection)
+
+    def create_product_order(self, product_id: str, order_parameters: OrderPayload) -> Order:  # type: ignore[type-arg]
+        # TODO Update return type after the pydantic model generic type is fixed
+        """Create an order for a product
+
+        Args:
+            product_id: The Product ID to place an order for
+            order_parameters: The parameters for the order
+        """
+        product_order_endpoint = self._get_products_href(product_id, subpath="orders")
+        product_order_json = self.stapi_io.read_json(
+            endpoint=product_order_endpoint, method="POST", parameters=order_parameters.model_dump()
+        )
+
+        return Order.model_validate(product_order_json)
+
+    def _get_products_href(self, product_id: str | None = None, subpath: str | None = None) -> str:
         product_link = self.get_single_link("products")
         if product_link is None:
             raise ValueError("No products link found")
         product_url = URL(str(product_link.href))
+
+        path = None
+
         if product_id is not None:
-            product_url = product_url.copy_with(path=f"{product_url.path}/{product_id}")
+            path = f"{product_url.path}/{product_id}"
+
+        if subpath is not None:
+            path = f"{path}/{subpath}"
+
+        if path is not None:
+            product_url = product_url.copy_with(path=path)
+
         return str(product_url)
 
     def get_orders(self, limit: int | None = None) -> Iterator[OrderCollection]:  # type: ignore[type-arg]
@@ -300,9 +380,9 @@ class Client:
         else:
             parameters = {"limit": limit}
 
-        orders_collection_iterator = self.stapi_io.get_pages(
-            orders_endpoint, parameters=parameters, lookup_key="features"
-        )
+        orders_link = Link(href=orders_endpoint, method="GET", body=parameters, rel="")
+
+        orders_collection_iterator = self.stapi_io.get_pages(link=orders_link, lookup_key="features")
         for orders_collection in orders_collection_iterator:
             yield OrderCollection.model_validate(orders_collection)
 
