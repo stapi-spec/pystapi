@@ -1,9 +1,7 @@
-import logging
 from typing import Any
 
 from fastapi import APIRouter, Path, Request
 from stapi_fastapi.conformance import CORE
-from stapi_fastapi.models.product import Product
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_pydantic import (
     Conformance,
@@ -11,13 +9,12 @@ from stapi_pydantic import (
     OrderCollection,
     OrderStatus,
     OrderStatuses,
+    Product,
     ProductsCollection,
     RootResponse,
 )
 
 from .product_router import ProductRouter
-
-logger = logging.getLogger(__name__)
 
 
 class RootRouter(APIRouter):

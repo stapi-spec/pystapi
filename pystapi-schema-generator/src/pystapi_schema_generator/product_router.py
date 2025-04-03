@@ -1,17 +1,13 @@
 from __future__ import annotations
 
-import logging
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from fastapi import (
     APIRouter,
-    Header,
-    HTTPException,
     Request,
     Response,
     status,
 )
-from stapi_fastapi.models.product import Product
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_pydantic import (
     JsonSchemaModel,
@@ -22,25 +18,10 @@ from stapi_pydantic import (
     OrderPayload,
     OrderStatus,
     Prefer,
+    Product,
 )
 
-if TYPE_CHECKING:
-    from .router import RootRouter
-
-logger = logging.getLogger(__name__)
-
-
-def get_prefer(prefer: str | None = Header(None)) -> str | None:
-    if prefer is None:
-        return None
-
-    if prefer not in Prefer:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid Prefer header value: {prefer}",
-        )
-
-    return Prefer(prefer)
+from .router import RootRouter
 
 
 class ProductRouter(APIRouter):
