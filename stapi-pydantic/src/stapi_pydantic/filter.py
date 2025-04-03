@@ -1,4 +1,4 @@
-from typing import Annotated, Any
+from typing import Annotated, Any, TypeAlias
 
 from cql2 import Expr
 from pydantic import BeforeValidator
@@ -11,7 +11,7 @@ def validate(v: dict[str, Any]) -> dict[str, Any]:
     return v
 
 
-type CQL2Filter = Annotated[
+CQL2Filter: TypeAlias = Annotated[
     dict,
     BeforeValidator(validate),
 ]

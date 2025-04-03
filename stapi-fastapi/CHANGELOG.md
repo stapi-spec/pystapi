@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Added
 
 - Add constants for route names to be used in link href generation
+- Conformance url to product ([#85](https://github.com/stapi-spec/pystapi/pull/85))
 
 ## Changed
 

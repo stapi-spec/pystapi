@@ -3,8 +3,9 @@ name = "pystapi"
 version = "0.0.0" # This package should never be released, only the workspace members should be
 description = "Monorepo for Satellite Tasking API (STAPI) Specification Python packages"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
+    "pystapi-client",
     "pystapi-validator",
     "stapi-pydantic",
     "stapi-fastapi"
@@ -30,9 +31,10 @@ docs = [
 default-groups = ["dev", "docs"]
 
 [tool.uv.workspace]
-members = ["pystapi-validator", "stapi-pydantic", "stapi-fastapi"]
+members = ["pystapi-validator", "stapi-pydantic", "pystapi-client", "stapi-fastapi"]
 
 [tool.uv.sources]
+pystapi-client.workspace = true
 pystapi-validator.workspace = true
 stapi-pydantic.workspace = true
 stapi-fastapi.workspace = true
@@ -59,6 +61,7 @@ max-complexity = 8  # default 10
 [tool.mypy]
 strict = true
 files = [
+    "pystapi-client/src/pystapi_client/**/*.py",
     "pystapi-validator/src/pystapi_validator/**/*.py",
     "stapi-pydantic/src/stapi_pydantic/**/*.py",
     "stapi-fastapi/src/stapi_fastapi/**/*.py"
