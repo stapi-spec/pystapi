@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
@@ -25,7 +25,6 @@ from .shared import (
 )
 from .test_datetime_interval import rfc3339_strftime
 
-UTC = timezone.utc
 
 
 @pytest.mark.mock_products([product_test_spotlight])
@@ -219,7 +218,7 @@ def test_async_opportunity_search_to_completion(
         )
     )
     search_record.status = OpportunitySearchStatus(
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
         status_code=OpportunitySearchStatusCode.completed,
     )
 

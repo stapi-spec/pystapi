@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi import status
@@ -10,7 +10,6 @@ from stapi_pydantic import Order, OrderPayload, OrderStatus, OrderStatusCode
 
 from .shared import MyOrderParameters, find_link, pagination_tester
 
-UTC = timezone.utc
 NOW = datetime.now(UTC)
 START = NOW
 END = START + timedelta(days=5)
@@ -27,9 +26,9 @@ def test_empty_order(stapi_client: TestClient):
 @pytest.fixture
 def create_order_payloads() -> list[OrderPayload]:
     datetimes = [
-        ("2024-10-09T18:55:33+00:00", "2024-10-12T18:55:33+00:00"),
-        ("2024-10-15T18:55:33+00:00", "2024-10-18T18:55:33+00:00"),
-        ("2024-10-20T18:55:33+00:00", "2024-10-23T18:55:33+00:00"),
+        ("2024-10-09T18:55:33Z", "2024-10-12T18:55:33Z"),
+        ("2024-10-15T18:55:33Z", "2024-10-18T18:55:33Z"),
+        ("2024-10-20T18:55:33Z", "2024-10-23T18:55:33Z"),
     ]
     payloads = []
     for start, end in datetimes:
@@ -175,17 +174,17 @@ def order_statuses() -> dict[str, list[OrderStatus]]:
     statuses = {
         "test_order_id": [
             OrderStatus(
-                timestamp=datetime(2025, 1, 14, 2, 21, 48, 466726, tzinfo=timezone.utc),
+                timestamp=datetime(2025, 1, 14, 2, 21, 48, 466726, tzinfo=UTC),
                 status_code=OrderStatusCode.received,
                 links=[],
             ),
             OrderStatus(
-                timestamp=datetime(2025, 1, 15, 5, 20, 48, 466726, tzinfo=timezone.utc),
+                timestamp=datetime(2025, 1, 15, 5, 20, 48, 466726, tzinfo=UTC),
                 status_code=OrderStatusCode.accepted,
                 links=[],
             ),
             OrderStatus(
-                timestamp=datetime(2025, 1, 16, 10, 15, 32, 466726, tzinfo=timezone.utc),
+                timestamp=datetime(2025, 1, 16, 10, 15, 32, 466726, tzinfo=UTC),
                 status_code=OrderStatusCode.completed,
                 links=[],
             ),

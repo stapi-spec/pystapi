@@ -1,6 +1,6 @@
 from collections.abc import AsyncIterator, Callable, Generator, Iterator
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import urljoin
 
@@ -32,8 +32,6 @@ from .shared import (
     product_test_spotlight_sync_opportunity,
 )
 from .test_datetime_interval import rfc3339_strftime
-
-UTC = timezone.utc
 
 
 @pytest.fixture(scope="session")

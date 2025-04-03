@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from itertools import product
 from zoneinfo import ZoneInfo
 
@@ -7,7 +7,6 @@ from pyrfc3339.utils import format_timezone
 from pytest import mark, raises
 from stapi_pydantic import DatetimeInterval
 
-UTC = timezone.utc
 EUROPE_BERLIN = ZoneInfo("Europe/Berlin")
 
 

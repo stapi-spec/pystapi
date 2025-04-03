@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+from enum import StrEnum
 from typing import Any, Literal, TypeAlias
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
-from .compatibility import StrEnum
 from .constants import STAPI_VERSION
 from .shared import Link
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal, TypeAlias
 from urllib.parse import parse_qs, urlparse
 from uuid import uuid4
@@ -205,7 +205,7 @@ product_test_satellite_provider_sync_opportunity = Product(
 
 
 def create_mock_opportunity() -> Opportunity:
-    now = datetime.now(timezone.utc)  # Use timezone-aware datetime
+    now = datetime.now(UTC)  # Use timezone-aware datetime
     start = now
     end = start + timedelta(days=5)
 
