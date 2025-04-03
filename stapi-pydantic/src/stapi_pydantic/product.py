@@ -1,12 +1,13 @@
 from enum import StrEnum
-from typing import Any, Self
+from typing import Any, Literal, Self, TypeAlias
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 from pydantic.json_schema import SkipJsonSchema
 
+from .constants import STAPI_VERSION
 from .shared import Link
 
-type Constraints = BaseModel
+Constraints: TypeAlias = BaseModel
 
 
 class ProviderRole(StrEnum):
@@ -28,12 +29,11 @@ class Provider(BaseModel):
         super().__init__(url=url, **kwargs)
 
 
-class ProductType(StrEnum):
-    product = "Product"
-
-
 class Product(BaseModel):
-    type_: ProductType | SkipJsonSchema[None] = Field(alias="type")
+    type_: Literal["Collection"] = Field(default="Collection", alias="type")
+    stapi_type: Literal["Product"] = "Product"
+    stapi_version: str = STAPI_VERSION
+    conformsTo: list[str] = Field(default_factory=list)
     id: str
     title: str | SkipJsonSchema[None] = None
     description: str

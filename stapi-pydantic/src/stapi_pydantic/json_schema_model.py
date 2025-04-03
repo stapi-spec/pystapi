@@ -18,7 +18,7 @@ def serialize(v: type[BaseModel]) -> dict[str, Any]:
     return v.model_json_schema()
 
 
-type JsonSchemaModel = Annotated[
+JsonSchemaModel = Annotated[
     type[BaseModel],
     PlainValidator(validate),
     PlainSerializer(serialize),
