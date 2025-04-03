@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from stapi_pydantic import Constraints, OpportunityProperties, OrderParameters
+from stapi_pydantic import OpportunityProperties, OrderParameters, Queryables
 from stapi_pydantic import Product as BaseProduct
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ class Product(BaseProduct):
     _get_opportunity_collection: GetOpportunityCollection | None
 
     # we don't want to include these in the model fields
-    _constraints: type[Constraints]
+    _queryables: type[Queryables]
     _opportunity_properties: type[OpportunityProperties]
     _order_parameters: type[OrderParameters]
 
@@ -32,7 +32,7 @@ class Product(BaseProduct):
         search_opportunities: SearchOpportunities | None = None,
         search_opportunities_async: SearchOpportunitiesAsync | None = None,
         get_opportunity_collection: GetOpportunityCollection | None = None,
-        constraints: type[Constraints],
+        queryables: type[Queryables],
         opportunity_properties: type[OpportunityProperties],
         order_parameters: type[OrderParameters],
         **kwargs: Any,
@@ -49,7 +49,7 @@ class Product(BaseProduct):
         self._search_opportunities = search_opportunities
         self._search_opportunities_async = search_opportunities_async
         self._get_opportunity_collection = get_opportunity_collection
-        self._constraints = constraints
+        self._queryables = queryables
         self._opportunity_properties = opportunity_properties
         self._order_parameters = order_parameters
 
@@ -84,8 +84,8 @@ class Product(BaseProduct):
         return self._search_opportunities_async is not None and self._get_opportunity_collection is not None
 
     @property
-    def constraints(self) -> type[Constraints]:
-        return self._constraints
+    def queryables(self) -> type[Queryables]:
+        return self._queryables
 
     @property
     def opportunity_properties(self) -> type[OpportunityProperties]:

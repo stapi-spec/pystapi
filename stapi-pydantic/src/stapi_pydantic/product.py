@@ -1,12 +1,10 @@
 from enum import StrEnum
-from typing import Any, Literal, Self, TypeAlias
+from typing import Any, Literal, Self
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
 from .constants import STAPI_VERSION
 from .shared import Link
-
-Constraints: TypeAlias = BaseModel
 
 
 class ProviderRole(StrEnum):
