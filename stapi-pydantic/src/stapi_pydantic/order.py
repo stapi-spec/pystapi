@@ -13,6 +13,7 @@ from pydantic import (
     field_validator,
 )
 
+from .constants import STAPI_VERSION
 from .datetime_interval import DatetimeInterval
 from .filter import CQL2Filter
 from .opportunity import OpportunityProperties
@@ -84,6 +85,8 @@ class Order[T: OrderStatus](_GeoJsonBase):
     # retrieve them via the API
     id: StrictStr
     type: Literal["Feature"] = "Feature"
+    stapi_type: Literal["Order"] = "Order"
+    stapi_version: str = STAPI_VERSION
 
     geometry: Geometry = Field(...)
     properties: OrderProperties[T] = Field(...)
