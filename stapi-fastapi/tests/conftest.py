@@ -113,11 +113,15 @@ def stapi_client_async_opportunity(
         get_opportunity_search_records=mock_get_opportunity_search_records,
         get_opportunity_search_record=mock_get_opportunity_search_record,
         get_opportunity_search_record_statuses=mock_get_opportunity_search_record_statuses,
-        conformances=[API["core"]],
+        conformances=[
+            API["core"],
+            API["searches-opportunity"],
+            API["searches-opportunity-statuses"],
+        ],
     )
 
     for mock_product in mock_products:
-        mock_product.conformsTo = [PRODUCT["geojson-point"]]
+        mock_product.conformsTo = [PRODUCT["opportunities"], PRODUCT["opportunities-async"], PRODUCT["geojson-point"]]
         root_router.add_product(mock_product)
 
     app = FastAPI(lifespan=lifespan)
