@@ -54,7 +54,7 @@ uv run fastapi dev stapi-fastapi/tests/application.py
 
 The app should be accessible at `http://localhost:8000`.
 
-### pustapi-client
+### pystapi-client
 
 The `pystapi-client` package is a Python client (CLI tool) focused on interfacing with the STAPI specification, specifically with a STAPI server. This is a work in progress.
 
