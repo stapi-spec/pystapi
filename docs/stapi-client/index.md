@@ -9,6 +9,6 @@ A Python client (CLI tool) for interfacing with a [Satellite Tasking API (STAPI)
 ## Installation
 
 ```shell
-uv pip install pystapi-client
+python -m pip install pystapi-client
 ```
 
