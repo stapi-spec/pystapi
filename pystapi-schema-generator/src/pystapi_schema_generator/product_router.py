@@ -17,18 +17,6 @@ from fastapi.responses import JSONResponse
 from geojson_pydantic.geometries import Geometry
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
-from stapi_pydantic import (
-    JsonSchemaModel,
-    Link,
-    OpportunityCollection,
-    OpportunityPayload,
-    OpportunitySearchRecord,
-    Order,
-    OrderPayload,
-    OrderStatus,
-    Prefer,
-)
-
 from stapi_fastapi.constants import TYPE_JSON
 from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
 from stapi_fastapi.models.product import Product
@@ -40,6 +28,17 @@ from stapi_fastapi.routers.route_names import (
     GET_ORDER_PARAMETERS,
     GET_PRODUCT,
     SEARCH_OPPORTUNITIES,
+)
+from stapi_pydantic import (
+    JsonSchemaModel,
+    Link,
+    OpportunityCollection,
+    OpportunityPayload,
+    OpportunitySearchRecord,
+    Order,
+    OrderPayload,
+    OrderStatus,
+    Prefer,
 )
 
 if TYPE_CHECKING:
@@ -127,12 +126,22 @@ class ProductRouter(APIRouter):
         self.add_api_route(
             path="/orders",
             endpoint=_create_order,
-            name=f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}",
             methods=["POST"],
             response_class=GeoJSONResponse,
             status_code=status.HTTP_201_CREATED,
-            summary="Create an order for the product",
-            tags=["Products"],
+            tags=["Orders"],
+            summary="create a new order for product with id `productId`",
+            description="...",
+        )
+
+        self.add_api_route(
+            path="/orders",
+            endpoint=root_router.get_orders,
+            methods=["GET"],
+            response_class=GeoJSONResponse,
+            tags=["Orders"],
+            summary="get a list of orders for the specific product",
+            description="...",
         )
 
         if product.supports_opportunity_search or root_router.supports_async_opportunity_search:
