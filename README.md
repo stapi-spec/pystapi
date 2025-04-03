@@ -43,7 +43,7 @@ graph
     stapi-pydantic --> stapi-fastapi
 ```
 
-### stapi-fastapi server
+### stapi-fastapi
 
 A minimal test implementation is provided in [stapi-fastapi/tests/application.py](stapi-fastapi/tests/application.py).
 Run it like so:
