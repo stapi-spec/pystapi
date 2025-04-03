@@ -42,13 +42,8 @@ class OrderStatusCode(StrEnum):
     reserved = "reserved"
     tasked = "tasked"
     user_canceled = "user_canceled"
-
-    # pending = "pending" # task awaiting execution but after start time , could be "scheduled"
-    # in_progress = "in_progress" # task awaiting execution, could "scheduled"
-    # pending_cancellation = "pending_cancellation" # going to call this "user_cancelled"
-    # requested = "requested" # mapping to received
     expired = "expired"
-    failed = "failed" # these two could just map to a shared "failed" state, but that is missing imo
+    failed = "failed"
 
 
 class OrderStatus(BaseModel):
