@@ -37,11 +37,7 @@ class OrderStatusCode(StrEnum):
     accepted = "accepted"
     rejected = "rejected"
     completed = "completed"
-    canceled = "cancelled"
-    failed = "failed"
-    expired = "expired"
-
-    # Optional
+    cancelled = "cancelled"
     scheduled = "scheduled"
     held = "held"
     processing = "processing"
@@ -49,7 +45,9 @@ class OrderStatusCode(StrEnum):
 
     # extensions
     tasked = "tasked"
-    user_canceled = "user_canceled"
+    user_cancelled = "user_cancelled"
+    expired = "expired"
+    failed = "failed"
 
 
 class OrderStatus(BaseModel):

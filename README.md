@@ -35,6 +35,14 @@ source .venv/bin/activate
 
 See our [contribution guidelines](./CONTRIBUTING.md) for information on contributing any changes, fixes, or features.
 
+## Packages
+
+```mermaid
+graph
+    stapi-pydantic --> pystapi-client --> pystapi-validator
+    stapi-pydantic --> stapi-fastapi
+```
+
 ### stapi-fastapi server
 
 A minimal test implementation is provided in [stapi-fastapi/tests/application.py](stapi-fastapi/tests/application.py).
@@ -46,10 +54,8 @@ uv run fastapi dev stapi-fastapi/tests/application.py
 
 The app should be accessible at `http://localhost:8000`.
 
-## Packages
+### stapi-client
 
-```mermaid
-graph
-    stapi-pydantic --> pystapi-client --> pystapi-validator
-    stapi-pydantic --> stapi-fastapi
-```
+The `stapi-client` package is a Python client (CLI tool) focused on interfacing with the STAPI specification, specifically with a STAPI server. This is a work in progress.
+
+For more information, see the [README](pystapi-client/README.md).
