@@ -36,8 +36,8 @@ class Link(BaseModel):
         description=(
             "This is only valid when the server is responding to POST request. "
             "If merge is true, the client is expected to merge the body value into the current request body before "
-            "following the link. This avoids passing large post bodies back and forth when following links, particularly "
-            "for navigating pages through the POST /search endpoint. "
+            "following the link. This avoids passing large post bodies back and forth when following links, "
+            "particularly for navigating pages through the POST /search endpoint. "
             "NOTE: To support form encoding it is expected that a client be able to merge in the key value pairs "
             "specified as JSON {'next': 'token'} will become &next=token."
         ),

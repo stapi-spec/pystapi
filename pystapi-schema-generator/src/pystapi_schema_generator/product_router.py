@@ -25,7 +25,7 @@ from stapi_pydantic import (
 )
 
 if TYPE_CHECKING:
-    from stapi_fastapi.routers import RootRouter
+    from .router import RootRouter
 
 logger = logging.getLogger(__name__)
 

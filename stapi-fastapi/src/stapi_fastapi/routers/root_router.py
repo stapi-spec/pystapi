@@ -202,7 +202,8 @@ class RootRouter(APIRouter):
 
         return RootResponse(
             id="STAPI API",
-            conformsTo=self.conformances,
+            description="STAPI API",
+            conforms_to=self.conformances,
             links=links,
         )
 
@@ -325,10 +326,10 @@ class RootRouter(APIRouter):
         self.product_routers[product.id] = product_router
         self.product_ids = [*self.product_routers.keys()]
 
-    def generate_order_href(self, request: Request, order_id: str) -> URL:
+    def generate_order_href(self, request: Request, order_id: str | None) -> URL:
         return request.url_for(f"{self.name}:{GET_ORDER}", order_id=order_id)
 
-    def generate_order_statuses_href(self, request: Request, order_id: str) -> URL:
+    def generate_order_statuses_href(self, request: Request, order_id: str | None) -> URL:
         return request.url_for(f"{self.name}:{LIST_ORDER_STATUSES}", order_id=order_id)
 
     def order_links(self, order: Order[OrderStatus], request: Request) -> list[Link]:
