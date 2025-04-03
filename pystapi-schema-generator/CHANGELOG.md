@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.1] - 2025-04-01
 
 ### Added
+
 - A spec product that tightly follows the [STAPI specification](https://github.com/stapi-spec/stapi-spec)
 - A STAPI FastAPI application offering the spec product
 - A script that creates the FastAPI application to create the OpenAPI schema
