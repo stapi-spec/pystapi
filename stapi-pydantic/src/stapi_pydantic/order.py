@@ -36,13 +36,13 @@ class OrderStatusCode(StrEnum):
     accepted = "accepted"
     rejected = "rejected"
     completed = "completed"
-    canceled = "canceled"
+    cancelled = "cancelled"
     scheduled = "scheduled"
     held = "held"
     processing = "processing"
     reserved = "reserved"
     tasked = "tasked"
-    user_canceled = "user_canceled"
+    user_cancelled = "user_cancelled"
 
 
 class OrderStatus(BaseModel):
