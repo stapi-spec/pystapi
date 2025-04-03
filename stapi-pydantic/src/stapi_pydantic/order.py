@@ -43,6 +43,8 @@ class OrderStatusCode(StrEnum):
     reserved = "reserved"
     tasked = "tasked"
     user_cancelled = "user_cancelled"
+    expired = "expired"
+    failed = "failed"
 
 
 class OrderStatus(BaseModel):
