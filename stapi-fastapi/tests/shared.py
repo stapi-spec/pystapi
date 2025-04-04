@@ -12,6 +12,7 @@ from geojson_pydantic.types import Position2D
 from httpx import Response
 from pydantic import BaseModel, Field, model_validator
 from pytest import fail
+from stapi_fastapi.conformance import PRODUCT
 from stapi_fastapi.models.product import Product
 from stapi_pydantic import (
     Opportunity,
@@ -120,6 +121,7 @@ provider = Provider(
     description="A provider for Test data",
     roles=[ProviderRole.producer],  # Example role
     url="https://test-provider.example.com",  # Must be a valid URL
+    conformsTo=[PRODUCT["geojson-point"]],
 )
 
 product_test_spotlight = Product(
@@ -137,6 +139,7 @@ product_test_spotlight = Product(
     queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
+    conformsTo=[PRODUCT["geojson-point"]],
 )
 
 product_test_spotlight_sync_opportunity = Product(
@@ -154,6 +157,7 @@ product_test_spotlight_sync_opportunity = Product(
     queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
+    conformsTo=[PRODUCT["geojson-point"], PRODUCT["opportunities"]],
 )
 
 
@@ -172,6 +176,7 @@ product_test_spotlight_async_opportunity = Product(
     queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
+    conformsTo=[PRODUCT["geojson-point"], PRODUCT["opportunities-async"]],
 )
 
 product_test_spotlight_sync_async_opportunity = Product(
@@ -189,6 +194,7 @@ product_test_spotlight_sync_async_opportunity = Product(
     queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
+    conformsTo=[PRODUCT["geojson-point"], PRODUCT["opportunities"], PRODUCT["opportunities-async"]],
 )
 
 product_test_satellite_provider_sync_opportunity = Product(
@@ -206,6 +212,7 @@ product_test_satellite_provider_sync_opportunity = Product(
     queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
+    conformsTo=[PRODUCT["geojson-point"], PRODUCT["opportunities"]],
 )
 
 
