@@ -35,7 +35,7 @@ root_router = RootRouter(
     get_order_statuses=mock_get_order_statuses,
     get_opportunity_search_records=mock_get_opportunity_search_records,
     get_opportunity_search_record=mock_get_opportunity_search_record,
-    conformances=[API["core"]],
+    conformances=[API.core],
 )
 root_router.add_product(product_test_spotlight_sync_opportunity)
 root_router.add_product(product_test_satellite_provider_sync_opportunity)
