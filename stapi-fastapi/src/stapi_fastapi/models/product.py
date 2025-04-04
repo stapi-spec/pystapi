@@ -83,7 +83,6 @@ class Product(BaseProduct):
 
     @property
     def supports_async_opportunity_search(self) -> bool:
-        # TODO add conformsTo check
         return (
             self._search_opportunities_async is not None
             and self._get_opportunity_collection is not None
