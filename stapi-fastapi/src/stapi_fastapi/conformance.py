@@ -1,3 +1,6 @@
+# This is some slightly strange magic to get "static" structures with
+# attributes, to make it pleasant to use in an editor with autocompletion.
+
 import dataclasses
 from dataclasses import dataclass
 
