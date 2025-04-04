@@ -1,7 +1,7 @@
 # Contributing
 
 First, thanks for contributing to **pystapi**!
-The [README](./README.md#development) as instructions on setting up your development environment, which is a great place to start.
+The [README](./README.md#development) has instructions on setting up your development environment, which is a great place to start.
 
 ## Repository organization
 

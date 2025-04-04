@@ -24,7 +24,7 @@ uv run pytest
 Check formatting and other lints:
 
 ```shell
-uv run pre-commit --all-files
+uv run pre-commit run --all-files
 ```
 
 If you don't want to type `uv run` all the time:
@@ -43,7 +43,7 @@ graph
     stapi-pydantic --> stapi-fastapi
 ```
 
-### stapi-fastapi server
+### stapi-fastapi
 
 A minimal test implementation is provided in [stapi-fastapi/tests/application.py](stapi-fastapi/tests/application.py).
 Run it like so:
@@ -54,8 +54,8 @@ uv run fastapi dev stapi-fastapi/tests/application.py
 
 The app should be accessible at `http://localhost:8000`.
 
-### stapi-client
+### pystapi-client
 
-The `stapi-client` package is a Python client (CLI tool) focused on interfacing with the STAPI specification, specifically with a STAPI server. This is a work in progress.
+The `pystapi-client` package is a Python client (CLI tool) focused on interfacing with the STAPI specification, specifically with a STAPI server. This is a work in progress.
 
 For more information, see the [README](pystapi-client/README.md).
