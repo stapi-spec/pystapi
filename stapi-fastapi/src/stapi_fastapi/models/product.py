@@ -79,7 +79,7 @@ class Product(BaseProduct):
 
     @property
     def supports_opportunity_search(self) -> bool:
-        return self._search_opportunities is not None and PRODUCT_CONFORMANCE["opportunities"] in self.conformsTo
+        return self._search_opportunities is not None and PRODUCT_CONFORMANCE.opportunities in self.conformsTo
 
     @property
     def supports_async_opportunity_search(self) -> bool:
@@ -87,7 +87,7 @@ class Product(BaseProduct):
         return (
             self._search_opportunities_async is not None
             and self._get_opportunity_collection is not None
-            and PRODUCT_CONFORMANCE["opportunities-async"] in self.conformsTo
+            and PRODUCT_CONFORMANCE.opportunities_async in self.conformsTo
         )
 
     @property

@@ -11,4 +11,8 @@ def test_conformance(stapi_client: TestClient) -> None:
 
     body = res.json()
 
-    assert body["conformsTo"] == [API["core"]]
+    assert body["conformsTo"] == [API.core]
+
+
+def test_all() -> None:
+    assert API.all() == [API.core, API.order_statuses, API.searches_opportunity, API.searches_opportunity_statuses]

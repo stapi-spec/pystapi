@@ -11,7 +11,7 @@ def test_root(stapi_client: TestClient, assert_link) -> None:
 
     body = res.json()
 
-    assert body["conformsTo"] == [API["core"]]
+    assert body["conformsTo"] == [API.core]
 
     assert_link("GET /", body, "self", "/")
     assert_link("GET /", body, "service-description", "/openapi.json")

@@ -58,7 +58,7 @@ class RootRouter(APIRouter):
         get_opportunity_search_records: GetOpportunitySearchRecords | None = None,
         get_opportunity_search_record: GetOpportunitySearchRecord | None = None,
         get_opportunity_search_record_statuses: GetOpportunitySearchRecordStatuses | None = None,
-        conformances: list[str] = [API_CONFORMANCE["core"]],
+        conformances: list[str] = [API_CONFORMANCE.core],
         name: str = "root",
         openapi_endpoint_name: str = "openapi",
         docs_endpoint_name: str = "swagger_ui_html",
@@ -67,7 +67,7 @@ class RootRouter(APIRouter):
     ) -> None:
         super().__init__(*args, **kwargs)
 
-        api_conformances = set(API_CONFORMANCE.values())
+        api_conformances = API_CONFORMANCE.all()
         for conformance in conformances:
             if conformance not in api_conformances:
                 raise ValueError(f"{conformance} is not a valid API conformance")
@@ -140,7 +140,7 @@ class RootRouter(APIRouter):
             tags=["Orders"],
         )
 
-        if API_CONFORMANCE["searches-opportunity"] in conformances:
+        if API_CONFORMANCE.searches_opportunity in conformances:
             self.add_api_route(
                 "/searches/opportunities",
                 self.get_opportunity_search_records,
@@ -159,7 +159,7 @@ class RootRouter(APIRouter):
                 tags=["Opportunities"],
             )
 
-        if API_CONFORMANCE["searches-opportunity-statuses"] in conformances:
+        if API_CONFORMANCE.searches_opportunity_statuses in conformances:
             self.add_api_route(
                 "/searches/opportunities/{search_record_id}/statuses",
                 self.get_opportunity_search_record_statuses,
@@ -487,7 +487,7 @@ class RootRouter(APIRouter):
     @property
     def supports_async_opportunity_search(self) -> bool:
         return (
-            API_CONFORMANCE["searches-opportunity"] in self.conformances
+            API_CONFORMANCE.searches_opportunity in self.conformances
             and self._get_opportunity_search_records is not None
             and self._get_opportunity_search_record is not None
         )

@@ -83,7 +83,7 @@ class ProductRouter(APIRouter):
                 f"Product '{product.id}' must support async opportunity search since the root router does",
             )
 
-        product_conformances = set(PRODUCT_CONFORMANCE.values())
+        product_conformances = PRODUCT_CONFORMANCE.all()
         has_geosjon = False
         for conformance in product.conformsTo:
             if conformance not in product_conformances:

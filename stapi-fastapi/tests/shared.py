@@ -121,7 +121,7 @@ provider = Provider(
     description="A provider for Test data",
     roles=[ProviderRole.producer],  # Example role
     url="https://test-provider.example.com",  # Must be a valid URL
-    conformsTo=[PRODUCT["geojson-point"]],
+    conformsTo=[PRODUCT.geojson_point],
 )
 
 product_test_spotlight = Product(
@@ -139,7 +139,7 @@ product_test_spotlight = Product(
     queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
-    conformsTo=[PRODUCT["geojson-point"]],
+    conformsTo=[PRODUCT.geojson_point],
 )
 
 product_test_spotlight_sync_opportunity = Product(
@@ -157,7 +157,7 @@ product_test_spotlight_sync_opportunity = Product(
     queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
-    conformsTo=[PRODUCT["geojson-point"], PRODUCT["opportunities"]],
+    conformsTo=[PRODUCT.geojson_point, PRODUCT.opportunities],
 )
 
 
@@ -176,7 +176,7 @@ product_test_spotlight_async_opportunity = Product(
     queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
-    conformsTo=[PRODUCT["geojson-point"], PRODUCT["opportunities-async"]],
+    conformsTo=[PRODUCT.geojson_point, PRODUCT.opportunities_async],
 )
 
 product_test_spotlight_sync_async_opportunity = Product(
@@ -194,7 +194,7 @@ product_test_spotlight_sync_async_opportunity = Product(
     queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
-    conformsTo=[PRODUCT["geojson-point"], PRODUCT["opportunities"], PRODUCT["opportunities-async"]],
+    conformsTo=[PRODUCT.geojson_point, PRODUCT.opportunities, PRODUCT.opportunities_async],
 )
 
 product_test_satellite_provider_sync_opportunity = Product(
@@ -212,7 +212,7 @@ product_test_satellite_provider_sync_opportunity = Product(
     queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
-    conformsTo=[PRODUCT["geojson-point"], PRODUCT["opportunities"]],
+    conformsTo=[PRODUCT.geojson_point, PRODUCT.opportunities],
 )
 
 
