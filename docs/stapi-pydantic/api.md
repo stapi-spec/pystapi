@@ -1,3 +1,0 @@
-# API
-
-::: stapi_pydantic
