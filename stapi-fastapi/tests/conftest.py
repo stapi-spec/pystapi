@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from stapi_fastapi.conformance import ASYNC_OPPORTUNITIES, CORE, OPPORTUNITIES
+from stapi_fastapi.conformance import API, PRODUCT
 from stapi_fastapi.models.product import (
     Product,
 )
@@ -75,10 +75,11 @@ def stapi_client(
         get_orders=mock_get_orders,
         get_order=mock_get_order,
         get_order_statuses=mock_get_order_statuses,
-        conformances=[CORE],
+        conformances=[API.core],
     )
 
     for mock_product in mock_products:
+        mock_product.conformsTo = [PRODUCT.opportunities, PRODUCT.opportunities_async, PRODUCT.geojson_point]
         root_router.add_product(mock_product)
 
     app = FastAPI(lifespan=lifespan)
@@ -112,10 +113,15 @@ def stapi_client_async_opportunity(
         get_opportunity_search_records=mock_get_opportunity_search_records,
         get_opportunity_search_record=mock_get_opportunity_search_record,
         get_opportunity_search_record_statuses=mock_get_opportunity_search_record_statuses,
-        conformances=[CORE, OPPORTUNITIES, ASYNC_OPPORTUNITIES],
+        conformances=[
+            API.core,
+            API.searches_opportunity,
+            API.searches_opportunity_statuses,
+        ],
     )
 
     for mock_product in mock_products:
+        mock_product.conformsTo = [PRODUCT.opportunities, PRODUCT.opportunities_async, PRODUCT.geojson_point]
         root_router.add_product(mock_product)
 
     app = FastAPI(lifespan=lifespan)
