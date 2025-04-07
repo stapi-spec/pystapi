@@ -1,6 +1,8 @@
 # pystapi
 
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/stapi-spec/pystapi/ci.yaml?style=for-the-badge)](https://github.com/stapi-spec/pystapi/actions/workflows/ci.yaml)
+[![stapi-pydantic PyPI](https://img.shields.io/pypi/v/stapi-pydantic?style=for-the-badge&label=stapi-pydantic)](https://pypi.org/project/stapi-pydantic/)
+[![stapi-fastapi PyPI](https://img.shields.io/pypi/v/stapi-fastapi?style=for-the-badge&label=stapi-fastapi)](https://pypi.org/project/stapi-fastapi/)
 
 Monorepo for Python Satellite Tasking API (STAPI) Specification packages.
 For more, see our [docs](https://stapi-spec.github.io/pystapi/).
