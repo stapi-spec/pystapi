@@ -22,7 +22,7 @@
             ],
             "links": [
                 {
-                    "href": "https://stapi.example.com/",
+                    "href": "http://stapi.test/",
                     "rel": "latest-version",
                     "type": "media type",
                     "title": "title"
@@ -123,7 +123,7 @@
             ],
             "links": [
                 {
-                    "href": "https://stapi.example.com/",
+                    "href": "http://stapi.test/",
                     "rel": "latest-version",
                     "type": "media type",
                     "title": "title"
