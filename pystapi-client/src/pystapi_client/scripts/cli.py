@@ -2,7 +2,6 @@ import itertools
 import json
 
 import click
-
 from pystapi_client.client import Client
 from pystapi_client.exceptions import APIError
 
