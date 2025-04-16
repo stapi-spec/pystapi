@@ -38,9 +38,8 @@ def products(ctx: click.Context, limit: int | None, max_items: int | None) -> No
         click.echo("No products found.")
         return
 
-    # FIXME: to get around AnyUrl not being JSON serializable, this does loads(pydantic.model_dump_json()). Should be
-    #        fixed with a custom JSON serializer for AnyUrl.
-    click.echo(json.dumps([json.loads(p.model_dump_json()) for p in products_list]))
+    # Serialize the products list into JSON format and output it
+    click.echo(json.dumps([p.model_dump(mode="json") for p in products_list]))
 
 
 @click.command()
@@ -53,7 +52,7 @@ def product(ctx: click.Context, id: str) -> None:
 
     product = client.get_product(product_id=id)
     if not product:
-        click.echo("Product not found.")
+        click.echo(f"Product {id} not found.", err=True)
         return
 
     click.echo(product.model_dump_json())
@@ -75,12 +74,11 @@ def orders(ctx: click.Context, max_items: int | None, limit: int | None) -> None
 
     orders_list = list(orders_iter)
     if len(orders_list) == 0:
-        click.echo("No orders found.")
+        click.echo("No orders found.", err=True)
         return
 
-    # FIXME: to get around AnyUrl not being JSON serializable, this does loads(pydantic.model_dump_json()). Should be
-    #        fixed with a custom JSON serializer for AnyUrl.
-    click.echo(json.dumps([json.loads(o.model_dump_json()) for o in orders_list]))
+    # Serialize the orders list into JSON format and output it
+    click.echo(json.dumps([o.model_dump(mode="json") for o in orders_list]))
 
 
 @click.command()
@@ -96,7 +94,7 @@ def order(ctx: click.Context, id: str) -> None:
         click.echo(order.model_dump_json())
     except APIError as e:
         if e.status_code == 404:
-            click.echo("Order not found.")
+            click.echo(f"Order {id} not found.", err=True)
         else:
             raise e
 
@@ -123,12 +121,10 @@ def opportunities(ctx: click.Context, product_id: str, limit: int, max_items: No
 
     opportunities_list = list(opportunities_iter)
     if len(opportunities_list) == 0:
-        click.echo("No opportunities found.")
+        click.echo("No opportunities found.", err=True)
         return
 
-    # FIXME: to get around AnyUrl not being JSON serializable, this does loads(pydantic.model_dump_json()). Should be
-    #        fixed with a custom JSON serializer for AnyUrl.
-    click.echo(json.dumps([json.loads(o.model_dump_json()) for o in opportunities_list]))
+    click.echo(json.dumps([o.model_dump(mode="json") for o in opportunities_list]))
 
 
 cli.add_command(products)
