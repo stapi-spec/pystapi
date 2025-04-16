@@ -30,7 +30,7 @@ from stapi_fastapi.backends.root_backend import (
 )
 from stapi_fastapi.conformance import ASYNC_OPPORTUNITIES, CORE
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
-from stapi_fastapi.exceptions import NotFoundException
+from stapi_fastapi.errors import NotFoundError
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_fastapi.routers.product_router import ProductRouter
@@ -231,7 +231,7 @@ class RootRouter(APIRouter):
                 start = self.product_ids.index(next)
         except ValueError:
             logger.exception("An error occurred while retrieving products")
-            raise NotFoundException(detail="Error finding pagination token for products") from None
+            raise NotFoundError(detail="Error finding pagination token for products") from None
         end = start + limit
         ids = self.product_ids[start:end]
         links = [
@@ -262,7 +262,7 @@ class RootRouter(APIRouter):
                     case Maybe.empty:
                         pass
             case Failure(ValueError()):
-                raise NotFoundException(detail="Error finding pagination token")
+                raise NotFoundError(detail="Error finding pagination token")
             case Failure(e):
                 logger.error(
                     "An error occurred while retrieving orders: %s",
@@ -285,7 +285,7 @@ class RootRouter(APIRouter):
                 order.links.extend(self.order_links(order, request))
                 return order  # type: ignore
             case Success(Maybe.empty):
-                raise NotFoundException("Order not found")
+                raise NotFoundError("Order not found")
             case Failure(e):
                 logger.error(
                     "An error occurred while retrieving order '%s': %s",
@@ -316,9 +316,9 @@ class RootRouter(APIRouter):
                     case Maybe.empty:
                         pass
             case Success(Maybe.empty):
-                raise NotFoundException("Order not found")
+                raise NotFoundError("Order not found")
             case Failure(ValueError()):
-                raise NotFoundException("Error finding pagination token")
+                raise NotFoundError("Error finding pagination token")
             case Failure(e):
                 logger.error(
                     "An error occurred while retrieving order statuses: %s",
@@ -392,7 +392,7 @@ class RootRouter(APIRouter):
                     case Maybe.empty:
                         pass
             case Failure(ValueError()):
-                raise NotFoundException(detail="Error finding pagination token")
+                raise NotFoundError(detail="Error finding pagination token")
             case Failure(e):
                 logger.error(
                     "An error occurred while retrieving opportunity search records: %s",
@@ -415,7 +415,7 @@ class RootRouter(APIRouter):
                 search_record.links.append(self.opportunity_search_record_self_link(search_record, request))
                 return search_record  # type: ignore
             case Success(Maybe.empty):
-                raise NotFoundException("Opportunity Search Record not found")
+                raise NotFoundError("Opportunity Search Record not found")
             case Failure(e):
                 logger.error(
                     "An error occurred while retrieving opportunity search record '%s': %s",
@@ -439,7 +439,7 @@ class RootRouter(APIRouter):
             case Success(Some(search_record_statuses)):
                 return search_record_statuses  # type: ignore
             case Success(Maybe.empty):
-                raise NotFoundException("Opportunity Search Record not found")
+                raise NotFoundError("Opportunity Search Record not found")
             case Failure(e):
                 logger.error(
                     "An error occurred while retrieving opportunity search record statuses '%s': %s",

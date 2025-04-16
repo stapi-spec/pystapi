@@ -149,6 +149,7 @@ class StapiIO:
             logger.debug(err)
             raise APIError(f"Error sending request: {err=}")
 
+
         # NOTE what about other successful status codes?
         if resp.status_code != 200:
             raise APIError.from_response(resp)

@@ -24,6 +24,7 @@ dev = [
     "fastapi[standard]>=0.115.12",
     "types-click>=7.1.8",
     "pygithub>=2.6.1",
+    "respx>=0.22.0",
 ]
 docs = [
     "mkdocs-material>=9.6.11",
