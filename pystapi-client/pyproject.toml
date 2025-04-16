@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.scripts]
-stapi-cli = "pystapi_client.scripts.cli:cli"
+stapi = "pystapi_client.scripts.cli:cli"
 
 [tool.uv.sources]
 stapi-pydantic = { workspace = true }
