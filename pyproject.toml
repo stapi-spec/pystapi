@@ -9,7 +9,6 @@ dependencies = [
     "pystapi-validator",
     "stapi-pydantic",
     "stapi-fastapi",
-    "types-click>=7.1.8",
 ]
 
 [dependency-groups]
