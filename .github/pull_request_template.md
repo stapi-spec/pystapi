@@ -9,5 +9,5 @@
 ## Checklist
 
 - [ ] Tests pass: `uv run pytest`
-- [ ] Checks pass: `uv run pre-commit --all-files`
+- [ ] Checks pass: `uv run pre-commit run --all-files`
 - [ ] CHANGELOG is updated (if necessary)
