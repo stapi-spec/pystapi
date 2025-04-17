@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - stapi-fastapi is now using stapi-pydantic models, deduplicating code
 - Product in stapi-fastapi is now subclass of Product from stapi-pydantic
 - How conformances work ([#90](https://github.com/stapi-spec/pystapi/pull/90))
+- Async behaviors align with spec changes ([#90](https://github.com/stapi-spec/pystapi/pull/90))
 
 ## [0.6.0] - 2025-02-11
 
