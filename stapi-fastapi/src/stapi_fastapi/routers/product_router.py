@@ -33,7 +33,6 @@ from stapi_pydantic import (
     Product as ProductPydantic,
 )
 
-from stapi_fastapi.conformance import PRODUCT as PRODUCT_CONFORMANCE
 from stapi_fastapi.constants import TYPE_JSON
 from stapi_fastapi.errors import NotFoundError, QueryablesError
 from stapi_fastapi.models.product import Product
@@ -83,14 +82,8 @@ class ProductRouter(APIRouter):
                 f"Product '{product.id}' must support async opportunity search since the root router does",
             )
 
-        product_conformances = PRODUCT_CONFORMANCE.all()
-        has_geosjon = False
-        for conformance in product.conformsTo:
-            if conformance not in product_conformances:
-                raise ValueError(f"{conformance} is not a valid product conformance")
-            elif conformance.startswith("https://geojson.org/schema/"):  # FIXME total hack
-                has_geosjon = True
-        if not has_geosjon:
+        # FIXME we can make this check more robust
+        if not any(conformance.startswith("https://geojson.org/schema/") for conformance in product.conformsTo):
             raise ValueError("product conformance does not contain at least one geojson conformance")
 
         self.product = product
