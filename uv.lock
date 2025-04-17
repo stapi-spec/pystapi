@@ -1508,6 +1508,7 @@ dependencies = [
     { name = "pystapi-validator" },
     { name = "stapi-fastapi" },
     { name = "stapi-pydantic" },
+    { name = "types-click" },
 ]
 
 [package.dev-dependencies]
@@ -1521,6 +1522,7 @@ dev = [
     { name = "pytest" },
     { name = "respx" },
     { name = "ruff" },
+    { name = "types-click" },
 ]
 docs = [
     { name = "mkdocs-material" },
@@ -1533,6 +1535,7 @@ requires-dist = [
     { name = "pystapi-validator", editable = "pystapi-validator" },
     { name = "stapi-fastapi", editable = "stapi-fastapi" },
     { name = "stapi-pydantic", editable = "stapi-pydantic" },
+    { name = "types-click", specifier = ">=7.1.8" },
 ]
 
 [package.metadata.requires-dev]
@@ -1547,6 +1550,7 @@ dev = [
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "respx", specifier = ">=0.22.0" },
     { name = "ruff", specifier = ">=0.11.2" },
+    { name = "types-click", specifier = ">=7.1.8" },
 ]
 docs = [
     { name = "mkdocs-material", specifier = ">=9.6.11" },
@@ -1558,6 +1562,7 @@ name = "pystapi-client"
 version = "0.0.1"
 source = { editable = "pystapi-client" }
 dependencies = [
+    { name = "click" },
     { name = "httpx" },
     { name = "python-dateutil" },
     { name = "stapi-pydantic" },
@@ -1565,6 +1570,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "click", specifier = ">=8.1.8" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "python-dateutil", specifier = ">=2.8.2" },
     { name = "stapi-pydantic", editable = "stapi-pydantic" },
@@ -2241,6 +2247,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/8b/6f/3991f0f1c7fcb2df31aef28e0594d8d54b05393a0e4e34c65e475c2a5d41/typer-0.15.2.tar.gz", hash = "sha256:ab2fab47533a813c49fe1f16b1a370fd5819099c00b119e0633df65f22144ba5", size = 100711 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7f/fc/5b29fea8cee020515ca82cc68e3b8e1e34bb19a3535ad854cac9257b414c/typer-0.15.2-py3-none-any.whl", hash = "sha256:46a499c6107d645a9c13f7ee46c5d5096cae6f5fc57dd11eccbbb9ae3e44ddfc", size = 45061 },
+]
+
+[[package]]
+name = "types-click"
+version = "7.1.8"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/00/ff/0e6a56108d45c80c61cdd4743312d0304d8192482aea4cce96c554aaa90d/types-click-7.1.8.tar.gz", hash = "sha256:b6604968be6401dc516311ca50708a0a28baa7a0cb840efd7412f0dbbff4e092", size = 10015 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ee/ad/607454a5f991c5b3e14693a7113926758f889138371058a5f72f567fa131/types_click-7.1.8-py3-none-any.whl", hash = "sha256:8cb030a669e2e927461be9827375f83c16b8178c365852c060a34e24871e7e81", size = 12929 },
 ]
 
 [[package]]
