@@ -33,6 +33,7 @@ from stapi_pydantic import (
     Product as ProductPydantic,
 )
 
+from stapi_fastapi.conformance import PRODUCT as PRODUCT_CONFORMACES
 from stapi_fastapi.constants import TYPE_JSON
 from stapi_fastapi.errors import NotFoundError, QueryablesError
 from stapi_fastapi.models.product import Product
@@ -66,8 +67,26 @@ def get_prefer(prefer: str | None = Header(None)) -> str | None:
     return Prefer(prefer)
 
 
+def build_conformances(product: Product, root_router: RootRouter) -> list[str]:
+    # FIXME we can make this check more robust
+    if not any(conformance.startswith("https://geojson.org/schema/") for conformance in product.conformsTo):
+        raise ValueError("product conformance does not contain at least one geojson conformance")
+
+    conformances = set(product.conformsTo)
+
+    if product.supports_opportunity_search:
+        conformances.add(PRODUCT_CONFORMACES.opportunities)
+
+    if product.supports_async_opportunity_search and root_router.supports_async_opportunity_search:
+        conformances.add(PRODUCT_CONFORMACES.opportunities)
+        conformances.add(PRODUCT_CONFORMACES.opportunities_async)
+
+    return list(conformances)
+
+
 class ProductRouter(APIRouter):
-    def __init__(
+    # FIXME ruff is complaining that the init is too complex
+    def __init__(  # noqa
         self,
         product: Product,
         root_router: RootRouter,
@@ -76,13 +95,9 @@ class ProductRouter(APIRouter):
     ) -> None:
         super().__init__(*args, **kwargs)
 
-        if root_router.supports_async_opportunity_search and not product.supports_async_opportunity_search:
-            raise ValueError(
-                f"Product '{product.id}' must support async opportunity search since the root router does",
-            )
-
         self.product = product
         self.root_router = root_router
+        self.conformances = build_conformances(product, root_router)
 
         self.add_api_route(
             path="",
@@ -149,7 +164,9 @@ class ProductRouter(APIRouter):
             tags=["Products"],
         )
 
-        if product.supports_opportunity_search or root_router.supports_async_opportunity_search:
+        if product.supports_opportunity_search or (
+            self.product.supports_async_opportunity_search and self.root_router.supports_async_opportunity_search
+        ):
             self.add_api_route(
                 path="/opportunities",
                 endpoint=self.search_opportunities,
@@ -171,7 +188,7 @@ class ProductRouter(APIRouter):
                 tags=["Products"],
             )
 
-        if root_router.supports_async_opportunity_search:
+        if product.supports_async_opportunity_search and root_router.supports_async_opportunity_search:
             self.add_api_route(
                 path="/opportunities/{opportunity_collection_id}",
                 endpoint=self.get_opportunity_collection,
@@ -232,7 +249,9 @@ class ProductRouter(APIRouter):
             ),
         ]
 
-        if self.product.supports_opportunity_search or self.root_router.supports_async_opportunity_search:
+        if self.product.supports_opportunity_search or (
+            self.product.supports_async_opportunity_search and self.root_router.supports_async_opportunity_search
+        ):
             links.append(
                 Link(
                     href=str(
@@ -258,9 +277,9 @@ class ProductRouter(APIRouter):
         Explore the opportunities available for a particular set of queryables
         """
         # sync
-        if not self.root_router.supports_async_opportunity_search or (
-            prefer is Prefer.wait and self.product.supports_opportunity_search
-        ):
+        if not (
+            self.root_router.supports_async_opportunity_search and self.product.supports_async_opportunity_search
+        ) or (prefer is Prefer.wait and self.product.supports_opportunity_search):
             return await self.search_opportunities_sync(
                 search,
                 request,
@@ -357,7 +376,7 @@ class ProductRouter(APIRouter):
         """
         Return conformance urls of a specific product
         """
-        return Conformance.model_validate({"conforms_to": self.product.conformsTo})
+        return Conformance.model_validate({"conforms_to": self.conformances})
 
     def get_product_queryables(self) -> JsonSchemaModel:
         """
