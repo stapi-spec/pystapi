@@ -28,7 +28,7 @@ from stapi_fastapi.backends.root_backend import (
     GetOrders,
     GetOrderStatuses,
 )
-from stapi_fastapi.conformance import ASYNC_OPPORTUNITIES, CORE
+from stapi_fastapi.conformance import API as API_CONFORMANCE
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
 from stapi_fastapi.errors import NotFoundError
 from stapi_fastapi.models.product import Product
@@ -54,11 +54,11 @@ class RootRouter(APIRouter):
         self,
         get_orders: GetOrders,
         get_order: GetOrder,
-        get_order_statuses: GetOrderStatuses,  # type: ignore
+        get_order_statuses: GetOrderStatuses | None = None,  # type: ignore
         get_opportunity_search_records: GetOpportunitySearchRecords | None = None,
         get_opportunity_search_record: GetOpportunitySearchRecord | None = None,
         get_opportunity_search_record_statuses: GetOpportunitySearchRecordStatuses | None = None,
-        conformances: list[str] = [CORE],
+        conformances: list[str] = [API_CONFORMANCE.core],
         name: str = "root",
         openapi_endpoint_name: str = "openapi",
         docs_endpoint_name: str = "swagger_ui_html",
@@ -67,21 +67,14 @@ class RootRouter(APIRouter):
     ) -> None:
         super().__init__(*args, **kwargs)
 
-        if ASYNC_OPPORTUNITIES in conformances and (
-            not get_opportunity_search_records or not get_opportunity_search_record
-        ):
-            raise ValueError(
-                "`get_opportunity_search_records` and `get_opportunity_search_record` "
-                "are required when advertising async opportunity search conformance"
-            )
+        _conformances = set(conformances)
 
         self._get_orders = get_orders
         self._get_order = get_order
-        self._get_order_statuses = get_order_statuses
+        self.__get_order_statuses = get_order_statuses
         self.__get_opportunity_search_records = get_opportunity_search_records
         self.__get_opportunity_search_record = get_opportunity_search_record
         self.__get_opportunity_search_record_statuses = get_opportunity_search_record_statuses
-        self.conformances = conformances
         self.name = name
         self.openapi_endpoint_name = openapi_endpoint_name
         self.docs_endpoint_name = docs_endpoint_name
@@ -135,15 +128,18 @@ class RootRouter(APIRouter):
             tags=["Orders"],
         )
 
-        self.add_api_route(
-            "/orders/{order_id}/statuses",
-            self.get_order_statuses,
-            methods=["GET"],
-            name=f"{self.name}:{LIST_ORDER_STATUSES}",
-            tags=["Orders"],
-        )
+        if self.get_order_statuses is not None:
+            _conformances.add(API_CONFORMANCE.order_statuses)
+            self.add_api_route(
+                "/orders/{order_id}/statuses",
+                self.get_order_statuses,
+                methods=["GET"],
+                name=f"{self.name}:{LIST_ORDER_STATUSES}",
+                tags=["Orders"],
+            )
 
-        if ASYNC_OPPORTUNITIES in conformances:
+        if self.supports_async_opportunity_search:
+            _conformances.add(API_CONFORMANCE.searches_opportunity)
             self.add_api_route(
                 "/searches/opportunities",
                 self.get_opportunity_search_records,
@@ -162,6 +158,8 @@ class RootRouter(APIRouter):
                 tags=["Opportunities"],
             )
 
+        if self.__get_opportunity_search_record_statuses is not None:
+            _conformances.add(API_CONFORMANCE.searches_opportunity_statuses)
             self.add_api_route(
                 "/searches/opportunities/{search_record_id}/statuses",
                 self.get_opportunity_search_record_statuses,
@@ -170,6 +168,8 @@ class RootRouter(APIRouter):
                 summary="Get an Opportunity Search Record statuses by ID",
                 tags=["Opportunities"],
             )
+
+        self.conformances = list(_conformances)
 
     def get_root(self, request: Request) -> RootResponse:
         links = [
@@ -469,6 +469,12 @@ class RootRouter(APIRouter):
         )
 
     @property
+    def _get_order_statuses(self) -> GetOrderStatuses:  # type: ignore
+        if not self.__get_order_statuses:
+            raise AttributeError("Root router does not support order status history")
+        return self.__get_order_statuses
+
+    @property
     def _get_opportunity_search_records(self) -> GetOpportunitySearchRecords:
         if not self.__get_opportunity_search_records:
             raise AttributeError("Root router does not support async opportunity search")
@@ -483,13 +489,9 @@ class RootRouter(APIRouter):
     @property
     def _get_opportunity_search_record_statuses(self) -> GetOpportunitySearchRecordStatuses:
         if not self.__get_opportunity_search_record_statuses:
-            raise AttributeError("Root router does not support async opportunity search")
+            raise AttributeError("Root router does not support async opportunity search status history")
         return self.__get_opportunity_search_record_statuses
 
     @property
     def supports_async_opportunity_search(self) -> bool:
-        return (
-            ASYNC_OPPORTUNITIES in self.conformances
-            and self._get_opportunity_search_records is not None
-            and self._get_opportunity_search_record is not None
-        )
+        return self.__get_opportunity_search_records is not None and self.__get_opportunity_search_record is not None

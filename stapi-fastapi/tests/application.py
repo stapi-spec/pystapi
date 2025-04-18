@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI
-from stapi_fastapi.conformance import CORE, OPPORTUNITIES
+from stapi_fastapi.conformance import API
 from stapi_fastapi.routers.root_router import RootRouter
 
 from tests.backends import (
@@ -35,7 +35,7 @@ root_router = RootRouter(
     get_order_statuses=mock_get_order_statuses,
     get_opportunity_search_records=mock_get_opportunity_search_records,
     get_opportunity_search_record=mock_get_opportunity_search_record,
-    conformances=[CORE, OPPORTUNITIES],
+    conformances=[API.core],
 )
 root_router.add_product(product_test_spotlight_sync_opportunity)
 root_router.add_product(product_test_satellite_provider_sync_opportunity)
