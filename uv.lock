@@ -1508,7 +1508,6 @@ dependencies = [
     { name = "pystapi-validator" },
     { name = "stapi-fastapi" },
     { name = "stapi-pydantic" },
-    { name = "types-click" },
 ]
 
 [package.dev-dependencies]
@@ -1535,7 +1534,6 @@ requires-dist = [
     { name = "pystapi-validator", editable = "pystapi-validator" },
     { name = "stapi-fastapi", editable = "stapi-fastapi" },
     { name = "stapi-pydantic", editable = "stapi-pydantic" },
-    { name = "types-click", specifier = ">=7.1.8" },
 ]
 
 [package.metadata.requires-dev]
