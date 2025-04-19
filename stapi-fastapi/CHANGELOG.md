@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## Unreleased
 
+## [0.7.0] - 2025-04-18
+
 ### Fixed
 
 - Add parameter method as "POST" to create-order link
@@ -120,6 +122,7 @@ Initial release
 - Add links `opportunities` and `create-order` to Product
 - Add link `create-order` to OpportunityCollection
 
+[0.7.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.7.0
 [0.6.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.6.0
 [0.5.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.5.0
 [0.4.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.4.0
