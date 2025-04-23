@@ -1,6 +1,6 @@
 [project]
 name = "stapi-fastapi"
-version = "0.6.0"
+version = "0.7.0"
 description = "Sensor Tasking API (STAPI) with FastAPI"
 authors = [
     { name = "Christian Wygoda", email = "christian.wygoda@wygoda.net" },
