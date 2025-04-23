@@ -19,4 +19,3 @@ def test_invalid_datetime_intervals() -> None:
     with pytest.raises(ValueError, match="end before start"):
         dt1 = DatetimeInterval.__metadata__[0].func("2025-04-01T00:00:00Z/2025-03-01T23:59:59Z")
         _ = DatetimeInterval.__metadata__[1].func(dt1)
-
