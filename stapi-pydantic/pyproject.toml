@@ -1,10 +1,10 @@
 [project]
 name = "stapi-pydantic"
-version = "0.0.2"
+version = "0.0.3"
 description = "Pydantic models for Satellite Tasking API (STAPI) Specification"
 readme = "README.md"
 authors = [
-    { name = "Phil Varner", email = "phil@philvarner.com" },
+    { name = "Phil Varner", email = "philvarner@gmail.com" },
     { name = "Pete Gadomski", email = "pete.gadomski@gmail.com" },
 ]
 requires-python = ">=3.11"
