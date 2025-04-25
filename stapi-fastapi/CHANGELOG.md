@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [0.7.1] - 2025-04-25
 
 ### Fixed
 
@@ -126,6 +126,7 @@ Initial release
 - Add links `opportunities` and `create-order` to Product
 - Add link `create-order` to OpportunityCollection
 
+[0.7.1]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.7.1
 [0.7.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.7.0
 [0.6.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.6.0
 [0.5.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.5.0
