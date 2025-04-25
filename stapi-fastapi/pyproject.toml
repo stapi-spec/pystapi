@@ -23,6 +23,7 @@ dependencies = [
     "pyrfc3339>=1.1",
     "types-pyRFC3339>=1.1.1",
     "uvicorn>=0.29.0",
+    "stapi-pydantic>=0.0.3",
 ]
 
 [tool.hatch.build.targets.sdist]

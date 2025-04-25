@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## Unreleased
 
+### Fixed
+
+- Add stapi-pydantic as a dependency
+
 ## [0.7.0] - 2025-04-18
 
 ### Fixed

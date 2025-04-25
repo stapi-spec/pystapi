@@ -2124,6 +2124,7 @@ dependencies = [
     { name = "pygeofilter" },
     { name = "pyrfc3339" },
     { name = "returns" },
+    { name = "stapi-pydantic" },
     { name = "types-pyrfc3339" },
     { name = "uvicorn" },
 ]
@@ -2139,13 +2140,14 @@ requires-dist = [
     { name = "pygeofilter", specifier = ">=0.2" },
     { name = "pyrfc3339", specifier = ">=1.1" },
     { name = "returns", specifier = ">=0.23" },
+    { name = "stapi-pydantic", editable = "stapi-pydantic" },
     { name = "types-pyrfc3339", specifier = ">=1.1.1" },
     { name = "uvicorn", specifier = ">=0.29.0" },
 ]
 
 [[package]]
 name = "stapi-pydantic"
-version = "0.0.2"
+version = "0.0.3"
 source = { editable = "stapi-pydantic" }
 dependencies = [
     { name = "cql2" },
