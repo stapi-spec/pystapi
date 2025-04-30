@@ -10,15 +10,17 @@ from fastapi import (
 )
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_pydantic import (
-    JsonSchemaModel,
+    Conformance,
     OpportunityCollection,
     OpportunityPayload,
     Order,
     OrderCollection,
+    OrderParameters,
     OrderPayload,
     OrderStatus,
     Prefer,
     Product,
+    Queryables,
 )
 
 if TYPE_CHECKING:
@@ -49,8 +51,17 @@ class ProductRouter(APIRouter):
         )
 
         self.add_api_route(
+            path="/conformance",
+            endpoint=self.get_conformance,
+            methods=["GET"],
+            tags=["Products"],
+            summary="describe the conformance for a product",
+            description="...",
+        )
+
+        self.add_api_route(
             path="/queryables",
-            endpoint=self.get_product_queryables,
+            endpoint=self.get_queryables,
             methods=["GET"],
             tags=["Products"],
             summary="describe the queryables for a product",
@@ -59,7 +70,7 @@ class ProductRouter(APIRouter):
 
         self.add_api_route(
             path="/order-parameters",
-            endpoint=self.get_product_order_parameters,
+            endpoint=self.get_order_parameters,
             methods=["GET"],
             tags=["Products"],
             summary="describe the order parameters for a product",
@@ -98,15 +109,20 @@ class ProductRouter(APIRouter):
             description="...",
         )
 
-    def get_product(self, request: Request) -> Product:
+    # Product endpoints
+    def get_product(self) -> Product:
         return None  # type: ignore
 
-    def get_product_queryables(self) -> JsonSchemaModel:
+    def get_conformance(self) -> Conformance:
         return None  # type: ignore
 
-    def get_product_order_parameters(self) -> JsonSchemaModel:
+    def get_queryables(self) -> Queryables:
         return None  # type: ignore
 
+    def get_order_parameters(self) -> OrderParameters:
+        return None  # type: ignore
+
+    # Orders endpoints
     def create_order(self, payload: OrderPayload, request: Request, response: Response) -> Order:  # type: ignore
         return None  # type: ignore
 

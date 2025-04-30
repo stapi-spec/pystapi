@@ -52,6 +52,16 @@ class RootRouter(APIRouter):
             ),
         )
 
+        # Products endpoints
+        self.add_api_route(
+            "/products",
+            self.get_products,
+            methods=["GET"],
+            tags=["Products"],
+            summary="the products in the dataset",
+            description="...",
+        )
+
         # Orders endpoints - w/o specific {productId}/orders endpoints
         self.add_api_route(
             "/orders",
@@ -82,31 +92,23 @@ class RootRouter(APIRouter):
             description="...",
         )
 
-        # Products endpoints
-        self.add_api_route(
-            "/products",
-            self.get_products,
-            methods=["GET"],
-            tags=["Products"],
-            summary="the products in the dataset",
-            description="...",
-        )
-
-    def add_product(self, product: Product, *args: Any, **kwargs: Any) -> None:
-        # Give the include a prefix from the product router
-        product_router = ProductRouter(product, self, *args, **kwargs)
-        self.include_router(product_router, prefix=f"/products/{product.id}")
-        self.product_routers[product.id] = product_router
-
+    # Core endpoints
     def get_root(self) -> RootResponse:
         return None  # type: ignore
 
     def get_conformance(self) -> Conformance:
         return None  # type: ignore
 
+    # Products endpoints
     def get_products(self) -> ProductsCollection:
         return None  # type: ignore
 
+    def add_product(self, product: Product, *args: Any, **kwargs: Any) -> None:
+        product_router = ProductRouter(product, self, *args, **kwargs)
+        self.include_router(product_router, prefix=f"/products/{product.id}")
+        self.product_routers[product.id] = product_router
+
+    # Orders endpoints - w/o specific {productId}/orders endpoints
     def get_orders(self) -> OrderCollection[OrderStatus]:
         return None  # type: ignore
 

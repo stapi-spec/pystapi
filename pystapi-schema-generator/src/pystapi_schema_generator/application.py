@@ -20,16 +20,16 @@ app: FastAPI = FastAPI(
             "description": "Core endpoints",
         },
         {
+            "name": "Products",
+            "description": "Products",
+        },
+        {
             "name": "Orders",
             "description": "Endpoint for creating and managing orders",
         },
         {
             "name": "Opportunities",
             "description": "Endpoint for viewing and accepting opportunities",
-        },
-        {
-            "name": "Products",
-            "description": "Products",
         },
     ]
 )
