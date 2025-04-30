@@ -5,6 +5,7 @@ description = "Schema Generator for the Satellite Tasking API (STAPI) Specificat
 readme = "README.md"
 authors = [
     { name = "Tobias Rohnstock", email = "tobias.rohnstock@live-eo.com" },
+    { name = "Justin Trautmann", email = "justin@live-eo.com" },
 ]
 requires-python = ">=3.10"
 dependencies = [

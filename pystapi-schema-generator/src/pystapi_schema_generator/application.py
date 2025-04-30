@@ -1,10 +1,9 @@
 from fastapi import FastAPI
-from stapi_fastapi.conformance import CORE, OPPORTUNITIES
 from stapi_pydantic import Product
 
 from pystapi_schema_generator.router import RootRouter
 
-router = RootRouter(conformances=[CORE, OPPORTUNITIES])
+router = RootRouter()
 router.add_product(
     Product(
         id="{productId}",

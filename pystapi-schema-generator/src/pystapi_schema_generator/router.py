@@ -1,7 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Path, Request
-from stapi_fastapi.conformance import CORE
+from fastapi import APIRouter, Path
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_pydantic import (
     Conformance,
@@ -18,27 +17,8 @@ from .product_router import ProductRouter
 
 
 class RootRouter(APIRouter):
-    def __init__(
-        self,
-        conformances: list[str] = [CORE],
-        name: str = "root",
-        openapi_endpoint_name: str = "openapi",
-        docs_endpoint_name: str = "swagger_ui_html",
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-
-        self.conformances = conformances
-        self.name = name
-        self.openapi_endpoint_name = openapi_endpoint_name
-        self.docs_endpoint_name = docs_endpoint_name
-        self.product_ids: list[str] = []
-
-        # A dict is used to track the product routers so we can ensure
-        # idempotentcy in case a product is added multiple times, and also to
-        # manage clobbering if multiple products with the same product_id are
-        # added.
         self.product_routers: dict[str, ProductRouter] = {}
 
         # Core endpoints
@@ -47,8 +27,13 @@ class RootRouter(APIRouter):
             self.get_root,
             methods=["GET"],
             tags=["Core"],
-            summary="landing page",
-            description="...",
+            summary="STAPI root endpoint for API discovery and metadata",
+            description=(
+                "This endpoint serves as the entry point for API discovery and navigation. "
+                "Returns the STAPI root endpoint response containing the API's metadata: "
+                "a unique identifier, descriptive text, implemented conformance classes, "
+                "and hypermedia links to available resources and documentation."
+            ),
         )
 
         self.add_api_route(
@@ -56,8 +41,15 @@ class RootRouter(APIRouter):
             self.get_conformance,
             methods=["GET"],
             tags=["Core"],
-            summary="information about specifications that this API conforms to",
-            description="A list of all conformance classes specified in a standard that the server conforms to.",
+            summary="List of implemented STAPI and OGC conformance classes",
+            description=(
+                "Returns a list of conformance classes implemented by this API, following "
+                "the OGC API Features conformance structure. While the core STAPI "
+                "conformance classes are already communicated in the root endpoint, "
+                "OGC API requires this duplicate conformance information at this "
+                "/conformance endpoint. Includes both STAPI-specific conformance classes "
+                "(e.g., core, order statuses, searches) and relevant OGC conformance classes."
+            ),
         )
 
         # Orders endpoints - w/o specific {productId}/orders endpoints
@@ -105,32 +97,23 @@ class RootRouter(APIRouter):
         product_router = ProductRouter(product, self, *args, **kwargs)
         self.include_router(product_router, prefix=f"/products/{product.id}")
         self.product_routers[product.id] = product_router
-        self.product_ids = [*self.product_routers.keys()]
 
-    def get_root(self, request: Request) -> RootResponse:
+    def get_root(self) -> RootResponse:
         return None  # type: ignore
 
     def get_conformance(self) -> Conformance:
         return None  # type: ignore
 
-    def get_products(self, request: Request) -> ProductsCollection:
+    def get_products(self) -> ProductsCollection:
         return None  # type: ignore
 
-    def get_orders(self, request: Request) -> OrderCollection[OrderStatus]:
+    def get_orders(self) -> OrderCollection[OrderStatus]:
         return None  # type: ignore
 
     def get_order(
-        self,
-        request: Request,
-        order_id: str = Path(alias="orderId", description="local identifier of an order"),
+        self, order_id: str = Path(alias="orderId", description="local identifier of an order")
     ) -> Order[OrderStatus]:
         return None  # type: ignore
 
-    def get_order_statuses(
-        self,
-        order_id: str,
-        request: Request,
-        next: str | None = None,
-        limit: int = 10,
-    ) -> OrderStatuses:  # type: ignore
+    def get_order_statuses(self, order_id: str, next: str | None = None, limit: int = 10) -> OrderStatuses:  # type: ignore
         return None  # type: ignore
