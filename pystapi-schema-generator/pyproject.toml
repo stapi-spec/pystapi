@@ -12,6 +12,8 @@ dependencies = [
     "uvicorn>=0.34",
     "fastapi>=0.115",
     "pydantic>=2.10",
+    "PyYAML>=6",
+    "types-PyYAML>=6",
     "geojson-pydantic>=1.2",
     "stapi-pydantic>=0.0.3",
 ]

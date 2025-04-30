@@ -214,12 +214,7 @@ class RootRouter(APIRouter):
                 ),
             )
 
-        return RootResponse(
-            id="STAPI API",
-            description="STAPI API",
-            conforms_to=self.conformances,
-            links=links,
-        )
+        return RootResponse(id="STAPI API", description="STAPI API", links=links)
 
     def get_conformance(self) -> Conformance:
         return Conformance(conforms_to=self.conformances)
