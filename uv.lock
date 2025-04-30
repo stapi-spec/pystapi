@@ -1590,11 +1590,21 @@ name = "pystapi-schema-generator"
 version = "0.0.1"
 source = { editable = "pystapi-schema-generator" }
 dependencies = [
-    { name = "pyyaml" },
+    { name = "fastapi" },
+    { name = "geojson-pydantic" },
+    { name = "pydantic" },
+    { name = "stapi-pydantic" },
+    { name = "uvicorn" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pyyaml", specifier = ">=6" }]
+requires-dist = [
+    { name = "fastapi", specifier = ">=0.115" },
+    { name = "geojson-pydantic", specifier = ">=1.2" },
+    { name = "pydantic", specifier = ">=2.10" },
+    { name = "stapi-pydantic", editable = "stapi-pydantic" },
+    { name = "uvicorn", specifier = ">=0.34" },
+]
 
 [[package]]
 name = "pystapi-validator"
