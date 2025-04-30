@@ -147,7 +147,7 @@ class StapiIO:
             resp = self.session.send(modified)
         except Exception as err:
             logger.debug(err)
-            raise APIError(f"Error sending request: {err}")
+            raise APIError(f"Error sending request: {err=}")
 
         # NOTE what about other successful status codes?
         if resp.status_code != 200:

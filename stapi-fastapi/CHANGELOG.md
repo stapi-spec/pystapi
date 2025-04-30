@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [0.7.1] - 2025-04-25
+
+### Fixed
+
+- Add stapi-pydantic as a dependency
+
+## [0.7.0] - 2025-04-18
 
 ### Fixed
 
@@ -18,8 +24,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## Changed
 
+- Renamed all exceptions to errors ([#41](https://github.com/stapi-spec/pystapi/pull/41))
 - stapi-fastapi is now using stapi-pydantic models, deduplicating code
 - Product in stapi-fastapi is now subclass of Product from stapi-pydantic
+- How conformances work ([#90](https://github.com/stapi-spec/pystapi/pull/90))
+- Async behaviors align with spec changes ([#90](https://github.com/stapi-spec/pystapi/pull/90))
 
 ## [0.6.0] - 2025-02-11
 
@@ -117,6 +126,8 @@ Initial release
 - Add links `opportunities` and `create-order` to Product
 - Add link `create-order` to OpportunityCollection
 
+[0.7.1]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.7.1
+[0.7.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.7.0
 [0.6.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.6.0
 [0.5.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.5.0
 [0.4.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.4.0
