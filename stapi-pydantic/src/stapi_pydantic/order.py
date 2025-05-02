@@ -9,9 +9,9 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    StrictStr,
     field_validator,
 )
-from pydantic.json_schema import SkipJsonSchema
 
 from .constants import STAPI_VERSION
 from .datetime_interval import DatetimeInterval
@@ -32,7 +32,6 @@ ORP = TypeVar("ORP", bound=OrderParameters)
 
 
 class OrderStatusCode(StrEnum):
-    # Required
     received = "received"
     accepted = "accepted"
     rejected = "rejected"
@@ -42,8 +41,6 @@ class OrderStatusCode(StrEnum):
     held = "held"
     processing = "processing"
     reserved = "reserved"
-
-    # extensions
     tasked = "tasked"
     user_cancelled = "user_cancelled"
     expired = "expired"
@@ -91,18 +88,15 @@ class OrderProperties(BaseModel, Generic[T]):
 class Order(_GeoJsonBase, Generic[T]):
     # We need to enforce that orders have an id defined, as that is required to
     # retrieve them via the API
-    id: str | SkipJsonSchema[None] = None
-    user: str | SkipJsonSchema[None] = None
-    status: T | SkipJsonSchema[None] = None
-    created: AwareDatetime | SkipJsonSchema[None] = None
-    links: list[Link] = Field(default_factory=list)
-
+    id: StrictStr
     type: Literal["Feature"] = "Feature"
     stapi_type: Literal["Order"] = "Order"
     stapi_version: str = STAPI_VERSION
 
     geometry: Geometry = Field(...)
     properties: OrderProperties[T] = Field(...)
+
+    links: list[Link] = Field(default_factory=list)
 
     __geojson_exclude_if_none__ = {"bbox", "id"}
 

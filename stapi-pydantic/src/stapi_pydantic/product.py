@@ -2,24 +2,23 @@ from enum import StrEnum
 from typing import Any, Literal, Self
 
 from pydantic import AnyHttpUrl, BaseModel, Field
-from pydantic.json_schema import SkipJsonSchema
 
 from .constants import STAPI_VERSION
 from .shared import Link
 
 
 class ProviderRole(StrEnum):
-    producer = "producer"
     licensor = "licensor"
+    producer = "producer"
     processor = "processor"
     host = "host"
 
 
 class Provider(BaseModel):
     name: str
-    description: str | SkipJsonSchema[None] = None
-    roles: list[ProviderRole] | SkipJsonSchema[None] = None
-    url: AnyHttpUrl | SkipJsonSchema[None] = None
+    description: str | None = None
+    roles: list[ProviderRole]
+    url: AnyHttpUrl
 
     # redefining init is a hack to get str type to validate for `url`,
     # as str is ultimately coerced into an AnyHttpUrl automatically anyway
@@ -33,12 +32,12 @@ class Product(BaseModel):
     stapi_version: str = STAPI_VERSION
     conformsTo: list[str] = Field(default_factory=list)
     id: str
-    title: str | SkipJsonSchema[None] = None
-    description: str
-    keywords: list[str] | SkipJsonSchema[None] = None
+    title: str = ""
+    description: str = ""
+    keywords: list[str] = Field(default_factory=list)
     license: str
-    providers: list[Provider] | SkipJsonSchema[None] = None
-    links: list[Link]
+    providers: list[Provider] = Field(default_factory=list)
+    links: list[Link] = Field(default_factory=list)
 
     def with_links(self, links: list[Link] | None = None) -> Self:
         if not links:
@@ -50,12 +49,6 @@ class Product(BaseModel):
 
 
 class ProductsCollection(BaseModel):
-    links: list[Link]
-    products: list[Product] = Field(
-        description=(
-            "STAPI Product objects are represented in JSON format and are very flexible. "
-            "Any JSON object that contains all the required fields is a valid STAPI Product. "
-            "A Product object contains a minimal set of required properties to be valid and can be extended "
-            "through the use of queryables and parameters."
-        )
-    )
+    type_: Literal["ProductCollection"] = Field(default="ProductCollection", alias="type")
+    links: list[Link] = Field(default_factory=list)
+    products: list[Product]
