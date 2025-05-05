@@ -56,15 +56,10 @@ class ProductRouter(APIRouter):
             endpoint=self.get_product,
             methods=["GET"],
             tags=["Products"],
-            summary="Get product details",
+            summary="Get product",
             description=(
-                "Returns detailed information about a specific product. The response includes "
-                "all product metadata, including required fields (type, id, title, description, "
-                "license, providers, links) and optional fields (keywords, queryables, parameters, "
-                "properties). The parameters field defines what can be ordered for this product, "
-                "while the properties field describes inherent characteristics of the product. "
-                "The response includes links to related endpoints such as queryables, order "
-                "parameters, and conformance information."
+                "Returns detailed information about a specific product, including its metadata, "
+                "capabilities, and configuration options."
             ),
             response_model=Product,
             responses={
@@ -73,7 +68,7 @@ class ProductRouter(APIRouter):
                     "content": {
                         "application/json": {
                             "example": {
-                                "type": "Product",
+                                "type": "Collection",
                                 "stapi_type": "Product",
                                 "stapi_version": STAPI_VERSION,
                                 "id": "{productId}",
@@ -86,7 +81,13 @@ class ProductRouter(APIRouter):
                                         "roles": ["producer"],
                                         "url": "https://example.com/provider",
                                         "description": "Example provider for demonstration purposes",
-                                    }
+                                    },
+                                    {
+                                        "name": "Example Host",
+                                        "roles": ["host"],
+                                        "url": "https://example.com/host",
+                                        "description": "Example host for demonstration purposes",
+                                    },
                                 ],
                                 "conformsTo": [
                                     f"{STAPI_BASE_URL}/{STAPI_VERSION}/core",
@@ -129,11 +130,8 @@ class ProductRouter(APIRouter):
             tags=["Products"],
             summary="Get product conformance",
             description=(
-                "Returns the conformance classes that apply specifically to this product. "
-                "These classes indicate which features and capabilities are supported by "
-                "this product, such as supported geometry types, parameter types, and "
-                "other product-specific capabilities. The conformance classes help clients "
-                "understand what operations and parameters are available for this product."
+                "Returns the conformance classes that apply specifically to this product, "
+                "indicating which features and capabilities are supported."
             ),
             response_model=Conformance,
             responses={
@@ -162,14 +160,10 @@ class ProductRouter(APIRouter):
             endpoint=self.get_queryables,
             methods=["GET"],
             tags=["Products"],
-            summary="Get queryable properties",
+            summary="Get queryables",
             description=(
-                "Returns a JSON Schema definition of the properties that can be used to "
-                "filter opportunities and orders for this product. These queryables define "
-                "the constraints that can be applied when searching for or ordering this "
-                "product, such as cloud cover limits, resolution requirements, or other "
-                "product-specific parameters. The schema follows JSON Schema draft-07 and "
-                "provides detailed information about each queryable property."
+                "Returns a JSON Schema definition of the properties that can be used to filter "
+                "opportunities and orders for this product."
             ),
             response_model=Queryables,
             responses={
@@ -212,11 +206,8 @@ class ProductRouter(APIRouter):
             tags=["Products"],
             summary="Get order parameters",
             description=(
-                "Returns a JSON Schema definition of the parameters that can be specified "
-                "when creating an order for this product. These parameters define the "
-                "configurable options for the order, such as delivery format, processing "
-                "level, or other product-specific options. The schema follows JSON Schema "
-                "draft-07 and provides detailed information about each parameter."
+                "Returns a JSON Schema definition of the parameters that can be specified when "
+                "creating an order for this product."
             ),
             response_model=OrderParameters,
             responses={
@@ -261,12 +252,8 @@ class ProductRouter(APIRouter):
             tags=["Orders"],
             summary="Create order",
             description=(
-                "Creates a new order for this product. The request must include the required "
-                "fields (datetime, geometry) and may include optional fields (queryables, "
-                "order_parameters). The datetime field specifies the temporal extent of the "
-                "order, while the geometry field defines its spatial extent. The response "
-                "is a GeoJSON Feature representing the created order. The order will be "
-                "processed according to the specified parameters and constraints."
+                "Creates a new order for this product using the parameters defined in the product "
+                "or provided through the opportunities endpoint."
             ),
             response_model=Order[OrderStatus],
             responses={
@@ -321,12 +308,8 @@ class ProductRouter(APIRouter):
             tags=["Orders"],
             summary="List product orders",
             description=(
-                "Returns a collection of orders for this product. Each order is a GeoJSON "
-                "Feature containing the order details, including status, parameters, and "
-                "metadata. The response is a GeoJSON FeatureCollection and includes "
-                "pagination links for navigating through the order collection. Orders can "
-                "be filtered by various parameters and support pagination for efficient "
-                "retrieval of large result sets."
+                "Returns a collection of orders for this product. The response includes pagination "
+                "links for navigating through the order collection."
             ),
             response_model=OrderCollection[OrderStatus],
             responses={
@@ -377,13 +360,8 @@ class ProductRouter(APIRouter):
             tags=["Opportunities"],
             summary="Search opportunities",
             description=(
-                "Searches for potential acquisition opportunities for this product. The request "
-                "must include the required fields (datetime, geometry) and may include optional "
-                "fields (filter). The datetime field specifies the temporal extent of the search, "
-                "while the geometry field defines its spatial extent. The filter field allows "
-                "specifying additional constraints using CQL2 JSON. The response is a GeoJSON "
-                "FeatureCollection containing the matching opportunities. Supports both "
-                "synchronous and asynchronous search modes."
+                "Explores the opportunities available for this product based on the provided "
+                "parameters. Supports both synchronous and asynchronous search modes."
             ),
             response_model=OpportunityCollection[Polygon, OpportunityProperties],
             responses={
@@ -483,10 +461,8 @@ class ProductRouter(APIRouter):
             tags=["Opportunities"],
             summary="Get opportunity collection",
             description=(
-                "Returns the opportunity collection for an asynchronous search. This endpoint "
-                "is used to retrieve the results of an asynchronous opportunity search. The "
-                "response is a GeoJSON FeatureCollection containing the matching opportunities. "
-                "The collection may be paginated if there are many results."
+                "Returns the opportunity collection for an asynchronous search. The response "
+                "includes pagination links for navigating through the opportunity collection."
             ),
             response_model=OpportunityCollection[Polygon, OpportunityProperties],
             responses={

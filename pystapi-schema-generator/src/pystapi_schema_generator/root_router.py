@@ -35,16 +35,14 @@ class RootRouter(APIRouter):
             self.get_root,
             methods=["GET"],
             tags=["Core"],
-            summary="STAPI root endpoint for API discovery and metadata",
+            summary="API root",
             description=(
-                "This endpoint serves as the entry point for API discovery and navigation. "
-                "Returns the STAPI root endpoint response containing the API's metadata: "
-                "a unique identifier, descriptive text, implemented conformance classes, "
-                "and hypermedia links to available resources and documentation. "
-                "The response includes links to all available products, orders, and "
-                "opportunities endpoints."
+                "Returns the STAPI landing page with essential metadata about the API implementation. "
+                "The response includes a unique identifier, descriptive text, and hypermedia links to "
+                "related endpoints."
             ),
             response_model=RootResponse,
+            response_description="STAPI landing page with API metadata and links",
             responses={
                 status.HTTP_200_OK: {
                     "description": "Successful response",
@@ -78,6 +76,12 @@ class RootRouter(APIRouter):
                                         "href": f"{STAPI_EXAMPLE_URL}/orders",
                                         "title": "Order Management",
                                     },
+                                    {
+                                        "rel": "create-order",
+                                        "type": "application/json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/products/{{productId}}/orders",
+                                        "title": "Create Order",
+                                    },
                                 ],
                             }
                         }
@@ -93,16 +97,12 @@ class RootRouter(APIRouter):
             tags=["Core"],
             summary="API conformance",
             description=(
-                "Returns a list of conformance classes implemented by this API, following "
-                "the OGC API Features conformance structure. While the core STAPI "
-                "conformance classes are already communicated in the root endpoint, "
-                "OGC API requires this duplicate conformance information at this "
-                "/conformance endpoint. Includes both STAPI-specific conformance classes "
-                "(e.g., core, order statuses, searches) and relevant OGC conformance classes. "
-                "This endpoint helps clients understand which features and capabilities "
-                "are supported by the API implementation."
+                "Returns the list of conformance classes implemented by this API. While the core "
+                "STAPI conformance classes are already communicated in the root endpoint, OGC API "
+                "requires this duplicate conformance information at this endpoint."
             ),
             response_model=Conformance,
+            response_description="List of implemented conformance classes",
             responses={
                 status.HTTP_200_OK: {
                     "description": "Successful response",
@@ -130,19 +130,13 @@ class RootRouter(APIRouter):
             self.get_products,
             methods=["GET"],
             tags=["Products"],
-            summary="List of available products from the provider",
+            summary="List products",
             description=(
-                "Returns a collection of products offered by the provider. Each product contains "
-                "required fields (type, id, title, description, license, providers, links) and "
-                "optional fields (keywords, queryables, parameters, properties). The parameters "
-                "field defines what can be ordered for each product (e.g., cloud cover limits), "
-                "while the properties field describes inherent characteristics of the product "
-                "(e.g., sensor type, frequency band). The response is represented as a GeoJSON "
-                "FeatureCollection and includes pagination links for navigating through the "
-                "product collection. Products may support different capabilities and parameters, "
-                "which are indicated by their conformance classes."
+                "Returns a collection of products offered by the provider. This endpoint helps "
+                "users discover which queryables are available for each product."
             ),
             response_model=ProductsCollection,
+            response_description="Collection of available products",
             responses={
                 status.HTTP_200_OK: {
                     "description": "Successful response",
@@ -151,7 +145,7 @@ class RootRouter(APIRouter):
                             "example": {
                                 "products": [
                                     {
-                                        "type": "Product",
+                                        "type": "Collection",
                                         "stapi_type": "Product",
                                         "stapi_version": STAPI_VERSION,
                                         "id": "{productId}",
@@ -163,7 +157,14 @@ class RootRouter(APIRouter):
                                                 "name": "Example Provider",
                                                 "roles": ["producer"],
                                                 "url": "https://example.com/provider",
-                                            }
+                                                "description": "Example provider for demonstration purposes",
+                                            },
+                                            {
+                                                "name": "Example Host",
+                                                "roles": ["host"],
+                                                "url": "https://example.com/host",
+                                                "description": "Example host for demonstration purposes",
+                                            },
                                         ],
                                         "conformsTo": [
                                             f"{STAPI_BASE_URL}/{STAPI_VERSION}/core",
@@ -179,6 +180,16 @@ class RootRouter(APIRouter):
                                                 "rel": "queryables",
                                                 "type": "application/json",
                                                 "href": f"{STAPI_EXAMPLE_URL}/products/{{productId}}/queryables",
+                                            },
+                                            {
+                                                "rel": "order-parameters",
+                                                "type": "application/json",
+                                                "href": f"{STAPI_EXAMPLE_URL}/products/{{productId}}/order-parameters",
+                                            },
+                                            {
+                                                "rel": "conformance",
+                                                "type": "application/json",
+                                                "href": f"{STAPI_EXAMPLE_URL}/products/{{productId}}/conformance",
                                             },
                                         ],
                                     }
@@ -206,15 +217,11 @@ class RootRouter(APIRouter):
             tags=["Orders"],
             summary="List orders",
             description=(
-                "Returns a collection of orders in the system. Each order contains required fields "
-                "(datetime, geometry) and optional fields (queryables). The datetime field specifies "
-                "the temporal extent of the order, while the geometry field defines its spatial extent. "
-                "The queryables field contains the constraints specified for the order. The response is "
-                "represented as a GeoJSON FeatureCollection and includes pagination links for navigating "
-                "through the order collection. Orders can be filtered by various parameters and support "
-                "pagination for efficient retrieval of large result sets."
+                "Returns a collection of orders in the system. "
+                "The response includes pagination links for navigating through the collection."
             ),
             response_model=OrderCollection[OrderStatus],
+            response_description="Collection of orders",
             responses={
                 status.HTTP_200_OK: {
                     "description": "Successful response",
@@ -258,15 +265,12 @@ class RootRouter(APIRouter):
             methods=["GET"],
             response_class=GeoJSONResponse,
             tags=["Orders"],
-            summary="Get order details",
+            summary="Get order",
             description=(
-                "Returns detailed information about a specific order. The order contains required "
-                "fields (datetime, geometry) defining its temporal and spatial extent, and optional "
-                "fields (queryables) containing the order constraints. The response is represented as "
-                "a GeoJSON Feature and may include additional metadata and links to related resources. "
-                "The order status and history can be accessed through the statuses endpoint."
+                "Returns detailed information about a specific order, including its status, parameters, and metadata."
             ),
             response_model=Order[OrderStatus],
+            response_description="Order details",
             responses={
                 status.HTTP_200_OK: {
                     "description": "Successful response",
@@ -311,15 +315,13 @@ class RootRouter(APIRouter):
             self.get_order_statuses,
             methods=["GET"],
             tags=["Orders"],
-            summary="Get order status history",
+            summary="Get order statuses",
             description=(
                 "Returns the history of status changes for a specific order. The response includes "
-                "a chronological list of status updates, each containing the status value, timestamp, "
-                "and any associated message or metadata. Supports pagination through the next and limit "
-                "parameters to navigate through the status history. The status history provides a "
-                "detailed audit trail of the order's processing and delivery."
+                "pagination links for navigating through the status history."
             ),
             response_model=OrderStatuses[OrderStatus],
+            response_description="Collection of order status updates",
             responses={
                 status.HTTP_200_OK: {
                     "description": "Successful response",
