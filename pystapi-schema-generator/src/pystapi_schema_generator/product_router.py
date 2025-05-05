@@ -56,7 +56,7 @@ class ProductRouter(APIRouter):
             endpoint=self.get_product,
             methods=["GET"],
             tags=["Products"],
-            summary="Get details of a specific product",
+            summary="Get product details",
             description=(
                 "Returns detailed information about a specific product. The response includes "
                 "all product metadata, including required fields (type, id, title, description, "
@@ -127,7 +127,7 @@ class ProductRouter(APIRouter):
             endpoint=self.get_conformance,
             methods=["GET"],
             tags=["Products"],
-            summary="Get conformance classes for a specific product",
+            summary="Get product conformance",
             description=(
                 "Returns the conformance classes that apply specifically to this product. "
                 "These classes indicate which features and capabilities are supported by "
@@ -162,7 +162,7 @@ class ProductRouter(APIRouter):
             endpoint=self.get_queryables,
             methods=["GET"],
             tags=["Products"],
-            summary="Get queryable properties for a specific product",
+            summary="Get queryable properties",
             description=(
                 "Returns a JSON Schema definition of the properties that can be used to "
                 "filter opportunities and orders for this product. These queryables define "
@@ -210,7 +210,7 @@ class ProductRouter(APIRouter):
             endpoint=self.get_order_parameters,
             methods=["GET"],
             tags=["Products"],
-            summary="Get order parameters for a specific product",
+            summary="Get order parameters",
             description=(
                 "Returns a JSON Schema definition of the parameters that can be specified "
                 "when creating an order for this product. These parameters define the "
@@ -259,7 +259,7 @@ class ProductRouter(APIRouter):
             response_class=GeoJSONResponse,
             status_code=status.HTTP_201_CREATED,
             tags=["Orders"],
-            summary="Create a new order for a specific product",
+            summary="Create order",
             description=(
                 "Creates a new order for this product. The request must include the required "
                 "fields (datetime, geometry) and may include optional fields (queryables, "
@@ -319,7 +319,7 @@ class ProductRouter(APIRouter):
             methods=["GET"],
             response_class=GeoJSONResponse,
             tags=["Orders"],
-            summary="Get orders for a specific product",
+            summary="List product orders",
             description=(
                 "Returns a collection of orders for this product. Each order is a GeoJSON "
                 "Feature containing the order details, including status, parameters, and "
@@ -375,7 +375,7 @@ class ProductRouter(APIRouter):
             methods=["POST"],
             response_class=GeoJSONResponse,
             tags=["Opportunities"],
-            summary="Search for acquisition opportunities",
+            summary="Search opportunities",
             description=(
                 "Searches for potential acquisition opportunities for this product. The request "
                 "must include the required fields (datetime, geometry) and may include optional "
@@ -481,7 +481,7 @@ class ProductRouter(APIRouter):
             methods=["GET"],
             response_class=GeoJSONResponse,
             tags=["Opportunities"],
-            summary="Get opportunity collection for async search",
+            summary="Get opportunity collection",
             description=(
                 "Returns the opportunity collection for an asynchronous search. This endpoint "
                 "is used to retrieve the results of an asynchronous opportunity search. The "

@@ -35,14 +35,11 @@ class RootRouter(APIRouter):
             self.get_root,
             methods=["GET"],
             tags=["Core"],
-            summary="STAPI root endpoint for API discovery and metadata",
+            summary="API root",
             description=(
-                "This endpoint serves as the entry point for API discovery and navigation. "
                 "Returns the STAPI root endpoint response containing the API's metadata: "
                 "a unique identifier, descriptive text, implemented conformance classes, "
-                "and hypermedia links to available resources and documentation. "
-                "The response includes links to all available products, orders, and "
-                "opportunities endpoints."
+                "and hypermedia links to available resources and documentation."
             ),
             response_model=RootResponse,
             responses={
@@ -91,7 +88,7 @@ class RootRouter(APIRouter):
             self.get_conformance,
             methods=["GET"],
             tags=["Core"],
-            summary="List of implemented STAPI and OGC conformance classes",
+            summary="API conformance",
             description=(
                 "Returns a list of conformance classes implemented by this API, following "
                 "the OGC API Features conformance structure. While the core STAPI "
@@ -173,12 +170,12 @@ class RootRouter(APIRouter):
                                             {
                                                 "rel": "self",
                                                 "type": "application/json",
-                                                "href": "https://stapi.example.com/products/{productId}",
+                                                "href": f"{STAPI_EXAMPLE_URL}/products/{{productId}}",
                                             },
                                             {
                                                 "rel": "queryables",
                                                 "type": "application/json",
-                                                "href": "https://stapi.example.com/products/{productId}/queryables",
+                                                "href": f"{STAPI_EXAMPLE_URL}/products/{{productId}}/queryables",
                                             },
                                         ],
                                     }
@@ -204,7 +201,7 @@ class RootRouter(APIRouter):
             methods=["GET"],
             response_class=GeoJSONResponse,
             tags=["Orders"],
-            summary="List of orders in the system",
+            summary="List orders",
             description=(
                 "Returns a collection of orders in the system. Each order contains required fields "
                 "(datetime, geometry) and optional fields (queryables). The datetime field specifies "
@@ -258,7 +255,7 @@ class RootRouter(APIRouter):
             methods=["GET"],
             response_class=GeoJSONResponse,
             tags=["Orders"],
-            summary="Get details of a specific order",
+            summary="Get order details",
             description=(
                 "Returns detailed information about a specific order. The order contains required "
                 "fields (datetime, geometry) defining its temporal and spatial extent, and optional "
@@ -311,7 +308,7 @@ class RootRouter(APIRouter):
             self.get_order_statuses,
             methods=["GET"],
             tags=["Orders"],
-            summary="Get status history of an order",
+            summary="Get order status history",
             description=(
                 "Returns the history of status changes for a specific order. The response includes "
                 "a chronological list of status updates, each containing the status value, timestamp, "

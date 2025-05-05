@@ -19,7 +19,10 @@ def create_app() -> FastAPI:
         openapi_tags=[
             {
                 "name": "Core",
-                "description": "Core endpoints for API discovery and metadata",
+                "description": (
+                    "Core endpoints for API discovery and metadata. These endpoints provide "
+                    "essential information about the API's capabilities and available resources."
+                ),
                 "externalDocs": {
                     "description": "STAPI Core Specification",
                     "url": "https://github.com/stapi-spec/stapi-spec/blob/main/core/README.md",
@@ -27,7 +30,11 @@ def create_app() -> FastAPI:
             },
             {
                 "name": "Products",
-                "description": "Endpoints for discovering remote sensing data products",
+                "description": (
+                    "Endpoints for discovering and accessing remote sensing data products. "
+                    "Each product endpoint provides detailed metadata, queryable properties, "
+                    "and order parameters specific to that product."
+                ),
                 "externalDocs": {
                     "description": "STAPI Product Specification",
                     "url": "https://github.com/stapi-spec/stapi-spec/blob/main/product/README.md",
@@ -35,7 +42,11 @@ def create_app() -> FastAPI:
             },
             {
                 "name": "Orders",
-                "description": "Endpoints for creating and tracking remote sensing data orders",
+                "description": (
+                    "Endpoints for creating and managing remote sensing data orders. "
+                    "Supports order creation, status tracking, and delivery management "
+                    "with comprehensive state machine implementation."
+                ),
                 "externalDocs": {
                     "description": "STAPI Order Specification",
                     "url": "https://github.com/stapi-spec/stapi-spec/blob/main/order/README.md",
@@ -43,7 +54,11 @@ def create_app() -> FastAPI:
             },
             {
                 "name": "Opportunities",
-                "description": "Endpoints for searching remote sensing acquisition opportunities",
+                "description": (
+                    "Endpoints for searching remote sensing acquisition opportunities. "
+                    "Supports both synchronous and asynchronous search modes with "
+                    "spatial, temporal, and property-based filtering."
+                ),
                 "externalDocs": {
                     "description": "STAPI Opportunity Specification",
                     "url": "https://github.com/stapi-spec/stapi-spec/blob/main/opportunity/README.md",
@@ -62,7 +77,8 @@ def create_app() -> FastAPI:
             title="Example Product",
             description=(
                 "This is an example product that demonstrates the STAPI specification. "
-                "Implementers should replace this with their actual product definitions."
+                "Implementers should replace this with their actual product definitions, "
+                "including specific metadata, queryable properties, and order parameters."
             ),
             license="proprietary",
             providers=[
