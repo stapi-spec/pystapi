@@ -13,6 +13,8 @@ from stapi_pydantic import (
     RootResponse,
 )
 
+from pystapi_schema_generator import STAPI_BASE_URL, STAPI_EXAMPLE_URL, STAPI_VERSION
+
 from .product_router import ProductRouter
 
 
@@ -38,7 +40,9 @@ class RootRouter(APIRouter):
                 "This endpoint serves as the entry point for API discovery and navigation. "
                 "Returns the STAPI root endpoint response containing the API's metadata: "
                 "a unique identifier, descriptive text, implemented conformance classes, "
-                "and hypermedia links to available resources and documentation."
+                "and hypermedia links to available resources and documentation. "
+                "The response includes links to all available products, orders, and "
+                "opportunities endpoints."
             ),
             response_model=RootResponse,
             responses={
@@ -49,13 +53,31 @@ class RootRouter(APIRouter):
                             "example": {
                                 "id": "stapi-example",
                                 "title": "STAPI API",
-                                "description": "Implementation of the STAPI specification",
+                                "description": "Implementation of the STAPI specification for remote sensing data",
                                 "conformsTo": [
-                                    "https://stapi.example.com/v0.1.0/core",
-                                    "https://stapi.example.com/v0.1.0/order-statuses",
+                                    f"{STAPI_BASE_URL}/{STAPI_VERSION}/core",
+                                    f"{STAPI_BASE_URL}/{STAPI_VERSION}/order-statuses",
+                                    f"{STAPI_BASE_URL}/{STAPI_VERSION}/opportunities",
                                 ],
                                 "links": [
-                                    {"rel": "self", "type": "application/json", "href": "https://stapi.example.com/"}
+                                    {
+                                        "rel": "self",
+                                        "type": "application/json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/",
+                                        "title": "STAPI API Root",
+                                    },
+                                    {
+                                        "rel": "products",
+                                        "type": "application/json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/products",
+                                        "title": "Available Products",
+                                    },
+                                    {
+                                        "rel": "orders",
+                                        "type": "application/json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/orders",
+                                        "title": "Order Management",
+                                    },
                                 ],
                             }
                         }
@@ -76,7 +98,9 @@ class RootRouter(APIRouter):
                 "conformance classes are already communicated in the root endpoint, "
                 "OGC API requires this duplicate conformance information at this "
                 "/conformance endpoint. Includes both STAPI-specific conformance classes "
-                "(e.g., core, order statuses, searches) and relevant OGC conformance classes."
+                "(e.g., core, order statuses, searches) and relevant OGC conformance classes. "
+                "This endpoint helps clients understand which features and capabilities "
+                "are supported by the API implementation."
             ),
             response_model=Conformance,
             responses={
@@ -86,8 +110,12 @@ class RootRouter(APIRouter):
                         "application/json": {
                             "example": {
                                 "conformsTo": [
-                                    "https://stapi.example.com/v0.1.0/core",
-                                    "https://stapi.example.com/v0.1.0/order-statuses",
+                                    f"{STAPI_BASE_URL}/{STAPI_VERSION}/core",
+                                    f"{STAPI_BASE_URL}/{STAPI_VERSION}/order-statuses",
+                                    f"{STAPI_BASE_URL}/{STAPI_VERSION}/opportunities",
+                                    f"{STAPI_BASE_URL}/{STAPI_VERSION}/opportunities-async",
+                                    "https://geojson.org/schema/Polygon.json",
+                                    "https://geojson.org/schema/Point.json",
                                 ]
                             }
                         }
@@ -111,7 +139,8 @@ class RootRouter(APIRouter):
                 "while the properties field describes inherent characteristics of the product "
                 "(e.g., sensor type, frequency band). The response is represented as a GeoJSON "
                 "FeatureCollection and includes pagination links for navigating through the "
-                "product collection."
+                "product collection. Products may support different capabilities and parameters, "
+                "which are indicated by their conformance classes."
             ),
             response_model=ProductsCollection,
             responses={
@@ -123,14 +152,44 @@ class RootRouter(APIRouter):
                                 "products": [
                                     {
                                         "type": "Product",
-                                        "id": "multispectral",
-                                        "title": "Multispectral",
-                                        "description": "Full color EO image",
+                                        "stapi_type": "Product",
+                                        "stapi_version": STAPI_VERSION,
+                                        "id": "{productId}",
+                                        "title": "Example Product",
+                                        "description": "Example product for demonstration purposes",
                                         "license": "proprietary",
-                                        "links": [],
+                                        "providers": [
+                                            {
+                                                "name": "Example Provider",
+                                                "roles": ["producer"],
+                                                "url": "https://example.com/provider",
+                                            }
+                                        ],
+                                        "conformsTo": [
+                                            f"{STAPI_BASE_URL}/{STAPI_VERSION}/core",
+                                            "https://geojson.org/schema/Polygon.json",
+                                        ],
+                                        "links": [
+                                            {
+                                                "rel": "self",
+                                                "type": "application/json",
+                                                "href": "https://stapi.example.com/products/{productId}",
+                                            },
+                                            {
+                                                "rel": "queryables",
+                                                "type": "application/json",
+                                                "href": "https://stapi.example.com/products/{productId}/queryables",
+                                            },
+                                        ],
                                     }
                                 ],
-                                "links": [],
+                                "links": [
+                                    {
+                                        "rel": "self",
+                                        "type": "application/json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/products",
+                                    }
+                                ],
                             }
                         }
                     },
@@ -152,7 +211,8 @@ class RootRouter(APIRouter):
                 "the temporal extent of the order, while the geometry field defines its spatial extent. "
                 "The queryables field contains the constraints specified for the order. The response is "
                 "represented as a GeoJSON FeatureCollection and includes pagination links for navigating "
-                "through the order collection."
+                "through the order collection. Orders can be filtered by various parameters and support "
+                "pagination for efficient retrieval of large result sets."
             ),
             response_model=OrderCollection[OrderStatus],
             responses={
@@ -162,8 +222,29 @@ class RootRouter(APIRouter):
                         "application/geo+json": {
                             "example": {
                                 "type": "FeatureCollection",
-                                "features": [],
-                                "links": [],
+                                "features": [
+                                    {
+                                        "type": "Feature",
+                                        "id": "order-123",
+                                        "properties": {
+                                            "product_id": "{productId}",
+                                            "created": "2024-01-01T00:00:00Z",
+                                            "status": "accepted",
+                                            "datetime": "2024-01-01T00:00:00Z/2024-01-02T00:00:00Z",
+                                        },
+                                        "geometry": {
+                                            "type": "Polygon",
+                                            "coordinates": [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]],
+                                        },
+                                    }
+                                ],
+                                "links": [
+                                    {
+                                        "rel": "self",
+                                        "type": "application/geo+json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/orders",
+                                    }
+                                ],
                             }
                         }
                     },
@@ -182,7 +263,8 @@ class RootRouter(APIRouter):
                 "Returns detailed information about a specific order. The order contains required "
                 "fields (datetime, geometry) defining its temporal and spatial extent, and optional "
                 "fields (queryables) containing the order constraints. The response is represented as "
-                "a GeoJSON Feature and may include additional metadata and links to related resources."
+                "a GeoJSON Feature and may include additional metadata and links to related resources. "
+                "The order status and history can be accessed through the statuses endpoint."
             ),
             response_model=Order[OrderStatus],
             responses={
@@ -194,10 +276,28 @@ class RootRouter(APIRouter):
                                 "type": "Feature",
                                 "id": "order-123",
                                 "properties": {
-                                    "product_id": "multispectral",
+                                    "product_id": "{productId}",
                                     "created": "2024-01-01T00:00:00Z",
                                     "status": "accepted",
+                                    "datetime": "2024-01-01T00:00:00Z/2024-01-02T00:00:00Z",
+                                    "order_parameters": {"format": "GeoTIFF", "processing_level": "L2A"},
                                 },
+                                "geometry": {
+                                    "type": "Polygon",
+                                    "coordinates": [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]],
+                                },
+                                "links": [
+                                    {
+                                        "rel": "self",
+                                        "type": "application/geo+json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/orders/order-123",
+                                    },
+                                    {
+                                        "rel": "monitor",
+                                        "type": "application/json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/orders/order-123/statuses",
+                                    },
+                                ],
                             }
                         }
                     },
@@ -216,7 +316,8 @@ class RootRouter(APIRouter):
                 "Returns the history of status changes for a specific order. The response includes "
                 "a chronological list of status updates, each containing the status value, timestamp, "
                 "and any associated message or metadata. Supports pagination through the next and limit "
-                "parameters to navigate through the status history."
+                "parameters to navigate through the status history. The status history provides a "
+                "detailed audit trail of the order's processing and delivery."
             ),
             response_model=OrderStatuses[OrderStatus],
             responses={
@@ -228,11 +329,34 @@ class RootRouter(APIRouter):
                                 "statuses": [
                                     {
                                         "timestamp": "2024-01-01T00:00:00Z",
+                                        "status_code": "received",
+                                        "reason_text": "Order received and validated",
+                                    },
+                                    {
+                                        "timestamp": "2024-01-01T00:05:00Z",
                                         "status_code": "accepted",
                                         "reason_text": "Order accepted for processing",
+                                    },
+                                    {
+                                        "timestamp": "2024-01-02T00:00:00Z",
+                                        "status_code": "completed",
+                                        "reason_text": "Order completed successfully",
+                                        "links": [
+                                            {
+                                                "rel": "delivery",
+                                                "type": "application/json",
+                                                "href": f"{STAPI_EXAMPLE_URL}/deliveries/delivery-123",
+                                            }
+                                        ],
+                                    },
+                                ],
+                                "links": [
+                                    {
+                                        "rel": "self",
+                                        "type": "application/json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/orders/order-123/statuses",
                                     }
                                 ],
-                                "links": [],
                             }
                         }
                     },
@@ -241,34 +365,35 @@ class RootRouter(APIRouter):
             },
         )
 
-    # Core endpoints
     def get_root(self) -> RootResponse:
+        """Get the root endpoint response."""
         return None  # type: ignore
 
     def get_conformance(self) -> Conformance:
+        """Get the conformance classes supported by this API."""
         return None  # type: ignore
 
-    # Products endpoints
     def get_products(self) -> ProductsCollection:
+        """Get the list of available products."""
         return None  # type: ignore
 
     def add_product(self, product: Product, *args: Any, **kwargs: Any) -> None:
         """Add a product router to the root router."""
-        product_router = ProductRouter(product, self, *args, **kwargs)
-        self.include_router(product_router, prefix=f"/products/{product.id}")
-        self.product_routers[product.id] = product_router
+        self.product_routers[product.id] = ProductRouter(product, self, *args, **kwargs)
+        self.include_router(self.product_routers[product.id], prefix=f"/products/{product.id}")
 
-    # Orders endpoints
     def get_orders(
         self,
         next: str | None = Query(default=None, description="Token for pagination to the next page of results"),
         limit: int = Query(default=10, ge=1, le=100, description="Maximum number of orders to return per page"),
     ) -> OrderCollection[OrderStatus]:
+        """Get the list of orders with pagination support."""
         return None  # type: ignore
 
     def get_order(
         self, order_id: str = Path(alias="orderId", description="Unique identifier of the order", example="order-123")
     ) -> Order[OrderStatus]:
+        """Get details of a specific order."""
         return None  # type: ignore
 
     def get_order_statuses(
@@ -277,4 +402,5 @@ class RootRouter(APIRouter):
         next: str | None = Query(default=None, description="Token for pagination to the next page of status history"),
         limit: int = Query(default=10, ge=1, le=100, description="Maximum number of status entries to return per page"),
     ) -> OrderStatuses[OrderStatus]:
+        """Get the status history of a specific order."""
         return None  # type: ignore

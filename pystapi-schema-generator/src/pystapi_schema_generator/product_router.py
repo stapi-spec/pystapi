@@ -27,6 +27,8 @@ from stapi_pydantic import (
     Queryables,
 )
 
+from pystapi_schema_generator import STAPI_BASE_URL, STAPI_EXAMPLE_URL, STAPI_VERSION
+
 if TYPE_CHECKING:
     from .root_router import RootRouter
 
@@ -60,7 +62,9 @@ class ProductRouter(APIRouter):
                 "all product metadata, including required fields (type, id, title, description, "
                 "license, providers, links) and optional fields (keywords, queryables, parameters, "
                 "properties). The parameters field defines what can be ordered for this product, "
-                "while the properties field describes inherent characteristics of the product."
+                "while the properties field describes inherent characteristics of the product. "
+                "The response includes links to related endpoints such as queryables, order "
+                "parameters, and conformance information."
             ),
             response_model=Product,
             responses={
@@ -70,14 +74,46 @@ class ProductRouter(APIRouter):
                         "application/json": {
                             "example": {
                                 "type": "Product",
-                                "id": "multispectral",
-                                "title": "Multispectral",
-                                "description": "Full color EO image",
+                                "stapi_type": "Product",
+                                "stapi_version": STAPI_VERSION,
+                                "id": "{productId}",
+                                "title": "Example Product",
+                                "description": "Example product for demonstration purposes",
                                 "license": "proprietary",
                                 "providers": [
-                                    {"name": "Example Provider", "roles": ["producer"], "url": "https://example.com"}
+                                    {
+                                        "name": "Example Provider",
+                                        "roles": ["producer"],
+                                        "url": "https://example.com/provider",
+                                        "description": "Example provider for demonstration purposes",
+                                    }
                                 ],
-                                "links": [],
+                                "conformsTo": [
+                                    f"{STAPI_BASE_URL}/{STAPI_VERSION}/core",
+                                    "https://geojson.org/schema/Polygon.json",
+                                ],
+                                "links": [
+                                    {
+                                        "rel": "self",
+                                        "type": "application/json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/products/{{productId}}",
+                                    },
+                                    {
+                                        "rel": "queryables",
+                                        "type": "application/json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/products/{{productId}}/queryables",
+                                    },
+                                    {
+                                        "rel": "order-parameters",
+                                        "type": "application/json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/products/{{productId}}/order-parameters",
+                                    },
+                                    {
+                                        "rel": "conformance",
+                                        "type": "application/json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/products/{{productId}}/conformance",
+                                    },
+                                ],
                             }
                         }
                     },
@@ -96,7 +132,8 @@ class ProductRouter(APIRouter):
                 "Returns the conformance classes that apply specifically to this product. "
                 "These classes indicate which features and capabilities are supported by "
                 "this product, such as supported geometry types, parameter types, and "
-                "other product-specific capabilities."
+                "other product-specific capabilities. The conformance classes help clients "
+                "understand what operations and parameters are available for this product."
             ),
             response_model=Conformance,
             responses={
@@ -106,8 +143,11 @@ class ProductRouter(APIRouter):
                         "application/json": {
                             "example": {
                                 "conformsTo": [
-                                    "https://stapi.example.com/v0.1.0/core",
+                                    f"{STAPI_BASE_URL}/{STAPI_VERSION}/core",
                                     "https://geojson.org/schema/Polygon.json",
+                                    "https://geojson.org/schema/Point.json",
+                                    f"{STAPI_BASE_URL}/{STAPI_VERSION}/opportunities",
+                                    f"{STAPI_BASE_URL}/{STAPI_VERSION}/opportunities-async",
                                 ]
                             }
                         }
@@ -128,7 +168,8 @@ class ProductRouter(APIRouter):
                 "filter opportunities and orders for this product. These queryables define "
                 "the constraints that can be applied when searching for or ordering this "
                 "product, such as cloud cover limits, resolution requirements, or other "
-                "product-specific parameters."
+                "product-specific parameters. The schema follows JSON Schema draft-07 and "
+                "provides detailed information about each queryable property."
             ),
             response_model=Queryables,
             responses={
@@ -138,7 +179,24 @@ class ProductRouter(APIRouter):
                         "application/json": {
                             "example": {
                                 "type": "object",
-                                "properties": {"eo:cloud_cover": {"type": "number", "minimum": 0, "maximum": 100}},
+                                "properties": {
+                                    "eo:cloud_cover": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 100,
+                                        "description": "Maximum cloud cover percentage",
+                                    },
+                                    "eo:resolution": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "description": "Minimum ground resolution in meters",
+                                    },
+                                    "datetime": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "description": "Acquisition time window",
+                                    },
+                                },
                             }
                         }
                     },
@@ -157,7 +215,8 @@ class ProductRouter(APIRouter):
                 "Returns a JSON Schema definition of the parameters that can be specified "
                 "when creating an order for this product. These parameters define the "
                 "configurable options for the order, such as delivery format, processing "
-                "level, or other product-specific options."
+                "level, or other product-specific options. The schema follows JSON Schema "
+                "draft-07 and provides detailed information about each parameter."
             ),
             response_model=OrderParameters,
             responses={
@@ -167,7 +226,23 @@ class ProductRouter(APIRouter):
                         "application/json": {
                             "example": {
                                 "type": "object",
-                                "properties": {"format": {"type": "string", "enum": ["GeoTIFF", "JPEG2000"]}},
+                                "properties": {
+                                    "format": {
+                                        "type": "string",
+                                        "enum": ["GeoTIFF", "JPEG2000"],
+                                        "description": "Output file format",
+                                    },
+                                    "processing_level": {
+                                        "type": "string",
+                                        "enum": ["L1C", "L2A"],
+                                        "description": "Processing level",
+                                    },
+                                    "delivery_method": {
+                                        "type": "string",
+                                        "enum": ["download", "s3", "azure"],
+                                        "description": "Delivery method",
+                                    },
+                                },
                             }
                         }
                     },
@@ -190,7 +265,8 @@ class ProductRouter(APIRouter):
                 "fields (datetime, geometry) and may include optional fields (queryables, "
                 "order_parameters). The datetime field specifies the temporal extent of the "
                 "order, while the geometry field defines its spatial extent. The response "
-                "is a GeoJSON Feature representing the created order."
+                "is a GeoJSON Feature representing the created order. The order will be "
+                "processed according to the specified parameters and constraints."
             ),
             response_model=Order[OrderStatus],
             responses={
@@ -202,10 +278,32 @@ class ProductRouter(APIRouter):
                                 "type": "Feature",
                                 "id": "order-123",
                                 "properties": {
-                                    "product_id": "multispectral",
+                                    "product_id": "{productId}",
                                     "created": "2024-01-01T00:00:00Z",
                                     "status": "received",
+                                    "datetime": "2024-01-01T00:00:00Z/2024-01-02T00:00:00Z",
+                                    "order_parameters": {
+                                        "format": "GeoTIFF",
+                                        "processing_level": "L2A",
+                                        "delivery_method": "download",
+                                    },
                                 },
+                                "geometry": {
+                                    "type": "Polygon",
+                                    "coordinates": [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]],
+                                },
+                                "links": [
+                                    {
+                                        "rel": "self",
+                                        "type": "application/geo+json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/orders/order-123",
+                                    },
+                                    {
+                                        "rel": "monitor",
+                                        "type": "application/json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/orders/order-123/statuses",
+                                    },
+                                ],
                             }
                         }
                     },
@@ -226,7 +324,9 @@ class ProductRouter(APIRouter):
                 "Returns a collection of orders for this product. Each order is a GeoJSON "
                 "Feature containing the order details, including status, parameters, and "
                 "metadata. The response is a GeoJSON FeatureCollection and includes "
-                "pagination links for navigating through the order collection."
+                "pagination links for navigating through the order collection. Orders can "
+                "be filtered by various parameters and support pagination for efficient "
+                "retrieval of large result sets."
             ),
             response_model=OrderCollection[OrderStatus],
             responses={
@@ -236,8 +336,30 @@ class ProductRouter(APIRouter):
                         "application/geo+json": {
                             "example": {
                                 "type": "FeatureCollection",
-                                "features": [],
-                                "links": [],
+                                "features": [
+                                    {
+                                        "type": "Feature",
+                                        "id": "order-123",
+                                        "properties": {
+                                            "product_id": "{productId}",
+                                            "created": "2024-01-01T00:00:00Z",
+                                            "status": "accepted",
+                                            "datetime": "2024-01-01T00:00:00Z/2024-01-02T00:00:00Z",
+                                            "order_parameters": {"format": "GeoTIFF", "processing_level": "L2A"},
+                                        },
+                                        "geometry": {
+                                            "type": "Polygon",
+                                            "coordinates": [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]],
+                                        },
+                                    }
+                                ],
+                                "links": [
+                                    {
+                                        "rel": "self",
+                                        "type": "application/geo+json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/products/{{productId}}/orders",
+                                    }
+                                ],
                             }
                         }
                     },
@@ -251,24 +373,99 @@ class ProductRouter(APIRouter):
             path="/opportunities",
             endpoint=self.search_opportunities,
             methods=["POST"],
+            response_class=GeoJSONResponse,
             tags=["Opportunities"],
-            summary="Search for opportunities for a specific product",
+            summary="Search for acquisition opportunities",
             description=(
-                "Searches for potential acquisition opportunities for this product based on "
-                "the provided search criteria. The request must include the required fields "
-                "(datetime, geometry) and may include optional fields (queryables). The "
-                "response is a collection of opportunities that match the search criteria, "
-                "each representing a potential acquisition that could fulfill an order."
+                "Searches for potential acquisition opportunities for this product. The request "
+                "must include the required fields (datetime, geometry) and may include optional "
+                "fields (filter). The datetime field specifies the temporal extent of the search, "
+                "while the geometry field defines its spatial extent. The filter field allows "
+                "specifying additional constraints using CQL2 JSON. The response is a GeoJSON "
+                "FeatureCollection containing the matching opportunities. Supports both "
+                "synchronous and asynchronous search modes."
             ),
-            response_model=OpportunityCollection,
+            response_model=OpportunityCollection[Polygon, OpportunityProperties],
             responses={
                 status.HTTP_200_OK: {
-                    "description": "Successful response",
+                    "description": "Successful synchronous response",
+                    "content": {
+                        "application/geo+json": {
+                            "example": {
+                                "type": "FeatureCollection",
+                                "features": [
+                                    {
+                                        "type": "Feature",
+                                        "id": "opp-123",
+                                        "properties": {
+                                            "product_id": "{productId}",
+                                            "datetime": "2024-01-01T00:00:00Z/2024-01-02T00:00:00Z",
+                                            "eo:cloud_cover": 10,
+                                            "eo:resolution": 10,
+                                        },
+                                        "geometry": {
+                                            "type": "Polygon",
+                                            "coordinates": [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]],
+                                        },
+                                        "links": [
+                                            {
+                                                "rel": "create-order",
+                                                "type": "application/json",
+                                                "href": f"{STAPI_EXAMPLE_URL}/products/{{productId}}/orders",
+                                                "method": "POST",
+                                                "body": {
+                                                    "datetime": "2024-01-01T00:00:00Z/2024-01-02T00:00:00Z",
+                                                    "geometry": {
+                                                        "type": "Polygon",
+                                                        "coordinates": [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]],
+                                                    },
+                                                },
+                                            }
+                                        ],
+                                    }
+                                ],
+                                "links": [
+                                    {
+                                        "rel": "self",
+                                        "type": "application/geo+json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/products/{{productId}}/opportunities",
+                                    }
+                                ],
+                            }
+                        }
+                    },
+                },
+                status.HTTP_201_CREATED: {
+                    "description": "Asynchronous search initiated",
                     "content": {
                         "application/json": {
                             "example": {
-                                "opportunities": [],
-                                "links": [],
+                                "id": "search-123",
+                                "product_id": "{productId}",
+                                "request": {
+                                    "datetime": "2024-01-01T00:00:00Z/2024-01-02T00:00:00Z",
+                                    "geometry": {
+                                        "type": "Polygon",
+                                        "coordinates": [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]],
+                                    },
+                                },
+                                "status": {
+                                    "timestamp": "2024-01-01T00:00:00Z",
+                                    "status_code": "running",
+                                    "reason_text": "Search in progress",
+                                },
+                                "links": [
+                                    {
+                                        "rel": "self",
+                                        "type": "application/json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/searches/opportunities/search-123",
+                                    },
+                                    {
+                                        "rel": "monitor",
+                                        "type": "application/json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/searches/opportunities/search-123/statuses",
+                                    },
+                                ],
                             }
                         }
                     },
@@ -279,26 +476,70 @@ class ProductRouter(APIRouter):
         )
 
         self.add_api_route(
-            path="/opportunities/{opportunity_collection_id}",
+            path="/opportunities/{opportunityCollectionId}",
             endpoint=self.get_opportunity_collection,
             methods=["GET"],
+            response_class=GeoJSONResponse,
             tags=["Opportunities"],
-            summary="Get details of a specific opportunity collection",
+            summary="Get opportunity collection for async search",
             description=(
-                "Returns detailed information about a specific opportunity collection. The response "
-                "includes all opportunities in the collection, their properties, and any associated "
-                "metadata. This endpoint is used to retrieve the results of an asynchronous "
-                "opportunity search."
+                "Returns the opportunity collection for an asynchronous search. This endpoint "
+                "is used to retrieve the results of an asynchronous opportunity search. The "
+                "response is a GeoJSON FeatureCollection containing the matching opportunities. "
+                "The collection may be paginated if there are many results."
             ),
             response_model=OpportunityCollection[Polygon, OpportunityProperties],
             responses={
                 status.HTTP_200_OK: {
                     "description": "Successful response",
                     "content": {
-                        "application/json": {
+                        "application/geo+json": {
                             "example": {
-                                "opportunities": [],
-                                "links": [],
+                                "type": "FeatureCollection",
+                                "id": "opp-col-123",
+                                "features": [
+                                    {
+                                        "type": "Feature",
+                                        "id": "opp-123",
+                                        "properties": {
+                                            "product_id": "{productId}",
+                                            "datetime": "2024-01-01T00:00:00Z/2024-01-02T00:00:00Z",
+                                            "eo:cloud_cover": 10,
+                                            "eo:resolution": 10,
+                                        },
+                                        "geometry": {
+                                            "type": "Polygon",
+                                            "coordinates": [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]],
+                                        },
+                                        "links": [
+                                            {
+                                                "rel": "create-order",
+                                                "type": "application/json",
+                                                "href": f"{STAPI_EXAMPLE_URL}/products/{{productId}}/orders",
+                                                "method": "POST",
+                                                "body": {
+                                                    "datetime": "2024-01-01T00:00:00Z/2024-01-02T00:00:00Z",
+                                                    "geometry": {
+                                                        "type": "Polygon",
+                                                        "coordinates": [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]],
+                                                    },
+                                                },
+                                            }
+                                        ],
+                                    }
+                                ],
+                                "links": [
+                                    {
+                                        "rel": "self",
+                                        "type": "application/geo+json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/products/{{productId}}/opportunities/opp-col-123",
+                                    },
+                                    {
+                                        "rel": "search-record",
+                                        "type": "application/json",
+                                        "href": f"{STAPI_EXAMPLE_URL}/searches/opportunities/search-123",
+                                    },
+                                ],
                             }
                         }
                     },
@@ -307,23 +548,26 @@ class ProductRouter(APIRouter):
             },
         )
 
-    # Product endpoints
     def get_product(self) -> Product:
+        """Get details of this product."""
         return None  # type: ignore
 
     def get_conformance(self) -> Conformance:
+        """Get conformance classes for this product."""
         return None  # type: ignore
 
     def get_queryables(self) -> Queryables:
+        """Get queryable properties for this product."""
         return None  # type: ignore
 
     def get_order_parameters(self) -> OrderParameters:
+        """Get order parameters for this product."""
         return None  # type: ignore
 
-    # Orders endpoints
     def create_order(
         self, payload: OrderPayload[OrderParameters], request: Request, response: Response
     ) -> Order[OrderStatus]:
+        """Create a new order for this product."""
         return None  # type: ignore
 
     def get_orders(
@@ -332,6 +576,7 @@ class ProductRouter(APIRouter):
         next: str | None = Query(default=None, description="Token for pagination to the next page of results"),
         limit: int = Query(default=10, ge=1, le=100, description="Maximum number of orders to return per page"),
     ) -> OrderCollection[OrderStatus]:
+        """Get orders for this product."""
         return None  # type: ignore
 
     def get_opportunity_collection(
@@ -341,6 +586,7 @@ class ProductRouter(APIRouter):
             description="Unique identifier of the opportunity collection", example="opp-col-123"
         ),
     ) -> OpportunityCollection[Polygon, OpportunityProperties]:
+        """Get opportunity collection for async search."""
         return None  # type: ignore
 
     def search_opportunities(
@@ -352,4 +598,5 @@ class ProductRouter(APIRouter):
             default=None, description="Preference for synchronous or asynchronous processing"
         ),
     ) -> OpportunityCollection[Polygon, OpportunityProperties]:
+        """Search for acquisition opportunities."""
         return None  # type: ignore
