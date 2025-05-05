@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, ClassVar
 
 from fastapi import APIRouter, Path, Query, status
 from stapi_fastapi.responses import GeoJSONResponse
@@ -17,10 +17,16 @@ from .product_router import ProductRouter
 
 
 class RootRouter(APIRouter):
+    """Root router for STAPI endpoints."""
+
+    product_routers: ClassVar[dict[str, ProductRouter]] = {}
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.product_routers: dict[str, ProductRouter] = {}
+        self._setup_routes()
 
+    def _setup_routes(self) -> None:
+        """Set up all routes for the root router."""
         # Core endpoints
         self.add_api_route(
             "/",
@@ -42,8 +48,8 @@ class RootRouter(APIRouter):
                         "application/json": {
                             "example": {
                                 "id": "stapi-example",
-                                "title": "STAPI Example API",
-                                "description": "Example implementation of the STAPI specification",
+                                "title": "STAPI API",
+                                "description": "Implementation of the STAPI specification",
                                 "conformsTo": [
                                     "https://stapi.example.com/v0.1.0/core",
                                     "https://stapi.example.com/v0.1.0/order-statuses",
@@ -132,7 +138,7 @@ class RootRouter(APIRouter):
             },
         )
 
-        # Orders endpoints - w/o specific {productId}/orders endpoints
+        # Orders endpoints
         self.add_api_route(
             "/orders",
             self.get_orders,
@@ -153,7 +159,13 @@ class RootRouter(APIRouter):
                 status.HTTP_200_OK: {
                     "description": "Successful response",
                     "content": {
-                        "application/geo+json": {"example": {"type": "FeatureCollection", "features": [], "links": []}}
+                        "application/geo+json": {
+                            "example": {
+                                "type": "FeatureCollection",
+                                "features": [],
+                                "links": [],
+                            }
+                        }
                     },
                 }
             },
@@ -241,11 +253,12 @@ class RootRouter(APIRouter):
         return None  # type: ignore
 
     def add_product(self, product: Product, *args: Any, **kwargs: Any) -> None:
+        """Add a product router to the root router."""
         product_router = ProductRouter(product, self, *args, **kwargs)
         self.include_router(product_router, prefix=f"/products/{product.id}")
         self.product_routers[product.id] = product_router
 
-    # Orders endpoints - w/o specific {productId}/orders endpoints
+    # Orders endpoints
     def get_orders(
         self,
         next: str | None = Query(default=None, description="Token for pagination to the next page of results"),

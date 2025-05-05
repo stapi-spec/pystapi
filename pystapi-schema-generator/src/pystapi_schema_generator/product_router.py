@@ -32,6 +32,8 @@ if TYPE_CHECKING:
 
 
 class ProductRouter(APIRouter):
+    """Router for product-specific endpoints."""
+
     def __init__(
         self,
         product: Product,
@@ -40,10 +42,12 @@ class ProductRouter(APIRouter):
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
-
         self.product = product
         self.root_router = root_router
+        self._setup_routes()
 
+    def _setup_routes(self) -> None:
+        """Set up all routes for the product router."""
         # Product endpoints
         self.add_api_route(
             path="",
@@ -229,7 +233,13 @@ class ProductRouter(APIRouter):
                 status.HTTP_200_OK: {
                     "description": "Successful response",
                     "content": {
-                        "application/geo+json": {"example": {"type": "FeatureCollection", "features": [], "links": []}}
+                        "application/geo+json": {
+                            "example": {
+                                "type": "FeatureCollection",
+                                "features": [],
+                                "links": [],
+                            }
+                        }
                     },
                 },
                 status.HTTP_404_NOT_FOUND: {"description": "Product not found"},
@@ -254,10 +264,46 @@ class ProductRouter(APIRouter):
             responses={
                 status.HTTP_200_OK: {
                     "description": "Successful response",
-                    "content": {"application/json": {"example": {"opportunities": [], "links": []}}},
+                    "content": {
+                        "application/json": {
+                            "example": {
+                                "opportunities": [],
+                                "links": [],
+                            }
+                        }
+                    },
                 },
                 status.HTTP_400_BAD_REQUEST: {"description": "Invalid search request"},
                 status.HTTP_404_NOT_FOUND: {"description": "Product not found"},
+            },
+        )
+
+        self.add_api_route(
+            path="/opportunities/{opportunity_collection_id}",
+            endpoint=self.get_opportunity_collection,
+            methods=["GET"],
+            tags=["Opportunities"],
+            summary="Get details of a specific opportunity collection",
+            description=(
+                "Returns detailed information about a specific opportunity collection. The response "
+                "includes all opportunities in the collection, their properties, and any associated "
+                "metadata. This endpoint is used to retrieve the results of an asynchronous "
+                "opportunity search."
+            ),
+            response_model=OpportunityCollection[Polygon, OpportunityProperties],
+            responses={
+                status.HTTP_200_OK: {
+                    "description": "Successful response",
+                    "content": {
+                        "application/json": {
+                            "example": {
+                                "opportunities": [],
+                                "links": [],
+                            }
+                        }
+                    },
+                },
+                status.HTTP_404_NOT_FOUND: {"description": "Opportunity collection not found"},
             },
         )
 
