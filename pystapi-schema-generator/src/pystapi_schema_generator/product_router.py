@@ -4,15 +4,19 @@ from typing import TYPE_CHECKING, Any
 
 from fastapi import (
     APIRouter,
+    Path,
+    Query,
     Request,
     Response,
     status,
 )
+from geojson_pydantic import Polygon
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_pydantic import (
     Conformance,
     OpportunityCollection,
     OpportunityPayload,
+    OpportunityProperties,
     Order,
     OrderCollection,
     OrderParameters,
@@ -24,7 +28,7 @@ from stapi_pydantic import (
 )
 
 if TYPE_CHECKING:
-    from .router import RootRouter
+    from .root_router import RootRouter
 
 
 class ProductRouter(APIRouter):
@@ -46,8 +50,36 @@ class ProductRouter(APIRouter):
             endpoint=self.get_product,
             methods=["GET"],
             tags=["Products"],
-            summary="describe the product with id `productId`",
-            description="...",
+            summary="Get details of a specific product",
+            description=(
+                "Returns detailed information about a specific product. The response includes "
+                "all product metadata, including required fields (type, id, title, description, "
+                "license, providers, links) and optional fields (keywords, queryables, parameters, "
+                "properties). The parameters field defines what can be ordered for this product, "
+                "while the properties field describes inherent characteristics of the product."
+            ),
+            response_model=Product,
+            responses={
+                status.HTTP_200_OK: {
+                    "description": "Successful response",
+                    "content": {
+                        "application/json": {
+                            "example": {
+                                "type": "Product",
+                                "id": "multispectral",
+                                "title": "Multispectral",
+                                "description": "Full color EO image",
+                                "license": "proprietary",
+                                "providers": [
+                                    {"name": "Example Provider", "roles": ["producer"], "url": "https://example.com"}
+                                ],
+                                "links": [],
+                            }
+                        }
+                    },
+                },
+                status.HTTP_404_NOT_FOUND: {"description": "Product not found"},
+            },
         )
 
         self.add_api_route(
@@ -55,8 +87,30 @@ class ProductRouter(APIRouter):
             endpoint=self.get_conformance,
             methods=["GET"],
             tags=["Products"],
-            summary="describe the conformance for a product",
-            description="...",
+            summary="Get conformance classes for a specific product",
+            description=(
+                "Returns the conformance classes that apply specifically to this product. "
+                "These classes indicate which features and capabilities are supported by "
+                "this product, such as supported geometry types, parameter types, and "
+                "other product-specific capabilities."
+            ),
+            response_model=Conformance,
+            responses={
+                status.HTTP_200_OK: {
+                    "description": "Successful response",
+                    "content": {
+                        "application/json": {
+                            "example": {
+                                "conformsTo": [
+                                    "https://stapi.example.com/v0.1.0/core",
+                                    "https://geojson.org/schema/Polygon.json",
+                                ]
+                            }
+                        }
+                    },
+                },
+                status.HTTP_404_NOT_FOUND: {"description": "Product not found"},
+            },
         )
 
         self.add_api_route(
@@ -64,8 +118,29 @@ class ProductRouter(APIRouter):
             endpoint=self.get_queryables,
             methods=["GET"],
             tags=["Products"],
-            summary="describe the queryables for a product",
-            description="...",
+            summary="Get queryable properties for a specific product",
+            description=(
+                "Returns a JSON Schema definition of the properties that can be used to "
+                "filter opportunities and orders for this product. These queryables define "
+                "the constraints that can be applied when searching for or ordering this "
+                "product, such as cloud cover limits, resolution requirements, or other "
+                "product-specific parameters."
+            ),
+            response_model=Queryables,
+            responses={
+                status.HTTP_200_OK: {
+                    "description": "Successful response",
+                    "content": {
+                        "application/json": {
+                            "example": {
+                                "type": "object",
+                                "properties": {"eo:cloud_cover": {"type": "number", "minimum": 0, "maximum": 100}},
+                            }
+                        }
+                    },
+                },
+                status.HTTP_404_NOT_FOUND: {"description": "Product not found"},
+            },
         )
 
         self.add_api_route(
@@ -73,8 +148,28 @@ class ProductRouter(APIRouter):
             endpoint=self.get_order_parameters,
             methods=["GET"],
             tags=["Products"],
-            summary="describe the order parameters for a product",
-            description="...",
+            summary="Get order parameters for a specific product",
+            description=(
+                "Returns a JSON Schema definition of the parameters that can be specified "
+                "when creating an order for this product. These parameters define the "
+                "configurable options for the order, such as delivery format, processing "
+                "level, or other product-specific options."
+            ),
+            response_model=OrderParameters,
+            responses={
+                status.HTTP_200_OK: {
+                    "description": "Successful response",
+                    "content": {
+                        "application/json": {
+                            "example": {
+                                "type": "object",
+                                "properties": {"format": {"type": "string", "enum": ["GeoTIFF", "JPEG2000"]}},
+                            }
+                        }
+                    },
+                },
+                status.HTTP_404_NOT_FOUND: {"description": "Product not found"},
+            },
         )
 
         # Orders endpoints
@@ -85,8 +180,35 @@ class ProductRouter(APIRouter):
             response_class=GeoJSONResponse,
             status_code=status.HTTP_201_CREATED,
             tags=["Orders"],
-            summary="create a new order for product with id `productId`",
-            description="...",
+            summary="Create a new order for a specific product",
+            description=(
+                "Creates a new order for this product. The request must include the required "
+                "fields (datetime, geometry) and may include optional fields (queryables, "
+                "order_parameters). The datetime field specifies the temporal extent of the "
+                "order, while the geometry field defines its spatial extent. The response "
+                "is a GeoJSON Feature representing the created order."
+            ),
+            response_model=Order[OrderStatus],
+            responses={
+                status.HTTP_201_CREATED: {
+                    "description": "Order created successfully",
+                    "content": {
+                        "application/geo+json": {
+                            "example": {
+                                "type": "Feature",
+                                "id": "order-123",
+                                "properties": {
+                                    "product_id": "multispectral",
+                                    "created": "2024-01-01T00:00:00Z",
+                                    "status": "received",
+                                },
+                            }
+                        }
+                    },
+                },
+                status.HTTP_400_BAD_REQUEST: {"description": "Invalid order request"},
+                status.HTTP_404_NOT_FOUND: {"description": "Product not found"},
+            },
         )
 
         self.add_api_route(
@@ -95,8 +217,23 @@ class ProductRouter(APIRouter):
             methods=["GET"],
             response_class=GeoJSONResponse,
             tags=["Orders"],
-            summary="get a list of orders for the specific product",
-            description="...",
+            summary="Get orders for a specific product",
+            description=(
+                "Returns a collection of orders for this product. Each order is a GeoJSON "
+                "Feature containing the order details, including status, parameters, and "
+                "metadata. The response is a GeoJSON FeatureCollection and includes "
+                "pagination links for navigating through the order collection."
+            ),
+            response_model=OrderCollection[OrderStatus],
+            responses={
+                status.HTTP_200_OK: {
+                    "description": "Successful response",
+                    "content": {
+                        "application/geo+json": {"example": {"type": "FeatureCollection", "features": [], "links": []}}
+                    },
+                },
+                status.HTTP_404_NOT_FOUND: {"description": "Product not found"},
+            },
         )
 
         # Opportunities endpoints
@@ -105,8 +242,23 @@ class ProductRouter(APIRouter):
             endpoint=self.search_opportunities,
             methods=["POST"],
             tags=["Opportunities"],
-            summary="create a new opportunity request for product with id `productId`",
-            description="...",
+            summary="Search for opportunities for a specific product",
+            description=(
+                "Searches for potential acquisition opportunities for this product based on "
+                "the provided search criteria. The request must include the required fields "
+                "(datetime, geometry) and may include optional fields (queryables). The "
+                "response is a collection of opportunities that match the search criteria, "
+                "each representing a potential acquisition that could fulfill an order."
+            ),
+            response_model=OpportunityCollection,
+            responses={
+                status.HTTP_200_OK: {
+                    "description": "Successful response",
+                    "content": {"application/json": {"example": {"opportunities": [], "links": []}}},
+                },
+                status.HTTP_400_BAD_REQUEST: {"description": "Invalid search request"},
+                status.HTTP_404_NOT_FOUND: {"description": "Product not found"},
+            },
         )
 
     # Product endpoints
@@ -123,13 +275,26 @@ class ProductRouter(APIRouter):
         return None  # type: ignore
 
     # Orders endpoints
-    def create_order(self, payload: OrderPayload, request: Request, response: Response) -> Order:  # type: ignore
+    def create_order(
+        self, payload: OrderPayload[OrderParameters], request: Request, response: Response
+    ) -> Order[OrderStatus]:
         return None  # type: ignore
 
-    def get_orders(self, request: Request, next: str | None = None, limit: int = 10) -> OrderCollection[OrderStatus]:
+    def get_orders(
+        self,
+        request: Request,
+        next: str | None = Query(default=None, description="Token for pagination to the next page of results"),
+        limit: int = Query(default=10, ge=1, le=100, description="Maximum number of orders to return per page"),
+    ) -> OrderCollection[OrderStatus]:
         return None  # type: ignore
 
-    def get_opportunity_collection(self, opportunity_collection_id: str, request: Request) -> OpportunityCollection:  # type: ignore
+    def get_opportunity_collection(
+        self,
+        request: Request,
+        opportunity_collection_id: str = Path(
+            description="Unique identifier of the opportunity collection", example="opp-col-123"
+        ),
+    ) -> OpportunityCollection[Polygon, OpportunityProperties]:
         return None  # type: ignore
 
     def search_opportunities(
@@ -137,6 +302,8 @@ class ProductRouter(APIRouter):
         search: OpportunityPayload,
         request: Request,
         response: Response,
-        prefer: Prefer | None,
-    ) -> OpportunityCollection:  # type: ignore
+        prefer: Prefer | None = Query(
+            default=None, description="Preference for synchronous or asynchronous processing"
+        ),
+    ) -> OpportunityCollection[Polygon, OpportunityProperties]:
         return None  # type: ignore
