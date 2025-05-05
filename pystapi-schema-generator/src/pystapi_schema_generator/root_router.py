@@ -35,11 +35,14 @@ class RootRouter(APIRouter):
             self.get_root,
             methods=["GET"],
             tags=["Core"],
-            summary="API root",
+            summary="STAPI root endpoint for API discovery and metadata",
             description=(
+                "This endpoint serves as the entry point for API discovery and navigation. "
                 "Returns the STAPI root endpoint response containing the API's metadata: "
                 "a unique identifier, descriptive text, implemented conformance classes, "
-                "and hypermedia links to available resources and documentation."
+                "and hypermedia links to available resources and documentation. "
+                "The response includes links to all available products, orders, and "
+                "opportunities endpoints."
             ),
             response_model=RootResponse,
             responses={
