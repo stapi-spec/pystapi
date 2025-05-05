@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from stapi_pydantic import Product
 
-from pystapi_schema_generator.router import RootRouter
+from pystapi_schema_generator.root_router import RootRouter
 
 router = RootRouter()
 router.add_product(
