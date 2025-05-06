@@ -53,6 +53,30 @@ def create_app() -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url="/openapi.json",
+        # Enhanced OpenAPI configuration
+        openapi_extra={
+            "info": {
+                "contact": {
+                    "name": "STAPI Specification Organization",
+                    "url": "https://github.com/stapi-spec",
+                }
+            },
+            "externalDocs": {
+                "description": "STAPI Specification Documentation",
+                "url": "https://github.com/stapi-spec/stapi-spec",
+            },
+        },
+        # Swagger UI customization
+        swagger_ui_parameters={
+            "deepLinking": True,
+            "docExpansion": "list",  # list endpoints but details are collapsed
+            "defaultModelsExpandDepth": 0,  # Show schemas at the bottom but collapsed
+            "supportedSubmitMethods": [],  # Disable all submit methods to prevent "Try it out"
+        },
+        # ReDoc customization
+        redoc_ui_parameters={
+            # TODO: Add Redoc customization parameters here if needed
+        },
     )
 
     router = RootRouter()
