@@ -129,7 +129,7 @@ class OrderCollection(_GeoJsonBase, Generic[T]):
 
 
 class OrderPayload(BaseModel, Generic[ORP]):
-    datetime: DatetimeInterval
+    datetime: DatetimeInterval = Field(examples=["2018-02-12T00:00:00Z/2018-03-18T12:31:12Z"])
     geometry: Geometry
     # TODO: validate the CQL2 filter?
     filter: CQL2Filter | None = None  # type: ignore [type-arg]
