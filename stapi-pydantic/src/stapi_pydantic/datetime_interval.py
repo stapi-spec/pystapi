@@ -39,5 +39,5 @@ DatetimeInterval = Annotated[
     BeforeValidator(validate_before),
     AfterValidator(validate_after),
     WrapSerializer(serialize, return_type=str),
-    WithJsonSchema({"type": "string"}, mode="serialization"),
+    WithJsonSchema({"type": "string"}),
 ]
