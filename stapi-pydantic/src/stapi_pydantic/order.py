@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import datetime
 from collections.abc import Iterator
 from enum import StrEnum
 from typing import Any, Generic, Literal, TypeVar
@@ -55,6 +58,18 @@ class OrderStatus(BaseModel):
     links: list[Link] = Field(default_factory=list)
 
     model_config = ConfigDict(extra="allow")
+
+    @classmethod
+    def new(
+        cls, status_code: OrderStatusCode, reason_code: str | None = None, reason_text: str | None = None
+    ) -> OrderStatus:
+        """Creates a new order status with timestamp set to now in UTC."""
+        return OrderStatus(
+            timestamp=datetime.datetime.now(tz=datetime.UTC),
+            status_code=status_code,
+            reason_code=reason_code,
+            reason_text=reason_text,
+        )
 
 
 T = TypeVar("T", bound=OrderStatus)
