@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.0.4] - 2025-07-17
+
 ### Added
 
 - `OrderStatus.new` ([#116](https://github.com/stapi-spec/pystapi/pull/116))
@@ -39,7 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Initial release.
 
 [unreleased]: https://github.com/stapi-spec/pystapi/compare/stac-pydantic/stapi-pydantic%2Fv0.0.4...main
-[0.0.3]: https://github.com/stapi-spec/pystapi/compare/stac-pydantic/stapi-pydantic%2Fv0.0.3...stapi-pydantic%2Fv0.0.4
+[0.0.4]: https://github.com/stapi-spec/pystapi/compare/stac-pydantic/stapi-pydantic%2Fv0.0.3...stapi-pydantic%2Fv0.0.4
 [0.0.3]: https://github.com/stapi-spec/pystapi/compare/stac-pydantic/stapi-pydantic%2Fv0.0.2...stapi-pydantic%2Fv0.0.3
 [0.0.2]: https://github.com/stapi-spec/pystapi/compare/stac-pydantic/stapi-pydantic%2Fv0.0.1...stapi-pydantic%2Fv0.0.2
 [0.0.1]: https://github.com/stapi-spec/pystapi/releases/tag/stapi-pydantic%2Fv0.0.1
