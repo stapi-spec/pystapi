@@ -9,7 +9,7 @@ license = "MIT"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "schemathesis>=3.37.0",
+    "schemathesis>=3.39.14",
     "pytest>=8.3.3",
     "requests>=2.32.3",
     "pyyaml>=6.0.2",
