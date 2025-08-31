@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 members = [
     "pystapi",
     "pystapi-client",
+    "pystapi-schema-generator",
     "pystapi-validator",
     "stapi-fastapi",
     "stapi-pydantic",
@@ -1513,6 +1514,7 @@ version = "0.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "pystapi-client" },
+    { name = "pystapi-schema-generator" },
     { name = "pystapi-validator" },
     { name = "stapi-fastapi" },
     { name = "stapi-pydantic" },
@@ -1539,6 +1541,7 @@ docs = [
 [package.metadata]
 requires-dist = [
     { name = "pystapi-client", editable = "pystapi-client" },
+    { name = "pystapi-schema-generator", editable = "pystapi-schema-generator" },
     { name = "pystapi-validator", editable = "pystapi-validator" },
     { name = "stapi-fastapi", editable = "stapi-fastapi" },
     { name = "stapi-pydantic", editable = "stapi-pydantic" },
@@ -1580,6 +1583,31 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "python-dateutil", specifier = ">=2.8.2" },
     { name = "stapi-pydantic", editable = "stapi-pydantic" },
+]
+
+[[package]]
+name = "pystapi-schema-generator"
+version = "0.0.1"
+source = { editable = "pystapi-schema-generator" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "geojson-pydantic" },
+    { name = "pydantic" },
+    { name = "pyyaml" },
+    { name = "stapi-pydantic" },
+    { name = "types-pyyaml" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = ">=0.115" },
+    { name = "geojson-pydantic", specifier = ">=1.2" },
+    { name = "pydantic", specifier = ">=2.10" },
+    { name = "pyyaml", specifier = ">=6" },
+    { name = "stapi-pydantic", editable = "stapi-pydantic" },
+    { name = "types-pyyaml", specifier = ">=6" },
+    { name = "uvicorn", specifier = ">=0.34" },
 ]
 
 [[package]]
@@ -2282,6 +2310,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a9/60/47d92293d9bc521cd2301e423a358abfac0ad409b3a1606d8fbae1321961/types_python_dateutil-2.9.0.20241206.tar.gz", hash = "sha256:18f493414c26ffba692a72369fea7a154c502646301ebfe3d56a04b3767284cb", size = 13802, upload-time = "2024-12-06T02:56:41.019Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0f/b3/ca41df24db5eb99b00d97f89d7674a90cb6b3134c52fb8121b6d8d30f15c/types_python_dateutil-2.9.0.20241206-py3-none-any.whl", hash = "sha256:e248a4bc70a486d3e3ec84d0dc30eec3a5f979d6e7ee4123ae043eedbb987f53", size = 14384, upload-time = "2024-12-06T02:56:39.412Z" },
+]
+
+[[package]]
+name = "types-pyyaml"
+version = "6.0.12.20250402"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2d/68/609eed7402f87c9874af39d35942744e39646d1ea9011765ec87b01b2a3c/types_pyyaml-6.0.12.20250402.tar.gz", hash = "sha256:d7c13c3e6d335b6af4b0122a01ff1d270aba84ab96d1a1a1063ecba3e13ec075", size = 17282 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ed/56/1fe61db05685fbb512c07ea9323f06ea727125951f1eb4dff110b3311da3/types_pyyaml-6.0.12.20250402-py3-none-any.whl", hash = "sha256:652348fa9e7a203d4b0d21066dfb00760d3cbd5a15ebb7cf8d33c88a49546681", size = 20329 },
 ]
 
 [[package]]
