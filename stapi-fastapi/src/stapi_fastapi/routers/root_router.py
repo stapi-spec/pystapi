@@ -171,35 +171,39 @@ class RootRouter(APIRouter):
 
         self.conformances = list(_conformances)
 
+    @staticmethod
+    def url_for(request: Request, name: str, /, **path_params: Any) -> str:
+        return str(request.url_for(name, **path_params))
+
     def get_root(self, request: Request) -> RootResponse:
         links = [
             Link(
-                href=str(request.url_for(f"{self.name}:{ROOT}")),
+                href=self.url_for(request, f"{self.name}:{ROOT}"),
                 rel="self",
                 type=TYPE_JSON,
             ),
             Link(
-                href=str(request.url_for(self.openapi_endpoint_name)),
+                href=self.url_for(request, self.openapi_endpoint_name),
                 rel="service-description",
                 type=TYPE_JSON,
             ),
             Link(
-                href=str(request.url_for(self.docs_endpoint_name)),
+                href=self.url_for(request, self.docs_endpoint_name),
                 rel="service-docs",
                 type="text/html",
             ),
             Link(
-                href=str(request.url_for(f"{self.name}:{CONFORMANCE}")),
+                href=self.url_for(request, f"{self.name}:{CONFORMANCE}"),
                 rel="conformance",
                 type=TYPE_JSON,
             ),
             Link(
-                href=str(request.url_for(f"{self.name}:{LIST_PRODUCTS}")),
+                href=self.url_for(request, f"{self.name}:{LIST_PRODUCTS}"),
                 rel="products",
                 type=TYPE_JSON,
             ),
             Link(
-                href=str(request.url_for(f"{self.name}:{LIST_ORDERS}")),
+                href=self.url_for(request, f"{self.name}:{LIST_ORDERS}"),
                 rel="orders",
                 type=TYPE_GEOJSON,
             ),
@@ -208,7 +212,7 @@ class RootRouter(APIRouter):
         if self.supports_async_opportunity_search:
             links.append(
                 Link(
-                    href=str(request.url_for(f"{self.name}:{LIST_OPPORTUNITY_SEARCH_RECORDS}")),
+                    href=self.url_for(request, f"{self.name}:{LIST_OPPORTUNITY_SEARCH_RECORDS}"),
                     rel="opportunity-search-records",
                     type=TYPE_JSON,
                 ),
@@ -236,7 +240,7 @@ class RootRouter(APIRouter):
         ids = self.product_ids[start:end]
         links = [
             Link(
-                href=str(request.url_for(f"{self.name}:{LIST_PRODUCTS}")),
+                href=self.url_for(request, f"{self.name}:{LIST_PRODUCTS}"),
                 rel="self",
                 type=TYPE_JSON,
             ),

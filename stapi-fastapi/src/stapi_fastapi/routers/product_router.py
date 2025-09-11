@@ -199,50 +199,34 @@ class ProductRouter(APIRouter):
                 tags=["Products"],
             )
 
+    @staticmethod
+    def url_for(request: Request, name: str, /, **path_params: Any) -> str:
+        return str(request.url_for(name, **path_params))
+
     def get_product(self, request: Request) -> ProductPydantic:
         links = [
             Link(
-                href=str(
-                    request.url_for(
-                        f"{self.root_router.name}:{self.product.id}:{GET_PRODUCT}",
-                    ),
-                ),
+                href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{GET_PRODUCT}"),
                 rel="self",
                 type=TYPE_JSON,
             ),
             Link(
-                href=str(
-                    request.url_for(
-                        f"{self.root_router.name}:{self.product.id}:{CONFORMANCE}",
-                    ),
-                ),
+                href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CONFORMANCE}"),
                 rel="conformance",
                 type=TYPE_JSON,
             ),
             Link(
-                href=str(
-                    request.url_for(
-                        f"{self.root_router.name}:{self.product.id}:{GET_QUERYABLES}",
-                    ),
-                ),
+                href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{GET_QUERYABLES}"),
                 rel="queryables",
                 type=TYPE_JSON,
             ),
             Link(
-                href=str(
-                    request.url_for(
-                        f"{self.root_router.name}:{self.product.id}:{GET_ORDER_PARAMETERS}",
-                    ),
-                ),
+                href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{GET_ORDER_PARAMETERS}"),
                 rel="order-parameters",
                 type=TYPE_JSON,
             ),
             Link(
-                href=str(
-                    request.url_for(
-                        f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}",
-                    ),
-                ),
+                href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}"),
                 rel="create-order",
                 type=TYPE_JSON,
                 method="POST",
@@ -254,11 +238,7 @@ class ProductRouter(APIRouter):
         ):
             links.append(
                 Link(
-                    href=str(
-                        request.url_for(
-                            f"{self.root_router.name}:{self.product.id}:{SEARCH_OPPORTUNITIES}",
-                        ),
-                    ),
+                    href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{SEARCH_OPPORTUNITIES}"),
                     rel="opportunities",
                     type=TYPE_JSON,
                 ),
@@ -420,11 +400,7 @@ class ProductRouter(APIRouter):
 
     def order_link(self, request: Request, opp_req: OpportunityPayload) -> Link:
         return Link(
-            href=str(
-                request.url_for(
-                    f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}",
-                ),
-            ),
+            href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}"),
             rel="create-order",
             type=TYPE_JSON,
             method="POST",
@@ -456,11 +432,10 @@ class ProductRouter(APIRouter):
             case Success(Some(opportunity_collection)):
                 opportunity_collection.links.append(
                     Link(
-                        href=str(
-                            request.url_for(
-                                f"{self.root_router.name}:{self.product.id}:{GET_OPPORTUNITY_COLLECTION}",
-                                opportunity_collection_id=opportunity_collection_id,
-                            ),
+                        href=self.url_for(
+                            request,
+                            f"{self.root_router.name}:{self.product.id}:{GET_OPPORTUNITY_COLLECTION}",
+                            opportunity_collection_id=opportunity_collection_id,
                         ),
                         rel="self",
                         type=TYPE_JSON,
