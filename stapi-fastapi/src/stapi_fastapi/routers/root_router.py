@@ -3,7 +3,6 @@ import traceback
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request, status
-from fastapi.datastructures import URL
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
 from stapi_pydantic import (
@@ -343,21 +342,21 @@ class RootRouter(APIRouter):
         self.product_routers[product.id] = product_router
         self.product_ids = [*self.product_routers.keys()]
 
-    def generate_order_href(self, request: Request, order_id: str) -> URL:
-        return request.url_for(f"{self.name}:{GET_ORDER}", order_id=order_id)
+    def generate_order_href(self, request: Request, order_id: str) -> str:
+        return self.url_for(request, f"{self.name}:{GET_ORDER}", order_id=order_id)
 
-    def generate_order_statuses_href(self, request: Request, order_id: str) -> URL:
-        return request.url_for(f"{self.name}:{LIST_ORDER_STATUSES}", order_id=order_id)
+    def generate_order_statuses_href(self, request: Request, order_id: str) -> str:
+        return self.url_for(request, f"{self.name}:{LIST_ORDER_STATUSES}", order_id=order_id)
 
     def order_links(self, order: Order[OrderStatus], request: Request) -> list[Link]:
         return [
             Link(
-                href=str(self.generate_order_href(request, order.id)),
+                href=self.generate_order_href(request, order.id),
                 rel="self",
                 type=TYPE_GEOJSON,
             ),
             Link(
-                href=str(self.generate_order_statuses_href(request, order.id)),
+                href=self.generate_order_statuses_href(request, order.id),
                 rel="monitor",
                 type=TYPE_JSON,
             ),
@@ -365,11 +364,10 @@ class RootRouter(APIRouter):
 
     def order_statuses_link(self, request: Request, order_id: str) -> Link:
         return Link(
-            href=str(
-                request.url_for(
-                    f"{self.name}:{LIST_ORDER_STATUSES}",
-                    order_id=order_id,
-                )
+            href=self.url_for(
+                request,
+                f"{self.name}:{LIST_ORDER_STATUSES}",
+                order_id=order_id,
             ),
             rel="self",
             type=TYPE_JSON,
@@ -457,8 +455,9 @@ class RootRouter(APIRouter):
             case _:
                 raise AssertionError("Expected code to be unreachable")
 
-    def generate_opportunity_search_record_href(self, request: Request, search_record_id: str) -> URL:
-        return request.url_for(
+    def generate_opportunity_search_record_href(self, request: Request, search_record_id: str) -> str:
+        return self.url_for(
+            request,
             f"{self.name}:{GET_OPPORTUNITY_SEARCH_RECORD}",
             search_record_id=search_record_id,
         )
@@ -467,7 +466,7 @@ class RootRouter(APIRouter):
         self, opportunity_search_record: OpportunitySearchRecord, request: Request
     ) -> Link:
         return Link(
-            href=str(self.generate_opportunity_search_record_href(request, opportunity_search_record.id)),
+            href=self.generate_opportunity_search_record_href(request, opportunity_search_record.id),
             rel="self",
             type=TYPE_JSON,
         )
