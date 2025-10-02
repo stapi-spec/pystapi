@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- `OrderPayload` changed so that the `geometry` and `datetime` fields are optional. This is in support of ordering non-tasked imagery (i.e. already collected imagery) where `geometry` and `datetime` are not necessary to fulfill the order. 
+
 ### Added
 
 - ProductRouter and RootRouter now have a method `url_for` that makes the link generation code slightly cleaner and
