@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- `OrderPayload` changed so that the `geometry` and `datetime` fields are optional. This is in support of ordering non-tasked imagery (i.e. already collected imagery) where `geometry` and `datetime` are not necessary to fulfill the order. 
+- `OrderPayload` changed so that the `geometry` and `datetime` fields are optional. This is in support of ordering non-tasked imagery (i.e. already collected imagery) where `geometry` and `datetime` are not necessary to fulfill the order.
 
 ### Added
 
