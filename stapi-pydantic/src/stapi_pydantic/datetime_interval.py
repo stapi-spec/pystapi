@@ -10,32 +10,37 @@ from pydantic import (
     WrapSerializer,
 )
 
+_DatetimeTuple = tuple[datetime | None, datetime | None]
 
-def validate_before(
-    value: str | tuple[datetime, datetime],
-) -> tuple[datetime, datetime]:
+
+def validate_before(value: str | _DatetimeTuple) -> _DatetimeTuple:
     if isinstance(value, str):
-        start, end = value.split("/", 1)
-        return (datetime.fromisoformat(start), datetime.fromisoformat(end))
+        start_str, end_str = value.split("/", 1)
+        start = None if start_str == ".." else datetime.fromisoformat(start_str)
+        end = None if end_str == ".." else datetime.fromisoformat(end_str)
+        value = (start, end)
     return value
 
 
-def validate_after(value: tuple[datetime, datetime]) -> tuple[datetime, datetime]:
-    if value[1] < value[0]:
+def validate_after(value: _DatetimeTuple) -> _DatetimeTuple:
+    # None/date & date/None are always valid
+    if value[1] and value[0] and value[1] < value[0]:
         raise ValueError("end before start")
     return value
 
 
 def serialize(
-    value: tuple[datetime, datetime],
-    serializer: Callable[[tuple[datetime, datetime]], tuple[str, str]],
+    value: _DatetimeTuple,
+    serializer: Callable[[_DatetimeTuple], tuple[str, str]],
 ) -> str:
     del serializer  # unused
-    return f"{value[0].isoformat()}/{value[1].isoformat()}"
+    start = value[0].isoformat() if value[0] else ".."
+    end = value[1].isoformat() if value[1] else ".."
+    return f"{start}/{end}"
 
 
 DatetimeInterval = Annotated[
-    tuple[AwareDatetime, AwareDatetime],
+    tuple[AwareDatetime | None, AwareDatetime | None],
     BeforeValidator(validate_before),
     AfterValidator(validate_after),
     WrapSerializer(serialize, return_type=str),
