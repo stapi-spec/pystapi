@@ -1602,7 +1602,7 @@ requires-dist = [
     { name = "pytest-metadata", specifier = ">=3.1.1" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "requests", specifier = ">=2.32.3" },
-    { name = "schemathesis", specifier = ">=3.37.0" },
+    { name = "schemathesis", specifier = ">=3.39.14" },
 ]
 
 [[package]]
