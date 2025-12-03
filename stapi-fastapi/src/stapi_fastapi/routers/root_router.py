@@ -287,7 +287,7 @@ class RootRouter(APIRouter):
         return OrderCollection(
             features=orders,
             links=links,
-            number_matched=orders_count,
+            numberMatched=orders_count,
         )
 
     async def get_order(self, order_id: str, request: Request) -> Order[OrderStatus]:
