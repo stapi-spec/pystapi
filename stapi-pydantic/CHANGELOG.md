@@ -50,6 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Initial release.
 
 [unreleased]: https://github.com/stapi-spec/pystapi/compare/stac-pydantic/stapi-pydantic%2Fv0.0.4...main
+[0.1.0]: https://github.com/stapi-spec/pystapi/compare/stac-pydantic/stapi-pydantic%2Fv0.0.4...stapi-pydantic%2Fv0.1.0
 [0.0.4]: https://github.com/stapi-spec/pystapi/compare/stac-pydantic/stapi-pydantic%2Fv0.0.3...stapi-pydantic%2Fv0.0.4
 [0.0.3]: https://github.com/stapi-spec/pystapi/compare/stac-pydantic/stapi-pydantic%2Fv0.0.2...stapi-pydantic%2Fv0.0.3
 [0.0.2]: https://github.com/stapi-spec/pystapi/compare/stac-pydantic/stapi-pydantic%2Fv0.0.1...stapi-pydantic%2Fv0.0.2

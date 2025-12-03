@@ -140,6 +140,7 @@ Initial release
 - Add links `opportunities` and `create-order` to Product
 - Add link `create-order` to OpportunityCollection
 
+[0.8.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.8.0
 [0.7.1]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.7.1
 [0.7.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.7.0
 [0.6.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.6.0
