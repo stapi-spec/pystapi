@@ -251,17 +251,23 @@ class RootRouter(APIRouter):
             links=links,
         )
 
-    async def get_orders(
+    async def get_orders(  # noqa: C901
         self, request: Request, next: str | None = None, limit: int = 10
     ) -> OrderCollection[OrderStatus]:
         links: list[Link] = []
+        orders_count: int | None = None
         match await self._get_orders(next, limit, request):
-            case Success((orders, maybe_pagination_token)):
+            case Success((orders, maybe_pagination_token, maybe_orders_count)):
                 for order in orders:
                     order.links.extend(self.order_links(order, request))
                 match maybe_pagination_token:
                     case Some(x):
                         links.append(self.pagination_link(request, x, limit))
+                    case Maybe.empty:
+                        pass
+                match maybe_orders_count:
+                    case Some(x):
+                        orders_count = x
                     case Maybe.empty:
                         pass
             case Failure(ValueError()):
@@ -277,7 +283,12 @@ class RootRouter(APIRouter):
                 )
             case _:
                 raise AssertionError("Expected code to be unreachable")
-        return OrderCollection(features=orders, links=links)
+
+        return OrderCollection(
+            features=orders,
+            links=links,
+            number_matched=orders_count,
+        )
 
     async def get_order(self, order_id: str, request: Request) -> Order[OrderStatus]:
         """

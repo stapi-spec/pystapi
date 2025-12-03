@@ -129,6 +129,7 @@ class OrderCollection(_GeoJsonBase, Generic[T]):
     type: Literal["FeatureCollection"] = "FeatureCollection"
     features: list[Order[T]]
     links: list[Link] = Field(default_factory=list)
+    number_matched: int | None = Field(serialization_alias="numberMatched", exclude_if=lambda v: v is None)
 
     def __iter__(self) -> Iterator[Order[T]]:  # type: ignore [override]
         """iterate over features"""
