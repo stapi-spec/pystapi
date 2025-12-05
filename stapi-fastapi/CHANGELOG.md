@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
   that will be returned from pagination. When this returns `Some(int)`, the value is used for the `numberMatched` field in
   FeatureCollection returned from the /orders endpoint.  If this feature is not desired, providing a function that returns
   `Nothing` will exclude the `numberMatched` field in the response.
+- ProductRouter and RootRouter now have a method `url_for` that makes the link generation code slightly cleaner and
+  allows for overridding in child classes, to support proxy rewrite of the links.
 
 ### Removed
 
