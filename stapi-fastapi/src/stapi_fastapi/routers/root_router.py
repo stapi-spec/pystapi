@@ -374,8 +374,12 @@ class RootRouter(APIRouter):
         )
 
     def pagination_link(self, request: Request, pagination_token: str, limit: int) -> Link:
+        href = str(request.url.include_query_params(next=pagination_token, limit=limit)).replace(
+            str(request.url_for(f"{self.name}:{ROOT}")), self.url_for(request, f"{self.name}:{ROOT}"), 1
+        )
+
         return Link(
-            href=str(request.url.include_query_params(next=pagination_token, limit=limit)),
+            href=href,
             rel="next",
             type=TYPE_JSON,
         )
