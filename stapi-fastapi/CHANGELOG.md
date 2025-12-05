@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2025-12-03
+
+### Added
+
+- RootRouter Callable `get_orders` now requires an additional value in the result tuple that is a count of the total number of orders
+  that will be returned from pagination. When this returns `Some(int)`, the value is used for the `numberMatched` field in
+  FeatureCollection returned from the /orders endpoint.  If this feature is not desired, providing a function that returns
+  `Nothing` will exclude the `numberMatched` field in the response.
+
+### Removed
+
+- removed dependency on `pyrfc3339` library, since only one function from it was used in tests and that function has
+  been removed in newer versions of the library.
+
 ## [0.7.1] - 2025-04-25
 
 ### Fixed
@@ -126,6 +140,7 @@ Initial release
 - Add links `opportunities` and `create-order` to Product
 - Add link `create-order` to OpportunityCollection
 
+[0.8.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.8.0
 [0.7.1]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.7.1
 [0.7.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.7.0
 [0.6.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.6.0

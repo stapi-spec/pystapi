@@ -3,7 +3,6 @@ from itertools import product
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ValidationError
-from pyrfc3339.utils import format_timezone
 from pytest import mark, raises
 from stapi_pydantic import DatetimeInterval
 
@@ -12,6 +11,27 @@ EUROPE_BERLIN = ZoneInfo("Europe/Berlin")
 
 class Model(BaseModel):
     datetime: DatetimeInterval
+
+
+# format_timezone was removed from pyrfc3339 (MIT) in v2.1, so included here now
+def format_timezone(utcoffset):
+    """
+    Return a string representing the timezone offset.
+    Remaining seconds are rounded to the nearest minute.
+
+    >>> format_timezone(3600)
+    '+01:00'
+    >>> format_timezone(5400)
+    '+01:30'
+    >>> format_timezone(-28800)
+    '-08:00'
+    """
+
+    hours, seconds = divmod(abs(utcoffset), 3600)
+    minutes = round(float(seconds) / 60)
+    sign = "+" if utcoffset >= 0 else "-"
+
+    return f"{sign}{int(hours):02d}:{int(minutes):02d}"
 
 
 def rfc3339_strftime(dt: datetime, format: str) -> str:

@@ -13,7 +13,7 @@ from stapi_pydantic import (
 
 GetOrders = Callable[
     [str | None, int, Request],
-    Coroutine[Any, Any, ResultE[tuple[list[Order[OrderStatus]], Maybe[str]]]],
+    Coroutine[Any, Any, ResultE[tuple[list[Order[OrderStatus]], Maybe[str], Maybe[int]]]],
 ]
 """
 Type alias for an async function that returns a list of existing Orders.

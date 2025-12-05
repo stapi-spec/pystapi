@@ -17,10 +17,9 @@ END = START + timedelta(days=5)
 
 def test_empty_order(stapi_client: TestClient):
     res = stapi_client.get("/orders")
-    default_orders = {"type": "FeatureCollection", "features": [], "links": []}
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/geo+json"
-    assert res.json() == default_orders
+    assert res.json() == {"type": "FeatureCollection", "features": [], "links": [], "numberMatched": 314}
 
 
 @pytest.fixture

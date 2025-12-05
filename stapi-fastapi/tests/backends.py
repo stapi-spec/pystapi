@@ -21,10 +21,15 @@ from stapi_pydantic import (
 )
 
 
-async def mock_get_orders(next: str | None, limit: int, request: Request) -> ResultE[tuple[list[Order], Maybe[str]]]:
+async def mock_get_orders(
+    next: str | None,
+    limit: int,
+    request: Request,
+) -> ResultE[tuple[list[Order], Maybe[str], Maybe[int]]]:
     """
     Return orders from backend.  Handle pagination/limit if applicable
     """
+    count = 314
     try:
         start = 0
         limit = min(limit, 100)
@@ -37,8 +42,8 @@ async def mock_get_orders(next: str | None, limit: int, request: Request) -> Res
         orders = [request.state._orders_db.get_order(order_id) for order_id in ids]
 
         if end > 0 and end < len(order_ids):
-            return Success((orders, Some(request.state._orders_db._orders[order_ids[end]].id)))
-        return Success((orders, Nothing))
+            return Success((orders, Some(request.state._orders_db._orders[order_ids[end]].id), Some(count)))
+        return Success((orders, Nothing, Some(count)))
     except Exception as e:
         return Failure(e)
 
