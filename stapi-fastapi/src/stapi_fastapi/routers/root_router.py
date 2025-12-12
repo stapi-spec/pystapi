@@ -2,7 +2,7 @@ import logging
 import traceback
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import HTTPException, Request, status
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
 from stapi_pydantic import (
@@ -18,6 +18,7 @@ from stapi_pydantic import (
     ProductsCollection,
     RootResponse,
 )
+from starlette.datastructures import URL
 
 from stapi_fastapi.backends.root_backend import (
     GetOpportunitySearchRecord,
@@ -32,6 +33,7 @@ from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
 from stapi_fastapi.errors import NotFoundError
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.responses import GeoJSONResponse
+from stapi_fastapi.routers.base import StapiFastapiBaseRouter
 from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_fastapi.routers.route_names import (
     CONFORMANCE,
@@ -48,7 +50,7 @@ from stapi_fastapi.routers.route_names import (
 logger = logging.getLogger(__name__)
 
 
-class RootRouter(APIRouter):
+class RootRouter(StapiFastapiBaseRouter):
     def __init__(
         self,
         get_orders: GetOrders,
@@ -170,10 +172,6 @@ class RootRouter(APIRouter):
 
         self.conformances = list(_conformances)
 
-    @staticmethod
-    def url_for(request: Request, name: str, /, **path_params: Any) -> str:
-        return str(request.url_for(name, **path_params))
-
     def get_root(self, request: Request) -> RootResponse:
         links = [
             Link(
@@ -245,7 +243,7 @@ class RootRouter(APIRouter):
             ),
         ]
         if end > 0 and end < len(self.product_ids):
-            links.append(self.pagination_link(request, self.product_ids[end], limit))
+            links.append(self.pagination_link(request, f"{self.name}:{LIST_PRODUCTS}", self.product_ids[end], limit))
         return ProductsCollection(
             products=[self.product_routers[product_id].get_product(request) for product_id in ids],
             links=links,
@@ -261,8 +259,8 @@ class RootRouter(APIRouter):
                 for order in orders:
                     order.links.extend(self.order_links(order, request))
                 match maybe_pagination_token:
-                    case Some(x):
-                        links.append(self.pagination_link(request, x, limit))
+                    case Some(next_):
+                        links.append(self.pagination_link(request, f"{self.name}:{LIST_ORDERS}", next_, limit))
                     case Maybe.empty:
                         pass
                 match maybe_orders_count:
@@ -325,8 +323,12 @@ class RootRouter(APIRouter):
             case Success(Some((statuses, maybe_pagination_token))):
                 links.append(self.order_statuses_link(request, order_id))
                 match maybe_pagination_token:
-                    case Some(x):
-                        links.append(self.pagination_link(request, x, limit))
+                    case Some(next_):
+                        links.append(
+                            self.pagination_link(
+                                request, f"{self.name}:{LIST_ORDER_STATUSES}", next_, limit, order_id=order_id
+                            )
+                        )
                     case Maybe.empty:
                         pass
             case Success(Maybe.empty):
@@ -353,10 +355,10 @@ class RootRouter(APIRouter):
         self.product_routers[product.id] = product_router
         self.product_ids = [*self.product_routers.keys()]
 
-    def generate_order_href(self, request: Request, order_id: str) -> str:
+    def generate_order_href(self, request: Request, order_id: str) -> URL:
         return self.url_for(request, f"{self.name}:{GET_ORDER}", order_id=order_id)
 
-    def generate_order_statuses_href(self, request: Request, order_id: str) -> str:
+    def generate_order_statuses_href(self, request: Request, order_id: str) -> URL:
         return self.url_for(request, f"{self.name}:{LIST_ORDER_STATUSES}", order_id=order_id)
 
     def order_links(self, order: Order[OrderStatus], request: Request) -> list[Link]:
@@ -384,13 +386,9 @@ class RootRouter(APIRouter):
             type=TYPE_JSON,
         )
 
-    def pagination_link(self, request: Request, pagination_token: str, limit: int) -> Link:
-        href = str(request.url.include_query_params(next=pagination_token, limit=limit)).replace(
-            str(request.url_for(f"{self.name}:{ROOT}")), self.url_for(request, f"{self.name}:{ROOT}"), 1
-        )
-
+    def pagination_link(self, request: Request, name: str, pagination_token: str, limit: int, **kwargs: Any) -> Link:
         return Link(
-            href=href,
+            href=self.url_for(request, name, **kwargs).include_query_params(next=pagination_token, limit=limit),
             rel="next",
             type=TYPE_JSON,
         )
@@ -404,8 +402,12 @@ class RootRouter(APIRouter):
                 for record in records:
                     record.links.append(self.opportunity_search_record_self_link(record, request))
                 match maybe_pagination_token:
-                    case Some(x):
-                        links.append(self.pagination_link(request, x, limit))
+                    case Some(next_):
+                        links.append(
+                            self.pagination_link(
+                                request, f"{self.name}:{LIST_OPPORTUNITY_SEARCH_RECORDS}", next_, limit
+                            )
+                        )
                     case Maybe.empty:
                         pass
             case Failure(ValueError()):
@@ -470,7 +472,7 @@ class RootRouter(APIRouter):
             case _:
                 raise AssertionError("Expected code to be unreachable")
 
-    def generate_opportunity_search_record_href(self, request: Request, search_record_id: str) -> str:
+    def generate_opportunity_search_record_href(self, request: Request, search_record_id: str) -> URL:
         return self.url_for(
             request,
             f"{self.name}:{GET_OPPORTUNITY_SEARCH_RECORD}",

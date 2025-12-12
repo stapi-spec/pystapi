@@ -5,7 +5,6 @@ import traceback
 from typing import TYPE_CHECKING, Any
 
 from fastapi import (
-    APIRouter,
     Depends,
     Header,
     HTTPException,
@@ -38,6 +37,7 @@ from stapi_fastapi.constants import TYPE_JSON
 from stapi_fastapi.errors import NotFoundError, QueryablesError
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.responses import GeoJSONResponse
+from stapi_fastapi.routers.base import StapiFastapiBaseRouter
 from stapi_fastapi.routers.route_names import (
     CONFORMANCE,
     CREATE_ORDER,
@@ -84,7 +84,7 @@ def build_conformances(product: Product, root_router: RootRouter) -> list[str]:
     return list(conformances)
 
 
-class ProductRouter(APIRouter):
+class ProductRouter(StapiFastapiBaseRouter):
     # FIXME ruff is complaining that the init is too complex
     def __init__(  # noqa
         self,
@@ -198,10 +198,6 @@ class ProductRouter(APIRouter):
                 summary="Get an Opportunity Collection by ID",
                 tags=["Products"],
             )
-
-    @staticmethod
-    def url_for(request: Request, name: str, /, **path_params: Any) -> str:
-        return str(request.url_for(name, **path_params))
 
     def get_product(self, request: Request) -> ProductPydantic:
         links = [
@@ -411,7 +407,7 @@ class ProductRouter(APIRouter):
         body = opp_req.body()
         body["next"] = pagination_token
         return Link(
-            href=str(request.url),
+            href=request.url,
             rel="next",
             type=TYPE_JSON,
             method="POST",
