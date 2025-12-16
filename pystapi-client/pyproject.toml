@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Kaveh Karimi-Asli", email = "ka7eh@pm.me" },
     { name = "Philip Weiss", email = "philip.weiss@orbitalsidekick.com" },
-    { name = "Stella Reinhardt", email = "stella@stellamaria.de"}
+    { name = "Stella Reinhardt", email = "stella@stellamaria.de" },
 ]
 maintainers = [{ name = "Pete Gadomski", email = "pete.gadomski@gmail.com" }]
 keywords = ["stapi"]
@@ -18,6 +18,8 @@ dependencies = [
     "python-dateutil>=2.8.2",
     "click>=8.1.8",
 ]
+[dependency-groups]
+dev = ["pytest>=8.3.5", "respx>=0.22.0", "types-click>=7.1.8"]
 
 [project.scripts]
 stapi = "pystapi_client.scripts.cli:cli"

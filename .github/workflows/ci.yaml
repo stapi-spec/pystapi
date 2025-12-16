@@ -30,7 +30,7 @@ jobs:
       - name: Pre-Commit Hooks
         run: uv run pre-commit run --all-files
       - name: Test
-        run: uv run pytest
+        run: ./scripts/run-tests.sh
       - name: Validate test server
         run: uv run scripts/validate-stapi-fastapi
       - name: Docs

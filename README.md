@@ -62,7 +62,7 @@ uv sync
 Test:
 
 ```shell
-uv run pytest
+./scripts/run-tests.sh
 ```
 
 Check formatting and other lints:

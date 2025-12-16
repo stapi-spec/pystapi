@@ -507,7 +507,7 @@ standard = [
 
 [[package]]
 name = "fastapi-cloud-cli"
-version = "0.5.2"
+version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "fastar" },
@@ -519,9 +519,9 @@ dependencies = [
     { name = "typer" },
     { name = "uvicorn", extra = ["standard"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/27/6c/32527a1fd7eee91dd0c52bbe6b7c21e3272b24beb436b142b2c9c01f922d/fastapi_cloud_cli-0.5.2.tar.gz", hash = "sha256:34d04ffadb2562c3ebb39e6f5a599c47353750f75a2ef0a2d9c1442ed09f3308", size = 30744, upload-time = "2025-11-25T11:06:14.583Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c2/dd/e5890bb4ee63f9d8988660b755490e346cf5769aaa7f5f3ced9afb9f090a/fastapi_cloud_cli-0.6.0.tar.gz", hash = "sha256:2c333fff2e4b93b9efbec7896ce3ffa3e77ce4cf3d8cb14e35b4f823dfddac02", size = 30579, upload-time = "2025-12-04T15:04:07.008Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1a/29/5b46612e48589df93cbd9a77fe35a36315937386f7ecc0f1d7b9b10ad0ca/fastapi_cloud_cli-0.5.2-py3-none-any.whl", hash = "sha256:783ab5e41baf8afcbbfb7e513ac5bdf7376202053b8bf2d158a38978dba1ca69", size = 23218, upload-time = "2025-11-25T11:06:13.215Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/2f/5ba9b5faa75067e30ff48e3c454263ebc2d2301d5509cfefe12cf9fc8156/fastapi_cloud_cli-0.6.0-py3-none-any.whl", hash = "sha256:b654890b5302c90d2f347b123a35186096328838a526316c470b6005cabd4983", size = 23215, upload-time = "2025-12-04T15:04:08.121Z" },
 ]
 
 [[package]]
@@ -1768,16 +1768,12 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "fastapi", extra = ["standard"] },
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "pre-commit-hooks" },
     { name = "pygithub" },
     { name = "pymarkdownlnt" },
-    { name = "pytest" },
-    { name = "respx" },
     { name = "ruff" },
-    { name = "types-click" },
 ]
 docs = [
     { name = "mkdocs-material" },
@@ -1794,17 +1790,12 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "fastapi", extras = ["standard"], specifier = ">=0.115.12" },
     { name = "mypy", specifier = ">=1.15.0" },
     { name = "pre-commit", specifier = ">=4.2.0" },
     { name = "pre-commit-hooks", specifier = ">=5.0.0" },
     { name = "pygithub", specifier = ">=2.6.1" },
     { name = "pymarkdownlnt", specifier = ">=0.9.25" },
-    { name = "pytest", specifier = ">=8.1.1" },
-    { name = "pytest", specifier = ">=8.3.5" },
-    { name = "respx", specifier = ">=0.22.0" },
     { name = "ruff", specifier = ">=0.11.2" },
-    { name = "types-click", specifier = ">=7.1.8" },
 ]
 docs = [
     { name = "mkdocs-material", specifier = ">=9.6.11" },
@@ -1822,12 +1813,26 @@ dependencies = [
     { name = "stapi-pydantic" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "respx" },
+    { name = "types-click" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=8.1.8" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "python-dateutil", specifier = ">=2.8.2" },
     { name = "stapi-pydantic", editable = "stapi-pydantic" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=8.3.5" },
+    { name = "respx", specifier = ">=0.22.0" },
+    { name = "types-click", specifier = ">=7.1.8" },
 ]
 
 [[package]]
@@ -2528,15 +2533,15 @@ wheels = [
 
 [[package]]
 name = "sentry-sdk"
-version = "2.46.0"
+version = "2.47.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7c/d7/c140a5837649e2bf2ec758494fde1d9a016c76777eab64e75ef38d685bbb/sentry_sdk-2.46.0.tar.gz", hash = "sha256:91821a23460725734b7741523021601593f35731808afc0bb2ba46c27b8acd91", size = 374761, upload-time = "2025-11-24T09:34:13.932Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4a/2a/d225cbf87b6c8ecce5664db7bcecb82c317e448e3b24a2dcdaacb18ca9a7/sentry_sdk-2.47.0.tar.gz", hash = "sha256:8218891d5e41b4ea8d61d2aed62ed10c80e39d9f2959d6f939efbf056857e050", size = 381895, upload-time = "2025-12-03T14:06:36.846Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4b/b6/ce7c502a366f4835b1f9c057753f6989a92d3c70cbadb168193f5fb7499b/sentry_sdk-2.46.0-py2.py3-none-any.whl", hash = "sha256:4eeeb60198074dff8d066ea153fa6f241fef1668c10900ea53a4200abc8da9b1", size = 406266, upload-time = "2025-11-24T09:34:12.114Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/ac/d6286ea0d49e7b58847faf67b00e56bb4ba3d525281e2ac306e1f1f353da/sentry_sdk-2.47.0-py2.py3-none-any.whl", hash = "sha256:d72f8c61025b7d1d9e52510d03a6247b280094a327dd900d987717a4fce93412", size = 411088, upload-time = "2025-12-03T14:06:35.374Z" },
 ]
 
 [[package]]
@@ -2583,6 +2588,12 @@ dependencies = [
     { name = "uvicorn" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "fastapi", extra = ["standard"] },
+    { name = "pytest" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115.0" },
@@ -2597,6 +2608,12 @@ requires-dist = [
     { name = "uvicorn", specifier = ">=0.29.0" },
 ]
 
+[package.metadata.requires-dev]
+dev = [
+    { name = "fastapi", extras = ["standard"], specifier = ">=0.115.0" },
+    { name = "pytest", specifier = ">=8.3.5" },
+]
+
 [[package]]
 name = "stapi-pydantic"
 version = "0.1.0"
@@ -2607,12 +2624,20 @@ dependencies = [
     { name = "pydantic" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "cql2", specifier = ">=0.3.6" },
     { name = "geojson-pydantic", specifier = ">=1.2.0" },
     { name = "pydantic", specifier = ">=2.12" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=8.3.5" }]
 
 [[package]]
 name = "starlette"
