@@ -18,7 +18,6 @@ dev = [
     "pymarkdownlnt>=0.9.25",
     "pre-commit>=4.2.0",
     "pre-commit-hooks>=5.0.0",
-    "types-click>=7.1.8",
     "pygithub>=2.6.1",
 ]
 docs = [

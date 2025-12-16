@@ -1774,7 +1774,6 @@ dev = [
     { name = "pygithub" },
     { name = "pymarkdownlnt" },
     { name = "ruff" },
-    { name = "types-click" },
 ]
 docs = [
     { name = "mkdocs-material" },
@@ -1797,7 +1796,6 @@ dev = [
     { name = "pygithub", specifier = ">=2.6.1" },
     { name = "pymarkdownlnt", specifier = ">=0.9.25" },
     { name = "ruff", specifier = ">=0.11.2" },
-    { name = "types-click", specifier = ">=7.1.8" },
 ]
 docs = [
     { name = "mkdocs-material", specifier = ">=9.6.11" },
@@ -1819,6 +1817,7 @@ dependencies = [
 dev = [
     { name = "pytest" },
     { name = "respx" },
+    { name = "types-click" },
 ]
 
 [package.metadata]
@@ -1833,6 +1832,7 @@ requires-dist = [
 dev = [
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "respx", specifier = ">=0.22.0" },
+    { name = "types-click", specifier = ">=7.1.8" },
 ]
 
 [[package]]

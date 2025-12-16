@@ -19,7 +19,7 @@ dependencies = [
     "click>=8.1.8",
 ]
 [dependency-groups]
-dev = ["pytest>=8.3.5", "respx>=0.22.0"]
+dev = ["pytest>=8.3.5", "respx>=0.22.0", "types-click>=7.1.8"]
 
 [project.scripts]
 stapi = "pystapi_client.scripts.cli:cli"
