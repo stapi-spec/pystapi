@@ -24,6 +24,12 @@ dependencies = [
     "stapi-pydantic>=0.0.3",
 ]
 
+[dependency-groups]
+dev = [
+    "fastapi[standard]>=0.115.0",
+    "pytest>=8.3.5",
+]
+
 [tool.hatch.build.targets.sdist]
 include = ["src/stapi_fastapi"]
 

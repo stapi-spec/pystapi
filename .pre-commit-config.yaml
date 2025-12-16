@@ -7,7 +7,6 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
-        verbose: true
 
       - id: ruff-format
         name: Format with ruff
@@ -15,7 +14,6 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
-        verbose: true
 
       - id: mypy
         name: Check typing with mypy
@@ -23,7 +21,6 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
-        verbose: true
 
       - id: pymarkdown
         name: Markdownlint

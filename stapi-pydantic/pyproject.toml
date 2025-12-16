@@ -10,6 +10,11 @@ authors = [
 requires-python = ">=3.11"
 dependencies = ["pydantic>=2.12", "cql2>=0.3.6", "geojson-pydantic>=1.2.0"]
 
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+]
+
 [project.scripts]
 stapi-pydantic = "stapi_pydantic:main"
 

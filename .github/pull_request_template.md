@@ -8,6 +8,6 @@
 
 ## Checklist
 
-- [ ] Tests pass: `uv run pytest`
+- [ ] Tests pass: `./scripts/run-tests.sh`
 - [ ] Checks pass: `uv run pre-commit run --all-files`
 - [ ] CHANGELOG is updated (if necessary)
