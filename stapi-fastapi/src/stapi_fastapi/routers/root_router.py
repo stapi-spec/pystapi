@@ -3,6 +3,7 @@ import traceback
 from typing import Any
 
 from fastapi import HTTPException, Request, status
+from fastapi.datastructures import URL
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
 from stapi_pydantic import (
@@ -18,7 +19,6 @@ from stapi_pydantic import (
     ProductsCollection,
     RootResponse,
 )
-from starlette.datastructures import URL
 
 from stapi_fastapi.backends.root_backend import (
     GetOpportunitySearchRecord,

@@ -4,7 +4,7 @@ from fastapi import (
     APIRouter,
     Request,
 )
-from starlette.datastructures import URL
+from fastapi.datastructures import URL
 
 
 class StapiFastapiBaseRouter(APIRouter):

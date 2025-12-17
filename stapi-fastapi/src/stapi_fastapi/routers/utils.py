@@ -1,5 +1,5 @@
+from fastapi.datastructures import URL
 from stapi_pydantic import Link
-from starlette.datastructures import URL
 
 from stapi_fastapi.constants import TYPE_JSON
 
