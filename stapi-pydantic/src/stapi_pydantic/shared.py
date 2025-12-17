@@ -7,7 +7,6 @@ from pydantic import (
     SerializerFunctionWrapHandler,
     model_serializer,
 )
-from starlette.datastructures import URL
 
 
 class Link(BaseModel):
@@ -23,7 +22,7 @@ class Link(BaseModel):
 
     # redefining init is a hack to get str type to validate for `href`,
     # as str is ultimately coerced into an AnyUrl automatically anyway
-    def __init__(self, href: AnyUrl | URL | str, **kwargs: Any) -> None:
+    def __init__(self, href: AnyUrl | str, **kwargs: Any) -> None:
         super().__init__(href=str(href), **kwargs)
 
     # overriding the default serialization to filter None field values from

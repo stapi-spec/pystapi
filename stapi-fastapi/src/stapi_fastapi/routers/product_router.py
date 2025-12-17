@@ -47,6 +47,7 @@ from stapi_fastapi.routers.route_names import (
     GET_QUERYABLES,
     SEARCH_OPPORTUNITIES,
 )
+from stapi_fastapi.routers.utils import json_link
 
 if TYPE_CHECKING:
     from stapi_fastapi.routers import RootRouter
@@ -201,28 +202,24 @@ class ProductRouter(StapiFastapiBaseRouter):
 
     def get_product(self, request: Request) -> ProductPydantic:
         links = [
-            Link(
+            json_link(
                 href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{GET_PRODUCT}"),
                 rel="self",
-                type=TYPE_JSON,
             ),
-            Link(
+            json_link(
                 href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CONFORMANCE}"),
                 rel="conformance",
-                type=TYPE_JSON,
             ),
-            Link(
+            json_link(
                 href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{GET_QUERYABLES}"),
                 rel="queryables",
-                type=TYPE_JSON,
             ),
-            Link(
+            json_link(
                 href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{GET_ORDER_PARAMETERS}"),
                 rel="order-parameters",
-                type=TYPE_JSON,
             ),
             Link(
-                href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}"),
+                href=str(self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}")),
                 rel="create-order",
                 type=TYPE_JSON,
                 method="POST",
@@ -233,10 +230,9 @@ class ProductRouter(StapiFastapiBaseRouter):
             self.product.supports_async_opportunity_search and self.root_router.supports_async_opportunity_search
         ):
             links.append(
-                Link(
+                json_link(
                     href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{SEARCH_OPPORTUNITIES}"),
                     rel="opportunities",
-                    type=TYPE_JSON,
                 ),
             )
 
@@ -396,7 +392,7 @@ class ProductRouter(StapiFastapiBaseRouter):
 
     def order_link(self, request: Request, opp_req: OpportunityPayload) -> Link:
         return Link(
-            href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}"),
+            href=str(self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}")),
             rel="create-order",
             type=TYPE_JSON,
             method="POST",
@@ -407,7 +403,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         body = opp_req.body()
         body["next"] = pagination_token
         return Link(
-            href=request.url,
+            href=str(request.url),
             rel="next",
             type=TYPE_JSON,
             method="POST",
@@ -427,14 +423,13 @@ class ProductRouter(StapiFastapiBaseRouter):
         ):
             case Success(Some(opportunity_collection)):
                 opportunity_collection.links.append(
-                    Link(
+                    json_link(
                         href=self.url_for(
                             request,
                             f"{self.root_router.name}:{self.product.id}:{GET_OPPORTUNITY_COLLECTION}",
                             opportunity_collection_id=opportunity_collection_id,
                         ),
                         rel="self",
-                        type=TYPE_JSON,
                     ),
                 )
                 return opportunity_collection  # type: ignore
