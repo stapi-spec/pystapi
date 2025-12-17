@@ -176,29 +176,23 @@ class RootRouter(StapiFastapiBaseRouter):
     def get_root(self, request: Request) -> RootResponse:
         links = [
             json_link(
-                href=self.url_for(request, f"{self.name}:{ROOT}"),
-                rel="self",
+                "self",
+                self.url_for(request, f"{self.name}:{ROOT}"),
             ),
             json_link(
-                href=self.url_for(request, self.openapi_endpoint_name),
-                rel="service-description",
+                "service-description",
+                self.url_for(request, self.openapi_endpoint_name),
             ),
             Link(
-                href=str(self.url_for(request, self.docs_endpoint_name)),
                 rel="service-docs",
+                href=self.url_for(request, self.docs_endpoint_name),
                 type="text/html",
             ),
-            json_link(
-                href=self.url_for(request, f"{self.name}:{CONFORMANCE}"),
-                rel="conformance",
-            ),
-            json_link(
-                href=self.url_for(request, f"{self.name}:{LIST_PRODUCTS}"),
-                rel="products",
-            ),
+            json_link("conformance", href=self.url_for(request, f"{self.name}:{CONFORMANCE}")),
+            json_link("products", self.url_for(request, f"{self.name}:{LIST_PRODUCTS}")),
             Link(
-                href=str(self.url_for(request, f"{self.name}:{LIST_ORDERS}")),
                 rel="orders",
+                href=self.url_for(request, f"{self.name}:{LIST_ORDERS}"),
                 type=TYPE_GEOJSON,
             ),
         ]
@@ -206,8 +200,8 @@ class RootRouter(StapiFastapiBaseRouter):
         if self.supports_async_opportunity_search:
             links.append(
                 json_link(
-                    href=self.url_for(request, f"{self.name}:{LIST_OPPORTUNITY_SEARCH_RECORDS}"),
-                    rel="opportunity-search-records",
+                    "opportunity-search-records",
+                    self.url_for(request, f"{self.name}:{LIST_OPPORTUNITY_SEARCH_RECORDS}"),
                 ),
             )
 
@@ -233,8 +227,8 @@ class RootRouter(StapiFastapiBaseRouter):
         ids = self.product_ids[start:end]
         links = [
             json_link(
-                href=self.url_for(request, f"{self.name}:{LIST_PRODUCTS}"),
-                rel="self",
+                "self",
+                self.url_for(request, f"{self.name}:{LIST_PRODUCTS}"),
             ),
         ]
         if end > 0 and end < len(self.product_ids):
@@ -359,30 +353,23 @@ class RootRouter(StapiFastapiBaseRouter):
     def order_links(self, order: Order[OrderStatus], request: Request) -> list[Link]:
         return [
             Link(
-                href=str(self.generate_order_href(request, order.id)),
+                href=self.generate_order_href(request, order.id),
                 rel="self",
                 type=TYPE_GEOJSON,
             ),
             json_link(
-                href=self.generate_order_statuses_href(request, order.id),
-                rel="monitor",
+                "monitor",
+                self.generate_order_statuses_href(request, order.id),
             ),
         ]
 
     def order_statuses_link(self, request: Request, order_id: str) -> Link:
-        return json_link(
-            href=self.url_for(
-                request,
-                f"{self.name}:{LIST_ORDER_STATUSES}",
-                order_id=order_id,
-            ),
-            rel="self",
-        )
+        return json_link("self", self.url_for(request, f"{self.name}:{LIST_ORDER_STATUSES}", order_id=order_id))
 
     def pagination_link(self, request: Request, name: str, pagination_token: str, limit: int, **kwargs: Any) -> Link:
         return json_link(
-            href=self.url_for(request, name, **kwargs).include_query_params(next=pagination_token, limit=limit),
-            rel="next",
+            "next",
+            self.url_for(request, name, **kwargs).include_query_params(next=pagination_token, limit=limit),
         )
 
     async def get_opportunity_search_records(
@@ -474,10 +461,7 @@ class RootRouter(StapiFastapiBaseRouter):
     def opportunity_search_record_self_link(
         self, opportunity_search_record: OpportunitySearchRecord, request: Request
     ) -> Link:
-        return json_link(
-            href=self.generate_opportunity_search_record_href(request, opportunity_search_record.id),
-            rel="self",
-        )
+        return json_link("self", self.generate_opportunity_search_record_href(request, opportunity_search_record.id))
 
     @property
     def _get_order_statuses(self) -> GetOrderStatuses:  # type: ignore

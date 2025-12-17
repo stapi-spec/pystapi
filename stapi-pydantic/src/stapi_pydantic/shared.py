@@ -22,8 +22,8 @@ class Link(BaseModel):
 
     # redefining init is a hack to get str type to validate for `href`,
     # as str is ultimately coerced into an AnyUrl automatically anyway
-    def __init__(self, href: AnyUrl | str, **kwargs: Any) -> None:
-        super().__init__(href=str(href), **kwargs)
+    def __init__(self, href: Any, **kwargs: Any) -> None:
+        super().__init__(href=href if isinstance(href, AnyUrl) else str(href), **kwargs)
 
     # overriding the default serialization to filter None field values from
     # dumped json
