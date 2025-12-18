@@ -21,7 +21,7 @@ dependencies = [
     "nox>=2024.4.15",
     "pydantic-settings>=2.2.1",
     "uvicorn>=0.29.0",
-    "stapi-pydantic>=0.0.3",
+    "stapi-pydantic>=0.1.0",
 ]
 
 [dependency-groups]
