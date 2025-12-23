@@ -11,9 +11,11 @@ from stapi_pydantic import (
     OrderStatus,
 )
 
+T = TypeVar("T", bound=OrderStatus)
+
 GetOrders = Callable[
     [str | None, int, Request],
-    Coroutine[Any, Any, ResultE[tuple[list[Order[OrderStatus]], Maybe[str], Maybe[int]]]],
+    Coroutine[Any, Any, ResultE[tuple[list[Order[T]], Maybe[str], Maybe[int]]]],
 ]
 """
 Type alias for an async function that returns a list of existing Orders.
@@ -46,9 +48,6 @@ Returns:
     - Should return returns.result.Success[returns.maybe.Nothing] if the order is not found or if access is denied.
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
-
-
-T = TypeVar("T", bound=OrderStatus)
 
 
 GetOrderStatuses = Callable[

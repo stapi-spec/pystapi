@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import traceback
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from fastapi import (
     Depends,
@@ -68,7 +68,10 @@ def get_prefer(prefer: str | None = Header(None)) -> str | None:
     return Prefer(prefer)
 
 
-def build_conformances(product: Product, root_router: RootRouter) -> list[str]:
+T = TypeVar("T", bound=OrderStatus)
+
+
+def build_conformances(product: Product, root_router: RootRouter[T]) -> list[str]:
     # FIXME we can make this check more robust
     if not any(conformance.startswith("https://geojson.org/schema/") for conformance in product.conformsTo):
         raise ValueError("product conformance does not contain at least one geojson conformance")
@@ -90,7 +93,7 @@ class ProductRouter(StapiFastapiBaseRouter):
     def __init__(  # noqa
         self,
         product: Product,
-        root_router: RootRouter,
+        root_router: RootRouter[T],
         *args: Any,
         **kwargs: Any,
     ) -> None:
