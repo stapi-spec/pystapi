@@ -72,11 +72,11 @@ class OrderStatus(BaseModel):
         )
 
 
-T = TypeVar("T", bound=OrderStatus)
+OrderStatusBound = TypeVar("OrderStatusBound", bound=OrderStatus)
 
 
-class OrderStatuses(BaseModel, Generic[T]):
-    statuses: list[T]
+class OrderStatuses(BaseModel, Generic[OrderStatusBound]):
+    statuses: list[OrderStatusBound]
     links: list[Link] = Field(default_factory=list)
 
 
@@ -87,10 +87,10 @@ class OrderSearchParameters(BaseModel):
     filter: CQL2Filter | None = None  # type: ignore [type-arg]
 
 
-class OrderProperties(BaseModel, Generic[T]):
+class OrderProperties(BaseModel, Generic[OrderStatusBound]):
     product_id: str
     created: AwareDatetime
-    status: T
+    status: OrderStatusBound
 
     search_parameters: OrderSearchParameters
     opportunity_properties: dict[str, Any]
@@ -100,7 +100,7 @@ class OrderProperties(BaseModel, Generic[T]):
 
 
 # derived from geojson_pydantic.Feature
-class Order(_GeoJsonBase, Generic[T]):
+class Order(_GeoJsonBase, Generic[OrderStatusBound]):
     # We need to enforce that orders have an id defined, as that is required to
     # retrieve them via the API
     id: StrictStr
@@ -109,7 +109,7 @@ class Order(_GeoJsonBase, Generic[T]):
     stapi_version: str = STAPI_VERSION
 
     geometry: Geometry = Field(...)
-    properties: OrderProperties[T] = Field(...)
+    properties: OrderProperties[OrderStatusBound] = Field(...)
 
     links: list[Link] = Field(default_factory=list)
 
@@ -125,15 +125,15 @@ class Order(_GeoJsonBase, Generic[T]):
 
 
 # derived from geojson_pydantic.FeatureCollection
-class OrderCollection(_GeoJsonBase, Generic[T]):
+class OrderCollection(_GeoJsonBase, Generic[OrderStatusBound]):
     type: Literal["FeatureCollection"] = "FeatureCollection"
-    features: list[Order[T]]
+    features: list[Order[OrderStatusBound]]
     links: list[Link] = Field(default_factory=list)
     number_matched: int | None = Field(
         serialization_alias="numberMatched", default=None, exclude_if=lambda x: x is None
     )
 
-    def __iter__(self) -> Iterator[Order[T]]:  # type: ignore [override]
+    def __iter__(self) -> Iterator[Order[OrderStatusBound]]:  # type: ignore [override]
         """iterate over features"""
         return iter(self.features)
 
@@ -141,7 +141,7 @@ class OrderCollection(_GeoJsonBase, Generic[T]):
         """return features length"""
         return len(self.features)
 
-    def __getitem__(self, index: int) -> Order[T]:
+    def __getitem__(self, index: int) -> Order[OrderStatusBound]:
         """get feature at a given index"""
         return self.features[index]
 

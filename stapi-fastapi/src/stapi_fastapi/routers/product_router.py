@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import traceback
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any
 
 from fastapi import (
     Depends,
@@ -50,7 +50,8 @@ from stapi_fastapi.routers.route_names import (
 from stapi_fastapi.routers.utils import json_link
 
 if TYPE_CHECKING:
-    from stapi_fastapi.routers import RootRouter
+    from stapi_fastapi.routers.root_router import ConformancesSupport, RootProvider
+
 
 logger = logging.getLogger(__name__)
 
@@ -68,10 +69,7 @@ def get_prefer(prefer: str | None = Header(None)) -> str | None:
     return Prefer(prefer)
 
 
-T = TypeVar("T", bound=OrderStatus)
-
-
-def build_conformances(product: Product, root_router: RootRouter[T]) -> list[str]:
+def build_conformances(product: Product, conformances_support: ConformancesSupport) -> list[str]:
     # FIXME we can make this check more robust
     if not any(conformance.startswith("https://geojson.org/schema/") for conformance in product.conformsTo):
         raise ValueError("product conformance does not contain at least one geojson conformance")
@@ -81,7 +79,7 @@ def build_conformances(product: Product, root_router: RootRouter[T]) -> list[str
     if product.supports_opportunity_search:
         conformances.add(PRODUCT_CONFORMACES.opportunities)
 
-    if product.supports_async_opportunity_search and root_router.supports_async_opportunity_search:
+    if product.supports_async_opportunity_search and conformances_support.supports_async_opportunity_search:
         conformances.add(PRODUCT_CONFORMACES.opportunities)
         conformances.add(PRODUCT_CONFORMACES.opportunities_async)
 
@@ -93,20 +91,21 @@ class ProductRouter(StapiFastapiBaseRouter):
     def __init__(  # noqa
         self,
         product: Product,
-        root_router: RootRouter[T],
+        root_provider: RootProvider,
         *args: Any,
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
 
         self.product = product
-        self.root_router = root_router
-        self.conformances = build_conformances(product, root_router)
+        self.root_provider = root_provider
+        self.conformances_support: ConformancesSupport = root_provider
+        self.conformances = build_conformances(product, root_provider)
 
         self.add_api_route(
             path="",
             endpoint=self.get_product,
-            name=f"{self.root_router.name}:{self.product.id}:{GET_PRODUCT}",
+            name=f"{self.root_provider.name}:{self.product.id}:{GET_PRODUCT}",
             methods=["GET"],
             summary="Retrieve this product",
             tags=["Products"],
@@ -115,7 +114,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         self.add_api_route(
             path="/conformance",
             endpoint=self.get_product_conformance,
-            name=f"{self.root_router.name}:{self.product.id}:{CONFORMANCE}",
+            name=f"{self.root_provider.name}:{self.product.id}:{CONFORMANCE}",
             methods=["GET"],
             summary="Get conformance urls for the product",
             tags=["Products"],
@@ -124,7 +123,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         self.add_api_route(
             path="/queryables",
             endpoint=self.get_product_queryables,
-            name=f"{self.root_router.name}:{self.product.id}:{GET_QUERYABLES}",
+            name=f"{self.root_provider.name}:{self.product.id}:{GET_QUERYABLES}",
             methods=["GET"],
             summary="Get queryables for the product",
             tags=["Products"],
@@ -133,7 +132,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         self.add_api_route(
             path="/order-parameters",
             endpoint=self.get_product_order_parameters,
-            name=f"{self.root_router.name}:{self.product.id}:{GET_ORDER_PARAMETERS}",
+            name=f"{self.root_provider.name}:{self.product.id}:{GET_ORDER_PARAMETERS}",
             methods=["GET"],
             summary="Get order parameters for the product",
             tags=["Products"],
@@ -160,7 +159,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         self.add_api_route(
             path="/orders",
             endpoint=_create_order,
-            name=f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}",
+            name=f"{self.root_provider.name}:{self.product.id}:{CREATE_ORDER}",
             methods=["POST"],
             response_class=GeoJSONResponse,
             status_code=status.HTTP_201_CREATED,
@@ -169,12 +168,13 @@ class ProductRouter(StapiFastapiBaseRouter):
         )
 
         if product.supports_opportunity_search or (
-            self.product.supports_async_opportunity_search and self.root_router.supports_async_opportunity_search
+            self.product.supports_async_opportunity_search
+            and self.conformances_support.supports_async_opportunity_search
         ):
             self.add_api_route(
                 path="/opportunities",
                 endpoint=self.search_opportunities,
-                name=f"{self.root_router.name}:{self.product.id}:{SEARCH_OPPORTUNITIES}",
+                name=f"{self.root_provider.name}:{self.product.id}:{SEARCH_OPPORTUNITIES}",
                 methods=["POST"],
                 response_class=GeoJSONResponse,
                 # unknown why mypy can't see the queryables property on Product, ignoring
@@ -192,11 +192,11 @@ class ProductRouter(StapiFastapiBaseRouter):
                 tags=["Products"],
             )
 
-        if product.supports_async_opportunity_search and root_router.supports_async_opportunity_search:
+        if product.supports_async_opportunity_search and self.conformances_support.supports_async_opportunity_search:
             self.add_api_route(
                 path="/opportunities/{opportunity_collection_id}",
                 endpoint=self.get_opportunity_collection,
-                name=f"{self.root_router.name}:{self.product.id}:{GET_OPPORTUNITY_COLLECTION}",
+                name=f"{self.root_provider.name}:{self.product.id}:{GET_OPPORTUNITY_COLLECTION}",
                 methods=["GET"],
                 response_class=GeoJSONResponse,
                 summary="Get an Opportunity Collection by ID",
@@ -205,17 +205,20 @@ class ProductRouter(StapiFastapiBaseRouter):
 
     def get_product(self, request: Request) -> ProductPydantic:
         links = [
-            json_link("self", self.url_for(request, f"{self.root_router.name}:{self.product.id}:{GET_PRODUCT}")),
-            json_link("conformance", self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CONFORMANCE}")),
+            json_link("self", self.url_for(request, f"{self.root_provider.name}:{self.product.id}:{GET_PRODUCT}")),
             json_link(
-                "queryables", self.url_for(request, f"{self.root_router.name}:{self.product.id}:{GET_QUERYABLES}")
+                "conformance", self.url_for(request, f"{self.root_provider.name}:{self.product.id}:{CONFORMANCE}")
+            ),
+            json_link(
+                "queryables",
+                self.url_for(request, f"{self.root_provider.name}:{self.product.id}:{GET_QUERYABLES}"),
             ),
             json_link(
                 "order-parameters",
-                self.url_for(request, f"{self.root_router.name}:{self.product.id}:{GET_ORDER_PARAMETERS}"),
+                self.url_for(request, f"{self.root_provider.name}:{self.product.id}:{GET_ORDER_PARAMETERS}"),
             ),
             Link(
-                href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}"),
+                href=self.url_for(request, f"{self.root_provider.name}:{self.product.id}:{CREATE_ORDER}"),
                 rel="create-order",
                 type=TYPE_JSON,
                 method="POST",
@@ -223,12 +226,13 @@ class ProductRouter(StapiFastapiBaseRouter):
         ]
 
         if self.product.supports_opportunity_search or (
-            self.product.supports_async_opportunity_search and self.root_router.supports_async_opportunity_search
+            self.product.supports_async_opportunity_search
+            and self.conformances_support.supports_async_opportunity_search
         ):
             links.append(
                 json_link(
                     "opportunities",
-                    self.url_for(request, f"{self.root_router.name}:{self.product.id}:{SEARCH_OPPORTUNITIES}"),
+                    self.url_for(request, f"{self.root_provider.name}:{self.product.id}:{SEARCH_OPPORTUNITIES}"),
                 ),
             )
 
@@ -246,7 +250,8 @@ class ProductRouter(StapiFastapiBaseRouter):
         """
         # sync
         if not (
-            self.root_router.supports_async_opportunity_search and self.product.supports_async_opportunity_search
+            self.product.supports_async_opportunity_search
+            and self.conformances_support.supports_async_opportunity_search
         ) or (prefer is Prefer.wait and self.product.supports_opportunity_search):
             return await self.search_opportunities_sync(
                 search,
@@ -301,7 +306,7 @@ class ProductRouter(StapiFastapiBaseRouter):
             case x:
                 raise AssertionError(f"Expected code to be unreachable {x}")
 
-        if prefer is Prefer.wait and self.root_router.supports_async_opportunity_search:
+        if prefer is Prefer.wait and self.conformances_support.supports_async_opportunity_search:
             response.headers["Preference-Applied"] = "wait"
 
         return OpportunityCollection(features=features, links=links)
@@ -314,10 +319,12 @@ class ProductRouter(StapiFastapiBaseRouter):
     ) -> JSONResponse:
         match await self.product.search_opportunities_async(self, search, request):
             case Success(search_record):
-                search_record.links.append(self.root_router.opportunity_search_record_self_link(search_record, request))
+                search_record.links.append(
+                    self.root_provider.opportunity_search_record_self_link(search_record, request)
+                )
                 headers = {}
                 headers["Location"] = str(
-                    self.root_router.generate_opportunity_search_record_href(request, search_record.id)
+                    self.root_provider.generate_opportunity_search_record_href(request, search_record.id)
                 )
                 if prefer is not None:
                     headers["Preference-Applied"] = "respond-async"
@@ -368,8 +375,8 @@ class ProductRouter(StapiFastapiBaseRouter):
             request,
         ):
             case Success(order):
-                order.links.extend(self.root_router.order_links(order, request))
-                location = str(self.root_router.generate_order_href(request, order.id))
+                order.links.extend(self.root_provider.order_links(order, request))
+                location = str(self.root_provider.generate_order_href(request, order.id))
                 response.headers["Location"] = location
                 return order  # type: ignore
             case Failure(e) if isinstance(e, QueryablesError):
@@ -388,7 +395,7 @@ class ProductRouter(StapiFastapiBaseRouter):
 
     def order_link(self, request: Request, opp_req: OpportunityPayload) -> Link:
         return Link(
-            href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}"),
+            href=self.url_for(request, f"{self.root_provider.name}:{self.product.id}:{CREATE_ORDER}"),
             rel="create-order",
             type=TYPE_JSON,
             method="POST",
@@ -423,7 +430,7 @@ class ProductRouter(StapiFastapiBaseRouter):
                         "self",
                         self.url_for(
                             request,
-                            f"{self.root_router.name}:{self.product.id}:{GET_OPPORTUNITY_COLLECTION}",
+                            f"{self.root_provider.name}:{self.product.id}:{GET_OPPORTUNITY_COLLECTION}",
                             opportunity_collection_id=opportunity_collection_id,
                         ),
                     ),
