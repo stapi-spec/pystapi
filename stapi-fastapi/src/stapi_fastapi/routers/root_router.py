@@ -73,7 +73,7 @@ class RootProvider(ConformancesSupport):
     def generate_opportunity_search_record_href(self, request: Request, search_record_id: str) -> URL: ...
 
     @abstractmethod
-    def order_links(self, order: Order[OrderStatusBound], request: Request) -> list[Link]: ...
+    def order_links(self, order: Order[Any], request: Request) -> list[Link]: ...
 
     @abstractmethod
     def generate_order_href(self, request: Request, order_id: str) -> URL: ...
@@ -272,7 +272,7 @@ class RootRouter(StapiFastapiBaseRouter, RootProvider, Generic[OrderStatusBound]
 
     async def get_orders(  # noqa: C901
         self, request: Request, next: str | None = None, limit: int = 10
-    ) -> OrderCollection[OrderStatus]:
+    ) -> OrderCollection[OrderStatusBound]:
         links: list[Link] = []
         orders_count: int | None = None
         match await self._get_orders(next, limit, request):
@@ -303,7 +303,7 @@ class RootRouter(StapiFastapiBaseRouter, RootProvider, Generic[OrderStatusBound]
             case _:
                 raise AssertionError("Expected code to be unreachable")
 
-        return OrderCollection[OrderStatus](
+        return OrderCollection[OrderStatusBound](
             features=orders,
             links=links,
             number_matched=orders_count,
