@@ -15,11 +15,12 @@ from stapi_pydantic import (
     OpportunitySearchStatus,
     Order,
     OrderCollection,
+    OrderStatus,
+    OrderStatusBound,
     OrderStatuses,
     ProductsCollection,
     RootResponse,
 )
-from stapi_pydantic.order import OrderStatus, OrderStatusBound
 
 from stapi_fastapi.backends.root_backend import (
     GetOpportunitySearchRecord,

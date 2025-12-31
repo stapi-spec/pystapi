@@ -1,17 +1,10 @@
 from collections.abc import Callable, Coroutine
-from typing import Any, Generic, Protocol, TypeVar
+from typing import Any, Generic, Protocol
 
 from fastapi import Request
 from returns.maybe import Maybe
 from returns.result import ResultE
-from stapi_pydantic import (
-    OpportunitySearchRecord,
-    OpportunitySearchStatus,
-    Order,
-    OrderStatus,
-)
-
-OrderStatusBound = TypeVar("OrderStatusBound", bound=OrderStatus)
+from stapi_pydantic import OpportunitySearchRecord, OpportunitySearchStatus, Order, OrderStatusBound
 
 
 class GetOrders(Protocol, Generic[OrderStatusBound]):
