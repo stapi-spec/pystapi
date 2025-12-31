@@ -8,7 +8,7 @@ from stapi_pydantic import OpportunitySearchRecord, OpportunitySearchStatus, Ord
 
 
 class GetOrders(Protocol, Generic[OrderStatusBound]):
-    """Type alias for an async function that returns a list of existing Orders.
+    """Callable class wrapping an async method that returns a list of Orders.
 
     Args:
         next (str | None): A pagination token.
@@ -34,7 +34,7 @@ class GetOrders(Protocol, Generic[OrderStatusBound]):
 
 
 class GetOrder(Protocol, Generic[OrderStatusBound]):
-    """Type alias for an async function that gets details for the order with `order_id`.
+    """Callable class wrapping an async method that gets details for the order with `order_id`.
 
     Args:
         order_id (str): The order ID.
@@ -50,7 +50,7 @@ class GetOrder(Protocol, Generic[OrderStatusBound]):
 
 
 class GetOrderStatuses(Protocol, Generic[OrderStatusBound]):
-    """Type alias for an async function that gets statuses for the order with `order_id`.
+    """Callable class wrapping an async method that gets statuses for the order with `order_id`.
 
     Args:
         order_id (str): The order ID.
