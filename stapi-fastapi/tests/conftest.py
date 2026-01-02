@@ -17,12 +17,11 @@ from stapi_pydantic import (
 )
 
 from .backends import (
+    MockGetOrders,
+    MockGetOrderStatuses,
     mock_get_opportunity_search_record,
     mock_get_opportunity_search_record_statuses,
     mock_get_opportunity_search_records,
-    mock_get_order,
-    mock_get_order_statuses,
-    mock_get_orders,
 )
 from .shared import (
     InMemoryOpportunityDB,
@@ -72,9 +71,8 @@ def stapi_client(
             pass
 
     root_router = RootRouter(
-        get_orders=mock_get_orders,
-        get_order=mock_get_order,
-        get_order_statuses=mock_get_order_statuses,
+        get_orders=MockGetOrders(),
+        get_order_statuses=MockGetOrderStatuses(),
         conformances=[API.core],
     )
 
@@ -107,9 +105,8 @@ def stapi_client_async_opportunity(
             pass
 
     root_router = RootRouter(
-        get_orders=mock_get_orders,
-        get_order=mock_get_order,
-        get_order_statuses=mock_get_order_statuses,
+        get_orders=MockGetOrders(),
+        get_order_statuses=MockGetOrderStatuses(),
         get_opportunity_search_records=mock_get_opportunity_search_records,
         get_opportunity_search_record=mock_get_opportunity_search_record,
         get_opportunity_search_record_statuses=mock_get_opportunity_search_record_statuses,

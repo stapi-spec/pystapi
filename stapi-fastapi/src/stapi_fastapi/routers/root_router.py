@@ -26,7 +26,6 @@ from stapi_fastapi.backends.root_backend import (
     GetOpportunitySearchRecord,
     GetOpportunitySearchRecords,
     GetOpportunitySearchRecordStatuses,
-    GetOrder,
     GetOrders,
     GetOrderStatuses,
 )
@@ -83,7 +82,6 @@ class RootRouter(StapiFastapiBaseRouter, RootProvider, Generic[OrderStatusBound]
     def __init__(
         self,
         get_orders: GetOrders[OrderStatusBound],
-        get_order: GetOrder[OrderStatusBound],
         get_order_statuses: GetOrderStatuses[OrderStatusBound] | None = None,
         get_opportunity_search_records: GetOpportunitySearchRecords | None = None,
         get_opportunity_search_record: GetOpportunitySearchRecord | None = None,
@@ -100,7 +98,6 @@ class RootRouter(StapiFastapiBaseRouter, RootProvider, Generic[OrderStatusBound]
         _conformances = set(conformances)
 
         self._get_orders = get_orders
-        self._get_order = get_order
         self.__get_order_statuses = get_order_statuses
         self.__get_opportunity_search_records = get_opportunity_search_records
         self.__get_opportunity_search_record = get_opportunity_search_record
@@ -275,7 +272,7 @@ class RootRouter(StapiFastapiBaseRouter, RootProvider, Generic[OrderStatusBound]
     ) -> OrderCollection[OrderStatusBound]:
         links: list[Link] = []
         orders_count: int | None = None
-        match await self._get_orders(next, limit, request):
+        match await self._get_orders.get_orders(next, limit, request):
             case Success((orders, maybe_pagination_token, maybe_orders_count)):
                 for order in orders:
                     order.links.extend(self.order_links(order, request))
@@ -313,7 +310,7 @@ class RootRouter(StapiFastapiBaseRouter, RootProvider, Generic[OrderStatusBound]
         """
         Get details for order with `order_id`.
         """
-        match await self._get_order(order_id, request):
+        match await self._get_orders.get_order(order_id, request):
             case Success(Some(order)):
                 order.links.extend(self.order_links(order, request))
                 return order  # type: ignore
@@ -340,7 +337,7 @@ class RootRouter(StapiFastapiBaseRouter, RootProvider, Generic[OrderStatusBound]
         limit: int = 10,
     ) -> OrderStatuses[OrderStatusBound]:
         links: list[Link] = []
-        match await self._get_order_statuses(order_id, next, limit, request):
+        match await self._get_order_statuses.get_order_statuses(order_id, next, limit, request):
             case Success(Some((statuses, maybe_pagination_token))):
                 links.append(self.order_statuses_link(request, order_id))
                 match maybe_pagination_token:

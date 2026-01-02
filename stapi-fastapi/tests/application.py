@@ -7,11 +7,10 @@ from stapi_fastapi.conformance import API
 from stapi_fastapi.routers.root_router import RootRouter
 
 from tests.backends import (
+    MockGetOrders,
+    MockGetOrderStatuses,
     mock_get_opportunity_search_record,
     mock_get_opportunity_search_records,
-    mock_get_order,
-    mock_get_order_statuses,
-    mock_get_orders,
 )
 from tests.shared import (
     InMemoryOpportunityDB,
@@ -30,9 +29,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, Any]]:
 
 
 root_router = RootRouter(
-    get_orders=mock_get_orders,
-    get_order=mock_get_order,
-    get_order_statuses=mock_get_order_statuses,
+    get_orders=MockGetOrders(),
+    get_order_statuses=MockGetOrderStatuses(),
     get_opportunity_search_records=mock_get_opportunity_search_records,
     get_opportunity_search_record=mock_get_opportunity_search_record,
     conformances=[API.core],
