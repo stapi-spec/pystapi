@@ -15,7 +15,6 @@ from stapi_pydantic import (
     OpportunitySearchStatus,
     Order,
     OrderCollection,
-    OrderStatus,
     OrderStatusBound,
     OrderStatuses,
     ProductsCollection,
@@ -306,7 +305,7 @@ class RootRouter(StapiFastapiBaseRouter, RootProvider, Generic[OrderStatusBound]
             number_matched=orders_count,
         )
 
-    async def get_order(self, order_id: str, request: Request) -> Order[OrderStatus]:
+    async def get_order(self, order_id: str, request: Request) -> Order[OrderStatusBound]:
         """
         Get details for order with `order_id`.
         """

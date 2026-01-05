@@ -25,7 +25,7 @@ from stapi_pydantic import (
     OpportunitySearchRecord,
     Order,
     OrderPayload,
-    OrderStatus,
+    OrderStatusBound,
     Prefer,
 )
 from stapi_pydantic import (
@@ -149,7 +149,7 @@ class ProductRouter(StapiFastapiBaseRouter):
             payload: OrderPayload,  # type: ignore
             request: Request,
             response: Response,
-        ) -> Order[OrderStatus]:
+        ) -> Order[OrderStatusBound]:
             return await self.create_order(payload, request, response)
 
         _create_order.__annotations__["payload"] = OrderPayload[
