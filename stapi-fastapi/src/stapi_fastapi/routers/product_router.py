@@ -100,7 +100,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         self.product = product
         self.root_provider = root_provider
         self.conformances_support: ConformancesSupport = root_provider
-        self.conformances = build_conformances(product, root_provider)
+        self.conformances = build_conformances(product, self.conformances_support)
 
         self.add_api_route(
             path="",
