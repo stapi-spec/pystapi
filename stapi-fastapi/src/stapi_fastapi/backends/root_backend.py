@@ -14,7 +14,7 @@ class GetOrders(Protocol, Generic[OrderStatusBound]):
     @abstractmethod
     async def get_orders(
         self,
-        next: str | None,
+        next_: str | None,
         limit: int,
         request: Request,
     ) -> ResultE[tuple[list[Order[OrderStatusBound]], Maybe[str], Maybe[int]]]:
@@ -56,7 +56,7 @@ class GetOrderStatuses(Protocol, Generic[OrderStatusBound]):
 
     @abstractmethod
     async def get_order_statuses(
-        self, order_id: str, _next: str | None, limit: int, request: Request
+        self, order_id: str, next_: str | None, limit: int, request: Request
     ) -> ResultE[Maybe[tuple[list[OrderStatusBound], Maybe[str]]]]:
         """Method that gets statuses for the order with `order_id`.
 
