@@ -21,6 +21,7 @@ from .order import (
     OrderProperties,
     OrderSearchParameters,
     OrderStatus,
+    OrderStatusBound,
     OrderStatusCode,
     OrderStatuses,
 )
@@ -52,6 +53,7 @@ __all__ = [
     "OrderStatus",
     "OrderStatusCode",
     "OrderStatuses",
+    "OrderStatusBound",
     "Prefer",
     "Product",
     "ProductsCollection",

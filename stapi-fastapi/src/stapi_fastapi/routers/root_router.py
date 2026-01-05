@@ -1,6 +1,7 @@
 import logging
 import traceback
-from typing import Any
+from abc import abstractmethod
+from typing import Any, Generic, Protocol
 
 from fastapi import HTTPException, Request, status
 from fastapi.datastructures import URL
@@ -14,7 +15,7 @@ from stapi_pydantic import (
     OpportunitySearchStatus,
     Order,
     OrderCollection,
-    OrderStatus,
+    OrderStatusBound,
     OrderStatuses,
     ProductsCollection,
     RootResponse,
@@ -24,7 +25,6 @@ from stapi_fastapi.backends.root_backend import (
     GetOpportunitySearchRecord,
     GetOpportunitySearchRecords,
     GetOpportunitySearchRecordStatuses,
-    GetOrder,
     GetOrders,
     GetOrderStatuses,
 )
@@ -51,12 +51,37 @@ from stapi_fastapi.routers.utils import json_link
 logger = logging.getLogger(__name__)
 
 
-class RootRouter(StapiFastapiBaseRouter):
+class ConformancesSupport(Protocol):
+    @property
+    @abstractmethod
+    def supports_async_opportunity_search(self) -> bool: ...
+
+
+class RootProvider(ConformancesSupport):
+    @property
+    @abstractmethod
+    def name(self) -> str: ...
+
+    @abstractmethod
+    def opportunity_search_record_self_link(
+        self, opportunity_search_record: OpportunitySearchRecord, request: Request
+    ) -> Link: ...
+
+    @abstractmethod
+    def generate_opportunity_search_record_href(self, request: Request, search_record_id: str) -> URL: ...
+
+    @abstractmethod
+    def order_links(self, order: Order[Any], request: Request) -> list[Link]: ...
+
+    @abstractmethod
+    def generate_order_href(self, request: Request, order_id: str) -> URL: ...
+
+
+class RootRouter(StapiFastapiBaseRouter, RootProvider, Generic[OrderStatusBound]):
     def __init__(
         self,
-        get_orders: GetOrders,
-        get_order: GetOrder,
-        get_order_statuses: GetOrderStatuses | None = None,  # type: ignore
+        get_orders: GetOrders[OrderStatusBound],
+        get_order_statuses: GetOrderStatuses[OrderStatusBound] | None = None,
         get_opportunity_search_records: GetOpportunitySearchRecords | None = None,
         get_opportunity_search_record: GetOpportunitySearchRecord | None = None,
         get_opportunity_search_record_statuses: GetOpportunitySearchRecordStatuses | None = None,
@@ -72,12 +97,11 @@ class RootRouter(StapiFastapiBaseRouter):
         _conformances = set(conformances)
 
         self._get_orders = get_orders
-        self._get_order = get_order
         self.__get_order_statuses = get_order_statuses
         self.__get_opportunity_search_records = get_opportunity_search_records
         self.__get_opportunity_search_record = get_opportunity_search_record
         self.__get_opportunity_search_record_statuses = get_opportunity_search_record_statuses
-        self.name = name
+        self._name = name
         self.openapi_endpoint_name = openapi_endpoint_name
         self.docs_endpoint_name = docs_endpoint_name
         self.product_ids: list[str] = []
@@ -173,6 +197,10 @@ class RootRouter(StapiFastapiBaseRouter):
 
         self.conformances = list(_conformances)
 
+    @property
+    def name(self) -> str:
+        return self._name
+
     def get_root(self, request: Request) -> RootResponse:
         links = [
             json_link(
@@ -240,10 +268,10 @@ class RootRouter(StapiFastapiBaseRouter):
 
     async def get_orders(  # noqa: C901
         self, request: Request, next: str | None = None, limit: int = 10
-    ) -> OrderCollection[OrderStatus]:
+    ) -> OrderCollection[OrderStatusBound]:
         links: list[Link] = []
         orders_count: int | None = None
-        match await self._get_orders(next, limit, request):
+        match await self._get_orders.get_orders(next, limit, request):
             case Success((orders, maybe_pagination_token, maybe_orders_count)):
                 for order in orders:
                     order.links.extend(self.order_links(order, request))
@@ -271,17 +299,17 @@ class RootRouter(StapiFastapiBaseRouter):
             case _:
                 raise AssertionError("Expected code to be unreachable")
 
-        return OrderCollection(
+        return OrderCollection[OrderStatusBound](
             features=orders,
             links=links,
             number_matched=orders_count,
         )
 
-    async def get_order(self, order_id: str, request: Request) -> Order[OrderStatus]:
+    async def get_order(self, order_id: str, request: Request) -> Order[OrderStatusBound]:
         """
         Get details for order with `order_id`.
         """
-        match await self._get_order(order_id, request):
+        match await self._get_orders.get_order(order_id, request):
             case Success(Some(order)):
                 order.links.extend(self.order_links(order, request))
                 return order  # type: ignore
@@ -306,9 +334,9 @@ class RootRouter(StapiFastapiBaseRouter):
         request: Request,
         next: str | None = None,
         limit: int = 10,
-    ) -> OrderStatuses:  # type: ignore
+    ) -> OrderStatuses[OrderStatusBound]:
         links: list[Link] = []
-        match await self._get_order_statuses(order_id, next, limit, request):
+        match await self._get_order_statuses.get_order_statuses(order_id, next, limit, request):
             case Success(Some((statuses, maybe_pagination_token))):
                 links.append(self.order_statuses_link(request, order_id))
                 match maybe_pagination_token:
@@ -350,7 +378,7 @@ class RootRouter(StapiFastapiBaseRouter):
     def generate_order_statuses_href(self, request: Request, order_id: str) -> URL:
         return self.url_for(request, f"{self.name}:{LIST_ORDER_STATUSES}", order_id=order_id)
 
-    def order_links(self, order: Order[OrderStatus], request: Request) -> list[Link]:
+    def order_links(self, order: Order[Any], request: Request) -> list[Link]:
         return [
             Link(
                 href=self.generate_order_href(request, order.id),
@@ -464,7 +492,7 @@ class RootRouter(StapiFastapiBaseRouter):
         return json_link("self", self.generate_opportunity_search_record_href(request, opportunity_search_record.id))
 
     @property
-    def _get_order_statuses(self) -> GetOrderStatuses:  # type: ignore
+    def _get_order_statuses(self) -> GetOrderStatuses[OrderStatusBound]:
         if not self.__get_order_statuses:
             raise AttributeError("Root router does not support order status history")
         return self.__get_order_statuses

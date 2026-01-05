@@ -1,5 +1,5 @@
 from pydantic import TypeAdapter
-from stapi_pydantic.datetime_interval import DatetimeInterval
+from stapi_pydantic import DatetimeInterval
 
 
 def test_datetime_interval() -> None:

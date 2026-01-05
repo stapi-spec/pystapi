@@ -7,7 +7,6 @@ from .product_backend import (
 from .root_backend import (
     GetOpportunitySearchRecord,
     GetOpportunitySearchRecords,
-    GetOrder,
     GetOrders,
     GetOrderStatuses,
 )
@@ -17,7 +16,6 @@ __all__ = [
     "GetOpportunityCollection",
     "GetOpportunitySearchRecord",
     "GetOpportunitySearchRecords",
-    "GetOrder",
     "GetOrders",
     "GetOrderStatuses",
     "SearchOpportunities",

@@ -1,79 +1,83 @@
+from abc import abstractmethod
 from collections.abc import Callable, Coroutine
-from typing import Any, TypeVar
+from typing import Any, Generic, Protocol
 
 from fastapi import Request
 from returns.maybe import Maybe
 from returns.result import ResultE
-from stapi_pydantic import (
-    OpportunitySearchRecord,
-    OpportunitySearchStatus,
-    Order,
-    OrderStatus,
-)
-
-GetOrders = Callable[
-    [str | None, int, Request],
-    Coroutine[Any, Any, ResultE[tuple[list[Order[OrderStatus]], Maybe[str], Maybe[int]]]],
-]
-"""
-Type alias for an async function that returns a list of existing Orders.
-
-Args:
-    next (str | None): A pagination token.
-    limit (int): The maximum number of orders to return in a page.
-    request (Request): FastAPI's Request object.
-
-Returns:
-    A tuple containing a list of orders and a pagination token.
-
-    - Should return returns.result.Success[tuple[list[Order], returns.maybe.Some[str]]]
-      if including a pagination token
-    - Should return returns.result.Success[tuple[list[Order], returns.maybe.Nothing]]
-      if not including a pagination token
-    - Returning returns.result.Failure[Exception] will result in a 500.
-"""
-
-GetOrder = Callable[[str, Request], Coroutine[Any, Any, ResultE[Maybe[Order[OrderStatus]]]]]
-"""
-Type alias for an async function that gets details for the order with `order_id`.
-
-Args:
-    order_id (str): The order ID.
-    request (Request): FastAPI's Request object.
-
-Returns:
-    - Should return returns.result.Success[returns.maybe.Some[Order]] if order is found.
-    - Should return returns.result.Success[returns.maybe.Nothing] if the order is not found or if access is denied.
-    - Returning returns.result.Failure[Exception] will result in a 500.
-"""
+from stapi_pydantic import OpportunitySearchRecord, OpportunitySearchStatus, Order, OrderStatusBound
 
 
-T = TypeVar("T", bound=OrderStatus)
+class GetOrders(Protocol, Generic[OrderStatusBound]):
+    """Interface for getting a list of orders or a single order."""
+
+    @abstractmethod
+    async def get_orders(
+        self,
+        next: str | None,
+        limit: int,
+        request: Request,
+    ) -> ResultE[tuple[list[Order[OrderStatusBound]], Maybe[str], Maybe[int]]]:
+        """Get a list of Order objects.
+
+        Args:
+            next (str | None): A pagination token.
+            limit (int): The maximum number of orders to return in a page.
+            request (Request): FastAPI's Request object.
+
+        Returns:
+            A tuple containing a list of orders and a pagination token.
+
+            - Should return returns.result.Success[tuple[list[Order], returns.maybe.Some[str]]]
+              if including a pagination token
+            - Should return returns.result.Success[tuple[list[Order], returns.maybe.Nothing]]
+              if not including a pagination token
+            - Returning returns.result.Failure[Exception] will result in a 500.
+        """
+
+    @abstractmethod
+    async def get_order(self, order_id: str, request: Request) -> ResultE[Maybe[Order[OrderStatusBound]]]:
+        """Get details for the order with `order_id`.
+
+        Args:
+            order_id (str): The order ID.
+            request (Request): FastAPI's Request object.
+
+        Returns:
+            - Should return returns.result.Success[returns.maybe.Some[Order]] if order is found.
+            - Should return returns.result.Success[returns.maybe.Nothing] if the order is not found or if access is
+              denied.
+            - Returning returns.result.Failure[Exception] will result in a 500.
+        """
 
 
-GetOrderStatuses = Callable[
-    [str, str | None, int, Request],
-    Coroutine[Any, Any, ResultE[Maybe[tuple[list[T], Maybe[str]]]]],
-]
-"""
-Type alias for an async function that gets statuses for the order with `order_id`.
+class GetOrderStatuses(Protocol, Generic[OrderStatusBound]):
+    """Callable class wrapping an async method that gets statuses for the order with `order_id`."""
 
-Args:
-    order_id (str): The order ID.
-    next (str | None): A pagination token.
-    limit (int): The maximum number of statuses to return in a page.
-    request (Request): FastAPI's Request object.
+    @abstractmethod
+    async def get_order_statuses(
+        self, order_id: str, next: str | None, limit: int, request: Request
+    ) -> ResultE[Maybe[tuple[list[OrderStatusBound], Maybe[str]]]]:
+        """Method that gets statuses for the order with `order_id`.
 
-Returns:
-    A tuple containing a list of order statuses and a pagination token.
+        Args:
+            order_id (str): The order ID.
+            next (str | None): A pagination token.
+            limit (int): The maximum number of statuses to return in a page.
+            request (Request): FastAPI's Request object.
 
-    - Should return returns.result.Success[returns.maybe.Some[tuple[list[OrderStatus], returns.maybe.Some[str]]]
-      if order is found and including a pagination token.
-    - Should return returns.result.Success[returns.maybe.Some[tuple[list[OrderStatus], returns.maybe.Nothing]]]
-      if order is found and not including a pagination token.
-    - Should return returns.result.Success[returns.maybe.Nothing] if the order is not found or if access is denied.
-    - Returning returns.result.Failure[Exception] will result in a 500.
-"""
+        Returns:
+            A tuple containing a list of order statuses and a pagination token.
+
+            - Should return returns.result.Success[returns.maybe.Some[tuple[list[OrderStatus], returns.maybe.Some[str]]]
+              if order is found and including a pagination token.
+            - Should return returns.result.Success[returns.maybe.Some[tuple[list[OrderStatus], returns.maybe.Nothing]]]
+              if order is found and not including a pagination token.
+            - Should return returns.result.Success[returns.maybe.Nothing] if the order is not found or if access is
+              denied.
+            - Returning returns.result.Failure[Exception] will result in a 500.
+        """
+
 
 GetOpportunitySearchRecords = Callable[
     [str | None, int, Request],
