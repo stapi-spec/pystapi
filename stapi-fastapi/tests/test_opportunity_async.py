@@ -169,7 +169,7 @@ def test_async_search_record_retrieval(
     records_response = stapi_client_async_opportunity.get("/searches/opportunities")
     assert records_response.status_code == 200
     records_response_body = records_response.json()
-    assert search_record_id in [x["id"] for x in records_response_body["search_records"]]
+    assert search_record_id in [x["id"] for x in records_response_body["records"]]
 
 
 @pytest.mark.mock_products([product_test_spotlight_async_opportunity])
@@ -195,7 +195,7 @@ def test_async_opportunity_search_to_completion(
         Link(
             rel="create-order",
             href=url_for(f"/products/{product_id}/orders"),
-            body=search_record.opportunity_request.model_dump(),
+            body=search_record.search_parameters.model_dump(),
             method="POST",
         )
     )
@@ -311,6 +311,6 @@ def test_get_search_records_pagination(
         url="/searches/opportunities",
         method="GET",
         limit=limit,
-        target="search_records",
+        target="records",
         expected_returns=expected_returns,
     )

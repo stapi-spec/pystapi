@@ -10,7 +10,7 @@ from stapi_pydantic import (
     Conformance,
     Link,
     OpportunitySearchRecord,
-    OpportunitySearchRecords,
+    OpportunitySearchRecordCollection,
     OpportunitySearchStatus,
     Order,
     OrderCollection,
@@ -374,7 +374,7 @@ class RootRouter(StapiFastapiBaseRouter):
 
     async def get_opportunity_search_records(
         self, request: Request, next: str | None = None, limit: int = 10
-    ) -> OpportunitySearchRecords:
+    ) -> OpportunitySearchRecordCollection:
         links: list[Link] = []
         match await self._get_opportunity_search_records(next, limit, request):
             case Success((records, maybe_pagination_token)):
@@ -402,7 +402,7 @@ class RootRouter(StapiFastapiBaseRouter):
                 )
             case _:
                 raise AssertionError("Expected code to be unreachable")
-        return OpportunitySearchRecords(search_records=records, links=links)
+        return OpportunitySearchRecordCollection(records=records, links=links)
 
     async def get_opportunity_search_record(self, search_record_id: str, request: Request) -> OpportunitySearchRecord:
         """

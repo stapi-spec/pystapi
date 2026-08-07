@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `cql2_property_names`, which collects the property names referenced by a CQL2 JSON filter.
 - `SearchParameters`, the Search Parameters Object (`datetime`, `geometry`, `filter`) shared by the Opportunity Request and the Order Request. It permits extra fields, so provider extension parameters round-trip instead of being dropped.
 - `ProductCollection`, the new name for `ProductsCollection` (see Changed).
+- `stapi_type` and `stapi_version` on `OpportunitySearchRecord` and `OpportunitySearchRecordCollection`.
 - `BaseOrderParameters`, a permissive base for order parameters at rest, and `StoredOrderRequest`, the form an Order Request takes once it is persisted inside `OrderProperties`. `OrderParameters` is now a strict (`extra="forbid"`) subclass of `BaseOrderParameters`.
 - `STAPI_VERSION` is now exported from the package root.
 
@@ -37,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **BREAKING** `OpportunityRequest` (was `OpportunityPayload`) and `OrderRequest` (was `OrderPayload`) now compose `SearchParameters` instead of declaring `datetime`, `geometry`, and `filter` themselves. A request body that was `{"datetime": ..., "geometry": ..., "filter": ...}` becomes `{"search_parameters": {"datetime": ..., "geometry": ..., "filter": ...}}`.
 - **BREAKING** `OrderRequest.order_parameters` is optional and defaults to an empty object. It was previously required. Products whose `OrderParameters` model has required fields still make it effectively required, via validation.
 - **BREAKING** `OrderProperties` carries a single `order_request` (a `StoredOrderRequest`) in place of the former `search_parameters`, `opportunity_properties`, and `order_parameters` fields.
+- **BREAKING** `OpportunitySearchRecord.opportunity_request` is replaced by `search_parameters`, a `SearchParameters` rather than a whole request object. A record describes what was searched for, not the request body that carried it; holding the request meant every record echoed back whatever `limit`/`next` the client happened to page with, so two records describing an identical search differed if the clients paged differently. `OpportunitySearchRecordCollection` (was `OpportunitySearchRecords`) holds its items in `records` rather than `search_records`.
 - **BREAKING** `OpportunityRequest.limit` is `int | None` with a lower bound of 1, and defaults to `None`. It defaulted to 10, which asserted a page size the client never asked for; the default is the server's to choose.
 
 ### Fixed
@@ -46,7 +48,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Removed
 
-- **BREAKING** The pre-0.2.0 compatibility aliases `ProductsCollection`, `OrderPayload`, `OpportunityPayload` and `OrderSearchParameters` are gone. Use `ProductCollection`, `OrderRequest`, `OpportunityRequest` and `SearchParameters`.
+- **BREAKING** The pre-0.2.0 compatibility aliases `ProductsCollection`, `OrderPayload`, `OpportunityPayload`, `OrderSearchParameters` and `OpportunitySearchRecords` are gone. Use `ProductCollection`, `OrderRequest`, `OpportunityRequest`, `SearchParameters` and `OpportunitySearchRecordCollection`.
 - The unused `Props`, `Geom`, and `OPP` type variables in `stapi_pydantic.order`.
 - **BREAKING** `JsonSchemaModel` is gone. It annotated a `type[BaseModel]` with a `PlainValidator`/`PlainSerializer` pair so a model class could stand in for its own schema, which meant the published document carried an orphan `BaseModel` component and the value could not be read back. Build a `JsonSchema` with `JsonSchema.from_model(YourModel)` instead.
 

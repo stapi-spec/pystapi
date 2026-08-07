@@ -1,5 +1,7 @@
 from stapi_pydantic import (
     OpportunityRequest,
+    OpportunitySearchRecord,
+    OpportunitySearchRecordCollection,
     OrderParameters,
     OrderRequest,
 )
@@ -38,3 +40,29 @@ def test_opportunity_request_body_includes_pagination() -> None:
     assert body["next"] == "abc"
     assert body["limit"] == 5
     assert "search_parameters" in body
+
+
+SEARCH_RECORD_DICT = {
+    "id": "search-1",
+    "product_id": "umbra_spotlight",
+    "search_parameters": SEARCH_PARAMS,
+    "status": {"timestamp": "2024-04-10T09:15:00Z", "status_code": "received"},
+}
+
+
+def test_opportunity_search_record_request_field() -> None:
+    """A record says what was searched for, not which request body carried it."""
+    record = OpportunitySearchRecord.model_validate(SEARCH_RECORD_DICT)
+    assert record.search_parameters.geometry.type == "Point"
+    dumped = record.model_dump(mode="json")
+    assert dumped["stapi_type"] == "OpportunitySearchRecord"
+    assert "opportunity_request" not in dumped
+
+
+def test_opportunity_search_record_collection() -> None:
+    collection = OpportunitySearchRecordCollection.model_validate(
+        {"records": [SEARCH_RECORD_DICT]},
+    )
+    dumped = collection.model_dump(mode="json")
+    assert dumped["stapi_type"] == "OpportunitySearchRecordCollection"
+    assert len(dumped["records"]) == 1

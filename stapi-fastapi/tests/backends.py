@@ -151,7 +151,7 @@ async def mock_search_opportunities_async(
         search_record = OpportunitySearchRecord(
             id=str(uuid4()),
             product_id=product_router.product.id,
-            opportunity_request=search,
+            search_parameters=search.search_parameters,
             status=received_status,
             links=[],
         )

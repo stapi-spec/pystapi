@@ -4,10 +4,11 @@ from typing import Any, Literal, TypeVar
 from geojson_pydantic import Feature, FeatureCollection
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
+from .constants import STAPI_VERSION
 from .datetime_interval import BoundedDatetimeInterval
 from .geometry import Geometry
 from .search_parameters import SearchParameters
-from .shared import Link
+from .shared import STAPI_RESPONSE_CONFIG, Link
 
 
 # Copied and modified from https://github.com/stac-utils/stac-pydantic/blob/main/stac_pydantic/item.py#L11
@@ -75,15 +76,23 @@ class OpportunitySearchStatus(BaseModel):
 
 
 class OpportunitySearchRecord(BaseModel):
+    model_config = STAPI_RESPONSE_CONFIG
+
     id: str
     product_id: str
-    opportunity_request: OpportunityRequest
+    search_parameters: SearchParameters
     status: OpportunitySearchStatus
+    stapi_type: Literal["OpportunitySearchRecord"] = "OpportunitySearchRecord"
+    stapi_version: str = STAPI_VERSION
     links: list[Link] = Field(default_factory=list)
 
 
-class OpportunitySearchRecords(BaseModel):
-    search_records: list[OpportunitySearchRecord]
+class OpportunitySearchRecordCollection(BaseModel):
+    model_config = STAPI_RESPONSE_CONFIG
+
+    stapi_type: Literal["OpportunitySearchRecordCollection"] = "OpportunitySearchRecordCollection"
+    stapi_version: str = STAPI_VERSION
+    records: list[OpportunitySearchRecord]
     links: list[Link] = Field(default_factory=list)
 
 
