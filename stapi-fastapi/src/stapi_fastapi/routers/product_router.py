@@ -98,12 +98,13 @@ class ProductRouter(StapiFastapiBaseRouter):
 
         self.product = product
         self.root_router = root_router
+        self.route_name_prefix = (root_router.name, product.id)
         self.conformances = build_conformances(product, root_router)
 
         self.add_api_route(
             path="",
             endpoint=self.get_product,
-            name=f"{self.root_router.name}:{self.product.id}:{GET_PRODUCT}",
+            name=self.route_name(GET_PRODUCT),
             methods=["GET"],
             summary="Retrieve this product",
             tags=["Products"],
@@ -112,7 +113,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         self.add_api_route(
             path="/conformance",
             endpoint=self.get_product_conformance,
-            name=f"{self.root_router.name}:{self.product.id}:{CONFORMANCE}",
+            name=self.route_name(CONFORMANCE),
             methods=["GET"],
             summary="Get conformance urls for the product",
             tags=["Products"],
@@ -121,7 +122,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         self.add_api_route(
             path="/queryables",
             endpoint=self.get_product_queryables,
-            name=f"{self.root_router.name}:{self.product.id}:{GET_QUERYABLES}",
+            name=self.route_name(GET_QUERYABLES),
             methods=["GET"],
             summary="Get queryables for the product",
             tags=["Products"],
@@ -130,7 +131,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         self.add_api_route(
             path="/order-parameters",
             endpoint=self.get_product_order_parameters,
-            name=f"{self.root_router.name}:{self.product.id}:{GET_ORDER_PARAMETERS}",
+            name=self.route_name(GET_ORDER_PARAMETERS),
             methods=["GET"],
             summary="Get order parameters for the product",
             tags=["Products"],
@@ -157,7 +158,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         self.add_api_route(
             path="/orders",
             endpoint=_create_order,
-            name=f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}",
+            name=self.route_name(CREATE_ORDER),
             methods=["POST"],
             response_class=GeoJSONResponse,
             status_code=status.HTTP_201_CREATED,
@@ -171,7 +172,7 @@ class ProductRouter(StapiFastapiBaseRouter):
             self.add_api_route(
                 path="/opportunities",
                 endpoint=self.search_opportunities,
-                name=f"{self.root_router.name}:{self.product.id}:{SEARCH_OPPORTUNITIES}",
+                name=self.route_name(SEARCH_OPPORTUNITIES),
                 methods=["POST"],
                 response_class=GeoJSONResponse,
                 # unknown why mypy can't see the queryables property on Product, ignoring
@@ -193,7 +194,7 @@ class ProductRouter(StapiFastapiBaseRouter):
             self.add_api_route(
                 path="/opportunities/{opportunity_collection_id}",
                 endpoint=self.get_opportunity_collection,
-                name=f"{self.root_router.name}:{self.product.id}:{GET_OPPORTUNITY_COLLECTION}",
+                name=self.route_name(GET_OPPORTUNITY_COLLECTION),
                 methods=["GET"],
                 response_class=GeoJSONResponse,
                 summary="Get an Opportunity Collection by ID",
@@ -202,17 +203,15 @@ class ProductRouter(StapiFastapiBaseRouter):
 
     def get_product(self, request: Request) -> ProductPydantic:
         links = [
-            json_link("self", self.url_for(request, f"{self.root_router.name}:{self.product.id}:{GET_PRODUCT}")),
-            json_link("conformance", self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CONFORMANCE}")),
-            json_link(
-                "queryables", self.url_for(request, f"{self.root_router.name}:{self.product.id}:{GET_QUERYABLES}")
-            ),
+            json_link("self", self.url_for(request, self.route_name(GET_PRODUCT))),
+            json_link("conformance", self.url_for(request, self.route_name(CONFORMANCE))),
+            json_link("queryables", self.url_for(request, self.route_name(GET_QUERYABLES))),
             json_link(
                 "order-parameters",
-                self.url_for(request, f"{self.root_router.name}:{self.product.id}:{GET_ORDER_PARAMETERS}"),
+                self.url_for(request, self.route_name(GET_ORDER_PARAMETERS)),
             ),
             Link(
-                href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}"),
+                href=self.url_for(request, self.route_name(CREATE_ORDER)),
                 rel="create-order",
                 type=TYPE_JSON,
                 method="POST",
@@ -225,7 +224,7 @@ class ProductRouter(StapiFastapiBaseRouter):
             links.append(
                 json_link(
                     "opportunities",
-                    self.url_for(request, f"{self.root_router.name}:{self.product.id}:{SEARCH_OPPORTUNITIES}"),
+                    self.url_for(request, self.route_name(SEARCH_OPPORTUNITIES)),
                 ),
             )
 
@@ -385,7 +384,7 @@ class ProductRouter(StapiFastapiBaseRouter):
 
     def order_link(self, request: Request, opp_req: OpportunityRequest) -> Link:
         return Link(
-            href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}"),
+            href=self.url_for(request, self.route_name(CREATE_ORDER)),
             rel="create-order",
             type=TYPE_JSON,
             method="POST",
@@ -420,7 +419,7 @@ class ProductRouter(StapiFastapiBaseRouter):
                         "self",
                         self.url_for(
                             request,
-                            f"{self.root_router.name}:{self.product.id}:{GET_OPPORTUNITY_COLLECTION}",
+                            self.route_name(GET_OPPORTUNITY_COLLECTION),
                             opportunity_collection_id=opportunity_collection_id,
                         ),
                     ),
