@@ -30,7 +30,7 @@ from stapi_fastapi.backends.root_backend import (
 )
 from stapi_fastapi.conformance import API as API_CONFORMANCE
 from stapi_fastapi.constants import TYPE_GEOJSON
-from stapi_fastapi.errors import NotFoundError
+from stapi_fastapi.errors import NotFoundError, PaginationTokenError
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.pagination import Page
 from stapi_fastapi.path_params import OrderIdPath, SearchRecordIdPath
@@ -270,7 +270,7 @@ class RootRouter(StapiFastapiBaseRouter):
                     links=self.page_links(request, page, self.route_name(LIST_ORDERS), limit, media_type=TYPE_GEOJSON),
                     number_matched=page.number_matched.value_or(None),
                 )
-            case Failure(ValueError()):
+            case Failure(PaginationTokenError()):
                 raise NotFoundError(detail="Error finding pagination token")
             case Failure(e):
                 logger.error(
@@ -323,7 +323,7 @@ class RootRouter(StapiFastapiBaseRouter):
                 )
             case Success(Maybe.empty):
                 raise NotFoundError("Order not found")
-            case Failure(ValueError()):
+            case Failure(PaginationTokenError()):
                 raise NotFoundError("Error finding pagination token")
             case Failure(e):
                 logger.error(
@@ -375,7 +375,7 @@ class RootRouter(StapiFastapiBaseRouter):
                     links=self.page_links(request, page, self.route_name(LIST_OPPORTUNITY_SEARCH_RECORDS), limit),
                     number_matched=page.number_matched.value_or(None),
                 )
-            case Failure(ValueError()):
+            case Failure(PaginationTokenError()):
                 raise NotFoundError(detail="Error finding pagination token")
             case Failure(e):
                 logger.error(

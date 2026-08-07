@@ -4,10 +4,15 @@ from typing import Any, cast
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
-from fastapi import FastAPI, status
+from fastapi import FastAPI, Request, status
 from fastapi.testclient import TestClient
+from returns.result import Failure, ResultE
+from stapi_fastapi.pagination import Page
 from stapi_fastapi.query_params import MAX_LIMIT, clamp_limit
+from stapi_fastapi.routers.root_router import RootRouter
+from stapi_pydantic import Order, OrderStatus
 
+from .backends import mock_get_order
 from .shared import (
     find_link,
     product_test_spotlight_async_opportunity,
@@ -143,3 +148,31 @@ def test_search_records_collection_has_self_link(stapi_client_async_opportunity:
     self_link = find_link(body["links"], "self")
     assert self_link is not None
     assert self_link["href"] == "http://stapiserver/searches/opportunities"
+
+
+@pytest.mark.parametrize("path", PAGINATED_PATHS)
+def test_unusable_pagination_token_is_a_404(path: str, stapi_client: TestClient) -> None:
+    """A token that identifies no page is a missing resource, not a bad request."""
+    res = stapi_client.get(path, params={"next": "not-a-token"})
+    assert res.status_code == status.HTTP_404_NOT_FOUND
+
+
+async def _orders_raising(next: str | None, limit: int, request: Request) -> ResultE[Page[Order[OrderStatus]]]:
+    return Failure(ValueError("a backend failed for some other reason"))
+
+
+def test_an_incidental_value_error_is_a_500_not_a_404() -> None:
+    """Only `PaginationTokenError` means "no such page".
+
+    A backend raising a plain `ValueError` -- an `int()` on bad input, a
+    `list.index` miss on anything but the token -- has failed, and saying "not
+    found" would hide that from the operator and lie to the client.
+    """
+    root_router = RootRouter(get_orders=_orders_raising, get_order=mock_get_order)
+    app = FastAPI()
+    app.include_router(root_router)
+
+    with TestClient(app, raise_server_exceptions=False) as client:
+        res = client.get("/orders")
+
+    assert res.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, res.text

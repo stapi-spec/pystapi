@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 - `Route`, a declarative route descriptor, with `Route.to_api_route()` returning the keyword arguments for FastAPI's own `add_api_route`, and `StapiFastapiBaseRouter.register_route()` handing them over. `Route` requires a `summary`, a `tag` (the new `Tag` enum) and an `errors` set, so an operation cannot be published without a title, a heading, or an accurate statement of how it can fail.
 - `Page`, exported from `stapi_fastapi`, is the one shape every list backend returns. It carries `items`, a `next_token`, an optional `number_matched`, and any collection-level `links` only the backend can know (e.g. `create-order` on a stored Opportunity Collection).
+- `PaginationTokenError`, which a backend returns inside a `Failure` when a pagination token identifies no page. The handler answers it with a 404.
 - `numberMatched` is populated on every collection response the backend can count, including `GET /products`.
 - `stapi_fastapi.query_params` provides the shared `Limit` and `NextToken` annotations and `DEFAULT_LIMIT`, so every paginated endpoint validates identically and publishes its bounds.
 - `stapi_fastapi.path_params` provides the camelCase path parameter annotations.
@@ -30,6 +31,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Fixed
 
+- An unusable pagination token is distinguished from an incidental failure. The handlers matched a bare `Failure(ValueError())` and answered 404, so any `ValueError` a backend raised in passing -- an `int()` on unparseable input, an unrelated `list.index` miss -- was reported to the client as a page that does not exist rather than as the server error it was. Backends now return `PaginationTokenError` for a bad token; everything else stays a 500.
 - A collection's `self` and `next` links carry the media type their target serves. `next` was hard-coded to `application/json`, so every geo+json collection published a next link contradicting its own response.
 - A query parameter named `self` no longer fails the request. The raw query params were splatted into `URL.include_query_params` as Python keywords, colliding with that method's own `self`; repeated parameters were also collapsed to the last value.
 - Operations declare only the error responses they can actually produce. A shared set was previously merged into every route and could not be narrowed, so `GET /` and `GET /conformance` published a 404 despite taking no input and calling no backend.

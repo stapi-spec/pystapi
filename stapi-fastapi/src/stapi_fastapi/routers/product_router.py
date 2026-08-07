@@ -34,7 +34,7 @@ from stapi_pydantic import (
 
 from stapi_fastapi.conformance import PRODUCT as PRODUCT_CONFORMACES
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
-from stapi_fastapi.errors import NotFoundError, QueryablesError
+from stapi_fastapi.errors import NotFoundError, PaginationTokenError, QueryablesError
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.path_params import OpportunityCollectionIdPath
 from stapi_fastapi.query_params import DEFAULT_LIMIT, clamp_limit
@@ -304,6 +304,8 @@ class ProductRouter(StapiFastapiBaseRouter):
                     links.append(self.search_pagination_link(request, search, next_token))
             case Failure(e) if isinstance(e, QueryablesError):
                 raise e
+            case Failure(PaginationTokenError()):
+                raise NotFoundError(detail="Error finding pagination token")
             case Failure(e):
                 logger.error(
                     "An error occurred while searching opportunities: %s",

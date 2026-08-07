@@ -5,6 +5,7 @@ from fastapi import Request
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, ResultE, Success
 from stapi_fastapi import Page
+from stapi_fastapi.errors import PaginationTokenError
 from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_pydantic import (
     Opportunity,
@@ -20,6 +21,18 @@ from stapi_pydantic import (
     OrderStatusCode,
     StoredOrderRequest,
 )
+
+
+def _offset(token: str) -> int:
+    """Read a page offset out of a pagination token.
+
+    The mocks encode the offset in the token itself, so anything unparseable is
+    a token that identifies no page rather than an incidental error.
+    """
+    try:
+        return int(token)
+    except ValueError:
+        raise PaginationTokenError(f"unusable pagination token: {token!r}") from None
 
 
 async def mock_get_orders(
@@ -39,7 +52,10 @@ async def mock_get_orders(
         order_ids = [*request.state._orders_db._orders.keys()]
 
         if next:
-            start = order_ids.index(next)
+            try:
+                start = order_ids.index(next)
+            except ValueError:
+                raise PaginationTokenError(f"unknown pagination token: {next!r}") from None
         end = start + limit
         ids = order_ids[start:end]
         orders = [request.state._orders_db.get_order(order_id) for order_id in ids]
@@ -71,7 +87,7 @@ async def mock_get_order_statuses(
             return Success(Nothing)
 
         if next:
-            start = int(next)
+            start = _offset(next)
         end = start + limit
 
         return Success(
@@ -131,7 +147,7 @@ async def mock_search_opportunities(
         start = 0
         limit = min(limit, 100)
         if next:
-            start = int(next)
+            start = _offset(next)
         end = start + limit
         # Reflect the searched geometry into the returned opportunities.
         opportunities = [
@@ -197,7 +213,7 @@ async def mock_get_opportunity_search_records(
         search_records = request.state._opportunities_db.get_search_records()
 
         if next:
-            start = int(next)
+            start = _offset(next)
         end = start + limit
 
         return Success(
