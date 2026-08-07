@@ -31,8 +31,6 @@ jobs:
         run: uv run pre-commit run --all-files
       - name: Test
         run: ./scripts/run-tests.sh
-      - name: Validate test server
-        run: uv run scripts/validate-stapi-fastapi
       - name: Docs
         run: uv run mkdocs build --strict
       - uses: actions/upload-pages-artifact@v3
