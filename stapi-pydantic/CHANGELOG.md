@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - A `stapi_pydantic.geometry` module providing `compute_geometry_bbox`, `bbox_from_geometry_input`, and `union_bboxes`.
 - `BoundedDatetimeInterval`, for intervals that are bounded at both ends.
 - `cql2_property_names`, which collects the property names referenced by a CQL2 JSON filter.
+- `SearchParameters`, the Search Parameters Object (`datetime`, `geometry`, `filter`) shared by the Opportunity Request and the Order Request. It permits extra fields, so provider extension parameters round-trip instead of being dropped.
 - `STAPI_VERSION` is now exported from the package root.
 
 ### Changed

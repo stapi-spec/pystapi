@@ -29,6 +29,7 @@ from .order import (
 from .product import Product, ProductsCollection, Provider, ProviderRole
 from .queryables import Queryables
 from .root import RootResponse
+from .search_parameters import SearchParameters
 from .shared import Link
 
 __all__ = [
@@ -63,6 +64,7 @@ __all__ = [
     "ProviderRole",
     "Queryables",
     "RootResponse",
+    "SearchParameters",
     "STAPI_VERSION",
     "cql2_property_names",
 ]
