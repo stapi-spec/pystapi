@@ -1,10 +1,10 @@
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 import pytest
-from fastapi import status
+from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 from stapi_fastapi.conformance import API, PRODUCT
 from stapi_pydantic import (
@@ -531,3 +531,36 @@ def test_preference_applied_mismatch_wait_on_async_only(
     res = stapi_client_async_opportunity.post(url, json=opportunity_search, headers={"Prefer": "wait"})
     assert res.status_code == 201
     assert res.headers["Preference-Applied"] == "respond-async"
+
+
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
+def test_openapi_async_search_201_metadata(stapi_client_async_opportunity: TestClient) -> None:
+    from stapi_fastapi.constants import TYPE_JSON
+
+    # TestClient types `app` as the bare ASGI callable; the fixture always
+    # builds a FastAPI app, which is what exposes `openapi()`.
+    spec = cast(FastAPI, stapi_client_async_opportunity.app).openapi()
+    responses = spec["paths"]["/products/test-spotlight/opportunities"]["post"]["responses"]
+
+    # 201 documents the OpportunitySearchRecord as application/json (not geo+json)
+    r201 = responses["201"]
+    assert set(r201["content"].keys()) == {TYPE_JSON}
+    assert r201["content"][TYPE_JSON]["schema"]["$ref"].endswith("/OpportunitySearchRecord")
+    # Location header documented
+    assert "Location" in r201["headers"]
+
+    # This product cannot search synchronously, so it can only ever answer 201.
+    # Documenting a 200 OpportunityCollection would promise a response that no
+    # request to this deployment can elicit.
+    assert "200" not in responses
+
+
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
+def test_openapi_create_order_201_location_header(stapi_client_async_opportunity: TestClient) -> None:
+    from stapi_fastapi.constants import TYPE_GEOJSON
+
+    spec = cast(FastAPI, stapi_client_async_opportunity.app).openapi()
+    r201 = spec["paths"]["/products/test-spotlight/orders"]["post"]["responses"]["201"]
+    assert "Location" in r201["headers"]
+    # Order is GeoJSON, content stays geo+json
+    assert set(r201["content"].keys()) == {TYPE_GEOJSON}

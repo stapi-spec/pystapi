@@ -12,6 +12,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from .shared import product_test_spotlight_sync_async_opportunity
+
 HTTP_METHODS = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
 
 PRODUCT_ID = "test-spotlight"
@@ -85,3 +87,13 @@ def test_no_component_schema_is_unreferenced(spec: dict[str, Any]) -> None:
     collect(schemas)
 
     assert set(schemas) - referenced == set()
+
+
+@pytest.mark.mock_products([product_test_spotlight_sync_async_opportunity])
+@pytest.mark.parametrize("code", ["200", "201"])
+def test_preference_applied_declared_on_opportunity_search(spec: dict[str, Any], code: str) -> None:
+    """`Preference-Applied` is a spec MUST, and which codes carry it depends on
+    the capabilities of the product actually mounted.
+    """
+    header = spec["paths"][SEARCH_OPPORTUNITIES_PATH]["post"]["responses"][code]["headers"]["Preference-Applied"]
+    assert set(header["schema"]["enum"]) == {"wait", "respond-async"}

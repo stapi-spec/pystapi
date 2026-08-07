@@ -22,7 +22,6 @@ from stapi_pydantic import (
     Link,
     OpportunityCollection,
     OpportunityRequest,
-    OpportunitySearchRecord,
     Order,
     OrderRequest,
     OrderStatus,
@@ -39,7 +38,14 @@ from stapi_fastapi.models.product import Product
 from stapi_fastapi.path_params import OpportunityCollectionIdPath
 from stapi_fastapi.query_params import DEFAULT_LIMIT, Limit, NextToken, clamp_limit
 from stapi_fastapi.responses import GeoJSONResponse
-from stapi_fastapi.routers.base import BAD_REQUEST, NOT_FOUND, SERVER_ERROR, Route, StapiFastapiBaseRouter
+from stapi_fastapi.routers.base import (
+    BAD_REQUEST,
+    NOT_FOUND,
+    SERVER_ERROR,
+    Responses,
+    Route,
+    StapiFastapiBaseRouter,
+)
 from stapi_fastapi.routers.route_names import (
     CONFORMANCE,
     CREATE_ORDER,
@@ -178,33 +184,76 @@ class ProductRouter(StapiFastapiBaseRouter):
                 summary="Create an order for the product",
                 response_class=GeoJSONResponse,
                 status_code=status.HTTP_201_CREATED,
+                responses={
+                    201: {
+                        "headers": {
+                            "Location": {
+                                "description": "URL of the created Order.",
+                                "schema": {"type": "string", "format": "uri"},
+                            },
+                        },
+                    },
+                },
             )
         )
 
-        if product.supports_opportunity_search or (
+        supports_async = (
             self.product.supports_async_opportunity_search and self.root_router.supports_async_opportunity_search
-        ):
+        )
+        if product.supports_opportunity_search or supports_async:
+            preference_applied = {
+                "Preference-Applied": {
+                    "description": (
+                        "Which preference the server applied, sent whenever the request "
+                        "carried a `Prefer` header. It may differ from the requested "
+                        "preference when the Product cannot honour it."
+                    ),
+                    "schema": {"type": "string", "enum": [preference.value for preference in Prefer]},
+                },
+            }
+
+            # Each outcome is declared only when this product can produce it: the
+            # async 201 also `$ref`s OpportunitySearchRecord, which is registered
+            # in the components schemas only when the async endpoints exist.
+            extra_responses: Responses = {}
+            if product.supports_opportunity_search:
+                extra_responses[200] = {"headers": {**preference_applied}}
+            if supports_async:
+                extra_responses[201] = {
+                    "description": "Created (async opportunity search record)",
+                    "content": {TYPE_JSON: {"schema": {"$ref": "#/components/schemas/OpportunitySearchRecord"}}},
+                    "headers": {
+                        "Location": {
+                            "description": "URL of the created Opportunity Search Record.",
+                            "schema": {"type": "string", "format": "uri"},
+                        },
+                        **preference_applied,
+                    },
+                }
+
             self.register_route(
                 Route(
                     name=SEARCH_OPPORTUNITIES,
                     tag=Tag.OPPORTUNITIES,
                     path="/opportunities",
                     endpoint=self.search_opportunities,
-                    methods=("POST",),
                     errors=BAD_REQUEST | NOT_FOUND | SERVER_ERROR,
                     summary="Search Opportunities for the product",
-                    response_class=GeoJSONResponse,
+                    methods=("POST",),
+                    # An async-only product answers with a search record, which
+                    # is JSON rather than GeoJSON.
+                    response_class=GeoJSONResponse if product.supports_opportunity_search else JSONResponse,
+                    status_code=None if product.supports_opportunity_search else status.HTTP_201_CREATED,
                     # unknown why mypy can't see the queryables property on Product, ignoring
-                    response_model=OpportunityCollection[
-                        Geometry,
-                        self.product.opportunity_properties,  # type: ignore
-                    ],
-                    responses={
-                        201: {
-                            "model": OpportunitySearchRecord,
-                            "content": {TYPE_JSON: {}},
-                        }
-                    },
+                    response_model=(
+                        OpportunityCollection[
+                            Geometry,
+                            self.product.opportunity_properties,  # type: ignore
+                        ]
+                        if product.supports_opportunity_search
+                        else None
+                    ),
+                    responses=extra_responses,
                 )
             )
 

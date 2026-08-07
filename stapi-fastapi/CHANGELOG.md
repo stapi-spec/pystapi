@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - `stapi_fastapi.path_params` provides the camelCase path parameter annotations.
 - `Responses` type alias for the response-declaration mapping, and `BAD_REQUEST` / `NOT_FOUND` / `SERVER_ERROR` to compose an `errors` set from, e.g. `errors=NOT_FOUND | SERVER_ERROR`.
 - Every route declares its 400 and 404 responses. 404 was raised from nine places and declared nowhere; 400 likewise.
+- The opportunity search declares the `Preference-Applied` response header on both its 200 and 201 responses, and `Location` headers are documented on order creation and on async opportunity search.
 - Operation summaries on the six routes that had none, where FastAPI was deriving titles like `Root:List-Orders` from route names.
 
 ### Changed
@@ -33,6 +34,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - OpenAPI tags come from the route family rather than the owning router: creating an order for a product is filed under Orders, and the opportunity routes under Opportunities, rather than all of them under Products.
 - `Preference-Applied` is sent whenever the request carried a `Prefer` header, as the spec requires. It was previously sent only when the preference was `wait` and the root router supported async search, so a client that asked for a preference the server did not honour was told nothing at all.
 - **BREAKING** The landing page publishes the search records link under the spec's `search-records` rel, not `opportunity-search-records`.
+- An async-only product no longer documents a 200 `OpportunityCollection` it can never return: the search route's response class, status code and model are chosen from what the product actually supports.
 - A product advertises the opportunity conformance classes it is actually served under, rather than whatever it declared. An async-only product mounted on a root router without async support previously advertised classes whose routes were never registered.
 - The root router advertises only the optional conformance classes whose backends were supplied, mirroring what `build_conformances` already did per product. `RootRouter(conformances=...)` now defaults to `None` rather than a fixed list.
 - Conformance lists are sorted, so they no longer vary between processes.
