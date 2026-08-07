@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `Geometry`, the union of the six geometry types STAPI defines, discriminated on `type`. Exported from the package root.
 - A `stapi_pydantic.geometry` module providing `compute_geometry_bbox`, `bbox_from_geometry_input`, and `union_bboxes`.
 - `BoundedDatetimeInterval`, for intervals that are bounded at both ends.
+- `cql2_property_names`, which collects the property names referenced by a CQL2 JSON filter.
 - `STAPI_VERSION` is now exported from the package root.
 
 ### Changed
@@ -22,6 +23,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `STAPI_VERSION` is `0.2.0`.
 - **BREAKING** `DatetimeInterval` now denotes the general interval, which may be open on one end via `..` or an empty string, and validates as a `tuple[AwareDatetime | None, AwareDatetime | None]`. The both-ends-bounded form is now `BoundedDatetimeInterval`. Code that relied on `DatetimeInterval` rejecting open ends, or on both tuple members being non-`None`, must switch to `BoundedDatetimeInterval`.
 - **BREAKING** `Geometry` is the six-member STAPI union and no longer includes `GeometryCollection`. The spec enumerates exactly six geometry conformance classes, so a `GeometryCollection` was a value no implementation could declare support for. Import `geojson_pydantic.geometries.Geometry` directly if you need the wider union.
+
+- `CQL2Filter` is typed as `dict[str, Any]` rather than a bare `dict`.
+
+### Fixed
+
+- A malformed CQL2 filter is reported as a validation error. `cql2` raises its own exception types, which pydantic does not convert, so an invalid filter escaped validation and surfaced as a server error rather than a rejected request.
 
 ### Removed
 

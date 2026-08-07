@@ -1,7 +1,7 @@
 from .conformance import Conformance
 from .constants import STAPI_VERSION
 from .datetime_interval import BoundedDatetimeInterval, DatetimeInterval
-from .filter import CQL2Filter
+from .filter import CQL2Filter, cql2_property_names
 from .geometry import Geometry
 from .json_schema import JsonSchema
 from .opportunity import (
@@ -64,4 +64,5 @@ __all__ = [
     "Queryables",
     "RootResponse",
     "STAPI_VERSION",
+    "cql2_property_names",
 ]
