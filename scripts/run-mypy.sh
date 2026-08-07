@@ -8,7 +8,7 @@ set -Eeuo pipefail
 
 failed=()
 
-for path in stapi-fastapi pystapi-validator pystapi-client stapi-pydantic; do
+for path in stapi-fastapi pystapi-validator pystapi-client stapi-pydantic pystapi-schema-generator; do
   name=$(basename "$path")
 
   set +e

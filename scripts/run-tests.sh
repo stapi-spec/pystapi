@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 # set -x # print each command before executing
 
-for path in stapi-fastapi pystapi-validator pystapi-client stapi-pydantic; do
+for path in stapi-fastapi pystapi-validator pystapi-client stapi-pydantic pystapi-schema-generator; do
   name=$(basename "$path")
 
   set +e
