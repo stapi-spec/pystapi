@@ -106,21 +106,26 @@ Returns:
 """
 
 GetOpportunitySearchRecordStatuses = Callable[
-    [str, Request], Coroutine[Any, Any, ResultE[Maybe[list[OpportunitySearchStatus]]]]
+    [str, str | None, int, Request],
+    Coroutine[Any, Any, ResultE[Maybe[Page[OpportunitySearchStatus]]]],
 ]
 """
-Type alias for an async function that gets the statuses of a OpportunitySearchRecord with
-`search_record_id`.
+Type alias for an async function that gets a page of statuses of the
+OpportunitySearchRecord with `search_record_id`.
 
 Args:
     search_record_id (str): The ID of the OpportunitySearchRecord.
+    next (str | None): A pagination token.
+    limit (int): The maximum number of statuses to return in a page.
     request (Request): FastAPI's Request object.
 
 Returns:
     - Should return
-      returns.result.Success[returns.maybe.Some[list[OpportunitySearchStatus]]] if
-      the search record is found.
+      returns.result.Success[returns.maybe.Some[stapi_fastapi.pagination.Page[OpportunitySearchStatus]]]
+      if the search record is found.
     - Should return returns.result.Success[returns.maybe.Nothing] if the search record is not found or
       if access is denied.
+    - Returning returns.result.Failure[stapi_fastapi.errors.PaginationTokenError]
+      will result in a 404, which is how an unusable pagination token is reported.
     - Returning returns.result.Failure[Exception] will result in a 500.
 """

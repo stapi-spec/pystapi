@@ -65,22 +65,25 @@ class InMemoryOrderDB:
 class InMemoryOpportunityDB:
     def __init__(self) -> None:
         self._search_records: dict[str, OpportunitySearchRecord] = {}
+        self._statuses: defaultdict[str, list[OpportunitySearchStatus]] = defaultdict(list)
         self._collections: dict[str, OpportunityCollection] = {}
 
     def get_search_record(self, search_id: str) -> OpportunitySearchRecord | None:
         return deepcopy(self._search_records.get(search_id))
 
     def get_search_record_statuses(self, search_id: str) -> list[OpportunitySearchStatus] | None:
-        if search_record := self.get_search_record(search_id):
-            return [deepcopy(search_record.status)]
-        else:
+        # None only when the record is unknown: a known record always has at
+        # least the status it was created with.
+        if search_id not in self._search_records:
             return None
+        return deepcopy(self._statuses[search_id])
 
     def get_search_records(self) -> list[OpportunitySearchRecord]:
         return deepcopy(list(self._search_records.values()))
 
     def put_search_record(self, search_record: OpportunitySearchRecord) -> None:
         self._search_records[search_record.id] = deepcopy(search_record)
+        self._statuses[search_record.id].append(deepcopy(search_record.status))
 
     def get_opportunity_collection(self, collection_id) -> OpportunityCollection | None:
         return deepcopy(self._collections.get(collection_id))

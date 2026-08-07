@@ -237,11 +237,26 @@ async def mock_get_opportunity_search_record(
 
 
 async def mock_get_opportunity_search_record_statuses(
-    search_record_id: str, request: Request
-) -> ResultE[Maybe[list[OpportunitySearchStatus]]]:
+    search_record_id: str,
+    next: str | None,
+    limit: int,
+    request: Request,
+) -> ResultE[Maybe[Page[OpportunitySearchStatus]]]:
     try:
+        statuses = request.state._opportunities_db.get_search_record_statuses(search_record_id)
+        if statuses is None:
+            return Success(Nothing)
+
+        start = _offset(next) if next else 0
+        end = start + limit
         return Success(
-            Maybe.from_optional(request.state._opportunities_db.get_search_record_statuses(search_record_id))
+            Some(
+                Page(
+                    items=statuses[start:end],
+                    next_token=Some(str(end)) if end < len(statuses) else Nothing,
+                    number_matched=Some(len(statuses)),
+                )
+            )
         )
     except Exception as e:
         return Failure(e)

@@ -11,7 +11,7 @@ from stapi_pydantic import (
     Link,
     OpportunitySearchRecord,
     OpportunitySearchRecordCollection,
-    OpportunitySearchStatus,
+    OpportunitySearchStatusCollection,
     Order,
     OrderCollection,
     OrderStatus,
@@ -415,16 +415,32 @@ class RootRouter(StapiFastapiBaseRouter):
                 raise AssertionError("Expected code to be unreachable")
 
     async def get_opportunity_search_record_statuses(
-        self, search_record_id: SearchRecordIdPath, request: Request
-    ) -> list[OpportunitySearchStatus]:
+        self,
+        search_record_id: SearchRecordIdPath,
+        request: Request,
+        next: NextToken = None,
+        limit: Limit = DEFAULT_LIMIT,
+    ) -> OpportunitySearchStatusCollection:
         """
-        Get the Opportunity Search Record statuses with `search_record_id`.
+        Get the Opportunity Search Record statuses with `searchRecordId`.
         """
-        match await self._get_opportunity_search_record_statuses(search_record_id, request):
-            case Success(Some(search_record_statuses)):
-                return search_record_statuses  # type: ignore
+        match await self._get_opportunity_search_record_statuses(search_record_id, next, limit, request):
+            case Success(Some(page)):
+                return OpportunitySearchStatusCollection(
+                    statuses=page.items,
+                    links=self.page_links(
+                        request,
+                        page,
+                        self.route_name(LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES),
+                        limit,
+                        searchRecordId=search_record_id,
+                    ),
+                    number_matched=page.number_matched.value_or(None),
+                )
             case Success(Maybe.empty):
                 raise NotFoundError("Opportunity Search Record not found")
+            case Failure(PaginationTokenError()):
+                raise NotFoundError("Error finding pagination token")
             case Failure(e):
                 logger.error(
                     "An error occurred while retrieving opportunity search record statuses '%s': %s",

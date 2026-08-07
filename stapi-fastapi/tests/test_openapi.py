@@ -45,6 +45,22 @@ def test_routes_declare_only_the_errors_they_produce(spec: dict[str, Any]) -> No
     assert {"404", "500"} <= set(spec["paths"]["/orders"]["get"]["responses"])
 
 
+def test_no_response_schema_carries_a_mangled_auto_title(spec: dict[str, Any]) -> None:
+    """FastAPI auto-titles an *inline* response schema after the operation that
+    returns it, yielding names like `Response Root Test Spotlight Get
+    Queryables ...`. Every response therefore has to `$ref` a named model.
+    """
+    titles = [
+        media["schema"]["title"]
+        for _, _, operation in operations(spec)
+        for response in operation.get("responses", {}).values()
+        for media in response.get("content", {}).values()
+        if isinstance(media.get("schema"), dict) and "title" in media["schema"]
+    ]
+
+    assert titles == []
+
+
 def test_no_component_schema_is_unreferenced(spec: dict[str, Any]) -> None:
     """An orphan component is a schema a reader cannot reach and a client cannot use."""
     schemas = spec["components"]["schemas"]

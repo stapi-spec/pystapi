@@ -1,5 +1,7 @@
 """Tests for the shared pagination query parameters, `self` links and totals."""
 
+from collections.abc import Callable
+from datetime import UTC, datetime
 from typing import Any, cast
 from urllib.parse import parse_qs, urlsplit
 
@@ -10,7 +12,13 @@ from returns.result import Failure, ResultE
 from stapi_fastapi.pagination import Page
 from stapi_fastapi.query_params import MAX_LIMIT, clamp_limit
 from stapi_fastapi.routers.root_router import RootRouter
-from stapi_pydantic import Order, OrderStatus
+from stapi_pydantic import (
+    OpportunitySearchStatus,
+    OpportunitySearchStatusCode,
+    Order,
+    OrderStatus,
+    OrderStatusCode,
+)
 
 from .backends import mock_get_order
 from .shared import (
@@ -176,3 +184,71 @@ def test_an_incidental_value_error_is_a_500_not_a_404() -> None:
         res = client.get("/orders")
 
     assert res.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR, res.text
+
+
+def follow_pages(
+    stapi_client: TestClient,
+    url: str,
+    target: str,
+    limit: int,
+    key: Callable[[dict[str, Any]], Any] = lambda item: item["id"],
+) -> list[Any]:
+    """Walk a collection's `next` links, returning a key of every item seen."""
+    seen: list[Any] = []
+    res = stapi_client.get(url, params={"limit": limit})
+    while True:
+        assert res.status_code == status.HTTP_200_OK, res.text
+        body = res.json()
+        assert len(body[target]) <= limit
+        seen.extend(key(item) for item in body[target])
+        next_link = find_link(body["links"], "next")
+        if next_link is None:
+            return seen
+        res = stapi_client.get(next_link["href"])
+
+
+def add_order_statuses(stapi_client: TestClient, order_id: str, *codes: OrderStatusCode) -> None:
+    """Append status revisions to a stored order."""
+    db = stapi_client.app_state["_orders_db"]
+    for code in codes:
+        db.put_order_status(order_id, OrderStatus(timestamp=datetime.now(UTC), status_code=code))
+
+
+def add_search_record_statuses(
+    stapi_client: TestClient, search_record_id: str, *codes: OpportunitySearchStatusCode
+) -> None:
+    """Append status revisions to a stored search record."""
+    db = stapi_client.app_state["_opportunities_db"]
+    for code in codes:
+        record = db.get_search_record(search_record_id)
+        record.status = OpportunitySearchStatus(timestamp=datetime.now(UTC), status_code=code)
+        db.put_search_record(record)
+
+
+@pytest.mark.parametrize("limit", LIMITS)
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
+def test_search_record_statuses_are_paginated(
+    limit: int,
+    stapi_client_async_opportunity: TestClient,
+    opportunity_search: dict[str, Any],
+) -> None:
+    """The statuses endpoint pages like every other collection endpoint."""
+    client = stapi_client_async_opportunity
+    created = client.post(f"/products/{PRODUCT_ID}/opportunities", json=opportunity_search)
+    assert created.status_code == status.HTTP_201_CREATED
+    record_id = created.json()["id"]
+    add_search_record_statuses(
+        client,
+        record_id,
+        OpportunitySearchStatusCode.in_progress,
+        OpportunitySearchStatusCode.completed,
+    )
+
+    codes = follow_pages(
+        client,
+        f"/searches/opportunities/{record_id}/statuses",
+        "statuses",
+        limit,
+        key=lambda status_: status_["status_code"],
+    )
+    assert codes == ["received", "in_progress", "completed"]

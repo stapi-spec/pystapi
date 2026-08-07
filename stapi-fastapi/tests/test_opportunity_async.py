@@ -233,7 +233,9 @@ def test_async_opportunity_search_to_completion(
     url = f"/searches/opportunities/{search_record.id}/statuses"
     retrieved_statuses_response = stapi_client_async_opportunity.get(url)
     assert retrieved_statuses_response.status_code == 200
-    retrieved_statuses = [OpportunitySearchStatus(**d) for d in retrieved_statuses_response.json()]
+    retrieved_statuses_body = retrieved_statuses_response.json()
+    assert retrieved_statuses_body["stapi_type"] == "OpportunitySearchStatusCollection"
+    retrieved_statuses = [OpportunitySearchStatus(**d) for d in retrieved_statuses_body["statuses"]]
     assert len(retrieved_statuses) >= 1
     assert retrieved_statuses[-1].status_code == OpportunitySearchStatusCode.completed
 
