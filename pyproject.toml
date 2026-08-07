@@ -9,6 +9,7 @@ dependencies = [
     "pystapi-validator",
     "stapi-pydantic",
     "stapi-fastapi",
+    "pystapi-schema-generator",
 ]
 
 [dependency-groups]
@@ -19,6 +20,8 @@ dev = [
     "pre-commit>=4.2.0",
     "pre-commit-hooks>=5.0.0",
     "pygithub>=2.6.1",
+    "pyyaml>=6.0",
+    "types-pyyaml>=6.0",
 ]
 docs = [
     "mkdocs-material>=9.6.11",
@@ -29,13 +32,14 @@ docs = [
 default-groups = ["dev", "docs"]
 
 [tool.uv.workspace]
-members = ["pystapi-validator", "stapi-pydantic", "pystapi-client", "stapi-fastapi"]
+members = ["pystapi-validator", "stapi-pydantic", "pystapi-client", "stapi-fastapi", "pystapi-schema-generator"]
 
 [tool.uv.sources]
 pystapi-client.workspace = true
 pystapi-validator.workspace = true
 stapi-pydantic.workspace = true
 stapi-fastapi.workspace = true
+pystapi-schema-generator.workspace = true
 
 [tool.ruff]
 line-length = 120
@@ -62,7 +66,8 @@ files = [
     "pystapi-client/src/pystapi_client/**/*.py",
     "pystapi-validator/src/pystapi_validator/**/*.py",
     "stapi-pydantic/src/stapi_pydantic/**/*.py",
-    "stapi-fastapi/src/stapi_fastapi/**/*.py"
+    "stapi-fastapi/src/stapi_fastapi/**/*.py",
+    "pystapi-schema-generator/src/pystapi_schema_generator/**/*.py"
 ]
 
 [[tool.mypy.overrides]]
