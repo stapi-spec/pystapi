@@ -18,7 +18,7 @@ from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
 from stapi_pydantic import (
     Conformance,
-    JsonSchemaModel,
+    JsonSchema,
     Link,
     OpportunityCollection,
     OpportunityPayload,
@@ -343,17 +343,17 @@ class ProductRouter(StapiFastapiBaseRouter):
         """
         return Conformance.model_validate({"conforms_to": self.conformances})
 
-    def get_product_queryables(self) -> JsonSchemaModel:
+    def get_product_queryables(self) -> JsonSchema:
         """
         Return supported queryables of a specific product
         """
-        return self.product.queryables
+        return JsonSchema.from_model(self.product.queryables)
 
-    def get_product_order_parameters(self) -> JsonSchemaModel:
+    def get_product_order_parameters(self) -> JsonSchema:
         """
         Return supported order parameters of a specific product
         """
-        return self.product.order_parameters
+        return JsonSchema.from_model(self.product.order_parameters)
 
     async def create_order(self, payload: OrderPayload, request: Request, response: Response) -> Order:  # type: ignore
         """

@@ -2,7 +2,7 @@ from .conformance import Conformance
 from .constants import STAPI_VERSION
 from .datetime_interval import DatetimeInterval
 from .filter import CQL2Filter
-from .json_schema_model import JsonSchemaModel
+from .json_schema import JsonSchema
 from .opportunity import (
     Opportunity,
     OpportunityCollection,
@@ -34,7 +34,7 @@ __all__ = [
     "Conformance",
     "CQL2Filter",
     "DatetimeInterval",
-    "JsonSchemaModel",
+    "JsonSchema",
     "Link",
     "Opportunity",
     "OpportunityCollection",

@@ -10,11 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `JsonSchema`, a root model holding a JSON Schema document, with `JsonSchema.from_model` deriving one from a pydantic model class.
 - `STAPI_VERSION` is now exported from the package root.
 
 ### Changed
 
 - `STAPI_VERSION` is `0.2.0`.
+
+### Removed
+
+- **BREAKING** `JsonSchemaModel` is gone. It annotated a `type[BaseModel]` with a `PlainValidator`/`PlainSerializer` pair so a model class could stand in for its own schema, which meant the published document carried an orphan `BaseModel` component and the value could not be read back. Build a `JsonSchema` with `JsonSchema.from_model(YourModel)` instead.
 
 ## [0.1.0] - 2025-12-18
 
