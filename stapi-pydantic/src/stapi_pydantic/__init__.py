@@ -2,6 +2,7 @@ from .conformance import Conformance
 from .constants import STAPI_VERSION
 from .datetime_interval import DatetimeInterval
 from .filter import CQL2Filter
+from .geometry import Geometry
 from .json_schema import JsonSchema
 from .opportunity import (
     Opportunity,
@@ -31,6 +32,7 @@ from .root import RootResponse
 from .shared import Link
 
 __all__ = [
+    "Geometry",
     "Conformance",
     "CQL2Filter",
     "DatetimeInterval",

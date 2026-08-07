@@ -6,7 +6,6 @@ from enum import StrEnum
 from typing import Any, Generic, Literal, TypeVar
 
 from geojson_pydantic.base import _GeoJsonBase
-from geojson_pydantic.geometries import Geometry
 from pydantic import (
     AwareDatetime,
     BaseModel,
@@ -19,6 +18,7 @@ from pydantic import (
 from .constants import STAPI_VERSION
 from .datetime_interval import DatetimeInterval
 from .filter import CQL2Filter
+from .geometry import Geometry
 from .opportunity import OpportunityProperties
 from .shared import Link
 

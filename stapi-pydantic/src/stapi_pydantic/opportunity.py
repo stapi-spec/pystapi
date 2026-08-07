@@ -2,11 +2,11 @@ from enum import StrEnum
 from typing import Any, Literal, TypeVar
 
 from geojson_pydantic import Feature, FeatureCollection
-from geojson_pydantic.geometries import Geometry
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 from .datetime_interval import DatetimeInterval
 from .filter import CQL2Filter
+from .geometry import Geometry
 from .shared import Link
 
 

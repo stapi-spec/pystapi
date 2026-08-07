@@ -13,11 +13,11 @@ from fastapi import (
     status,
 )
 from fastapi.responses import JSONResponse
-from geojson_pydantic.geometries import Geometry
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
 from stapi_pydantic import (
     Conformance,
+    Geometry,
     JsonSchema,
     Link,
     OpportunityCollection,
