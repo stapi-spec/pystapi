@@ -83,7 +83,7 @@ def test_product_order_parameters_response(
     assert "s3_path" in json_schema["properties"]
 
 
-@pytest.mark.parametrize("limit", [0, 1, 2, 4])
+@pytest.mark.parametrize("limit", [1, 2, 4])
 def test_get_products_pagination(
     limit: int,
     stapi_client: TestClient,

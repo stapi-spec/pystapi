@@ -1,5 +1,8 @@
+from typing import Any
+
 import pytest
 from fastapi.testclient import TestClient
+from stapi_fastapi.query_params import MAX_LIMIT
 from stapi_pydantic import (
     OpportunityCollection,
 )
@@ -55,3 +58,31 @@ def test_search_opportunities_pagination(
         expected_returns=expected_returns,
         body=opportunity_search,
     )
+
+
+@pytest.mark.parametrize("limit", [0, -1])
+def test_search_opportunities_rejects_limit_below_the_minimum(
+    limit: int,
+    stapi_client: TestClient,
+    opportunity_search: dict[str, Any],
+) -> None:
+    """The POST body's `limit` is bounded exactly as the GET query param is."""
+    response = stapi_client.post(
+        "/products/test-spotlight/opportunities",
+        json={**opportunity_search, "limit": limit},
+    )
+    # 422 is spelled out: starlette renamed its constant for this status code,
+    # and the old name now raises a DeprecationWarning.
+    assert response.status_code == 422
+
+
+def test_search_opportunities_clamps_an_over_large_limit(
+    stapi_client: TestClient,
+    opportunity_search: dict[str, Any],
+) -> None:
+    """As on the GET collections: the spec's `limit` is a request, not a demand."""
+    response = stapi_client.post(
+        "/products/test-spotlight/opportunities",
+        json={**opportunity_search, "limit": MAX_LIMIT + 1},
+    )
+    assert response.status_code == 200, response.text

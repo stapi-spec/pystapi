@@ -33,6 +33,7 @@ from stapi_fastapi.constants import TYPE_GEOJSON
 from stapi_fastapi.errors import NotFoundError
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.path_params import OrderIdPath, SearchRecordIdPath
+from stapi_fastapi.query_params import DEFAULT_LIMIT, Limit, NextToken
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_fastapi.routers.base import NOT_FOUND, SERVER_ERROR, Route, StapiFastapiBaseRouter
 from stapi_fastapi.routers.product_router import ProductRouter
@@ -236,9 +237,8 @@ class RootRouter(StapiFastapiBaseRouter):
     def get_conformance(self) -> Conformance:
         return Conformance(conforms_to=self.conformances)
 
-    def get_products(self, request: Request, next: str | None = None, limit: int = 10) -> ProductCollection:
+    def get_products(self, request: Request, next: NextToken = None, limit: Limit = DEFAULT_LIMIT) -> ProductCollection:
         start = 0
-        limit = min(limit, 100)
         try:
             if next:
                 start = self.product_ids.index(next)
@@ -261,7 +261,7 @@ class RootRouter(StapiFastapiBaseRouter):
         )
 
     async def get_orders(  # noqa: C901
-        self, request: Request, next: str | None = None, limit: int = 10
+        self, request: Request, next: NextToken = None, limit: Limit = DEFAULT_LIMIT
     ) -> OrderCollection[OrderStatus]:
         links: list[Link] = []
         orders_count: int | None = None
@@ -326,8 +326,8 @@ class RootRouter(StapiFastapiBaseRouter):
         self,
         order_id: OrderIdPath,
         request: Request,
-        next: str | None = None,
-        limit: int = 10,
+        next: NextToken = None,
+        limit: Limit = DEFAULT_LIMIT,
     ) -> OrderStatusCollection:  # type: ignore
         links: list[Link] = []
         match await self._get_order_statuses(order_id, next, limit, request):
@@ -395,7 +395,7 @@ class RootRouter(StapiFastapiBaseRouter):
         )
 
     async def get_opportunity_search_records(
-        self, request: Request, next: str | None = None, limit: int = 10
+        self, request: Request, next: NextToken = None, limit: Limit = DEFAULT_LIMIT
     ) -> OpportunitySearchRecordCollection:
         links: list[Link] = []
         match await self._get_opportunity_search_records(next, limit, request):

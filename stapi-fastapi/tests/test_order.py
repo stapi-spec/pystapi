@@ -159,7 +159,7 @@ def setup_orders_pagination(stapi_client: TestClient, create_order_payloads) -> 
     return orders
 
 
-@pytest.mark.parametrize("limit", [0, 1, 2, 4])
+@pytest.mark.parametrize("limit", [1, 2, 4])
 def test_get_orders_pagination(limit, setup_orders_pagination, create_order_payloads, stapi_client: TestClient) -> None:
     expected_returns = []
     if limit > 0:
@@ -204,7 +204,7 @@ def order_statuses() -> dict[str, list[OrderStatus]]:
     return statuses
 
 
-@pytest.mark.parametrize("limit", [0, 1, 2, 4])
+@pytest.mark.parametrize("limit", [1, 2, 4])
 def test_get_order_status_pagination(
     limit: int,
     stapi_client: TestClient,

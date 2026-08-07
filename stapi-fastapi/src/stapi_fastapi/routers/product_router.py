@@ -37,6 +37,7 @@ from stapi_fastapi.constants import TYPE_JSON
 from stapi_fastapi.errors import NotFoundError, QueryablesError
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.path_params import OpportunityCollectionIdPath
+from stapi_fastapi.query_params import DEFAULT_LIMIT, clamp_limit
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_fastapi.routers.base import BAD_REQUEST, NOT_FOUND, SERVER_ERROR, Route, StapiFastapiBaseRouter
 from stapi_fastapi.routers.route_names import (
@@ -282,12 +283,17 @@ class ProductRouter(StapiFastapiBaseRouter):
         response: Response,
         prefer: Prefer | None,
     ) -> OpportunityCollection:  # type: ignore
+        # The POST body carries its own `limit`, so it is held to the same bound
+        # as the GET collections' query parameter. Its lower bound is the
+        # model's, so only the clamp is applied here.
+        limit = DEFAULT_LIMIT if search.limit is None else clamp_limit(search.limit)
+
         links: list[Link] = []
         match await self.product.search_opportunities(
             self,
             search,
             search.next,
-            search.limit,
+            limit,
             request,
         ):
             case Success((features, maybe_pagination_token)):
