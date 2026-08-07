@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - `JsonSchema`, a root model holding a JSON Schema document, with `JsonSchema.from_model` deriving one from a pydantic model class.
+- `Queryables.required_property_names`, the required set read from the published queryables JSON Schema and cached per subclass.
 - `STAPI_VERSION` is now exported from the package root.
 
 ### Changed
