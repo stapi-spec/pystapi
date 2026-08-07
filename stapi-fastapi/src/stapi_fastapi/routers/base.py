@@ -11,7 +11,9 @@ from fastapi import (
 )
 from fastapi.datastructures import URL, Default, DefaultPlaceholder
 from fastapi.responses import JSONResponse
+from stapi_pydantic import Link
 
+from stapi_fastapi.constants import TYPE_JSON
 from stapi_fastapi.routers.route_names import Tag
 
 #: OpenAPI response declarations, keyed by status code.
@@ -127,6 +129,11 @@ class StapiFastapiBaseRouter(APIRouter):
     def route_name(self, name: str) -> str:
         """The registered name of the route this router serves under `name`."""
         return ":".join((*self.route_name_prefix, name))
+
+    def pagination_link(self, request: Request, name: str, pagination_token: str, limit: int, **kwargs: Any) -> Link:
+        """A `next` link for the page after the one being returned."""
+        url = self.url_for(request, name, **kwargs).include_query_params(next=pagination_token, limit=limit)
+        return Link(href=url, rel="next", type=TYPE_JSON)
 
     def register_route(self, route: Route) -> None:
         """Register `route` on this router."""

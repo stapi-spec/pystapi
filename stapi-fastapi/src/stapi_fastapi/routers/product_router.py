@@ -300,7 +300,7 @@ class ProductRouter(StapiFastapiBaseRouter):
                 links.append(self.order_link(request, search))
                 match maybe_pagination_token:
                     case Some(x):
-                        links.append(self.pagination_link(request, search, x))
+                        links.append(self.search_pagination_link(request, search, x))
                     case Maybe.empty:
                         pass
             case Failure(e) if isinstance(e, QueryablesError):
@@ -411,7 +411,12 @@ class ProductRouter(StapiFastapiBaseRouter):
             body=opp_req.search_body(),
         )
 
-    def pagination_link(self, request: Request, opp_req: OpportunityRequest, pagination_token: str) -> Link:
+    def search_pagination_link(self, request: Request, opp_req: OpportunityRequest, pagination_token: str) -> Link:
+        """A `next` link for an opportunity search, whose parameters are a POST body.
+
+        Distinct from the base router's query-parameter one: paging a search
+        means re-POSTing the search body with a new token, not following a URL.
+        """
         body = opp_req.body()
         body["next"] = pagination_token
         return Link(

@@ -388,12 +388,6 @@ class RootRouter(StapiFastapiBaseRouter):
     def order_statuses_link(self, request: Request, order_id: str) -> Link:
         return json_link("self", self.url_for(request, self.route_name(LIST_ORDER_STATUSES), orderId=order_id))
 
-    def pagination_link(self, request: Request, name: str, pagination_token: str, limit: int, **kwargs: Any) -> Link:
-        return json_link(
-            "next",
-            self.url_for(request, name, **kwargs).include_query_params(next=pagination_token, limit=limit),
-        )
-
     async def get_opportunity_search_records(
         self, request: Request, next: NextToken = None, limit: Limit = DEFAULT_LIMIT
     ) -> OpportunitySearchRecordCollection:
