@@ -1,20 +1,20 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, tzinfo
 from itertools import product
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ValidationError
 from pytest import mark, raises
-from stapi_pydantic import DatetimeInterval
+from stapi_pydantic import BoundedDatetimeInterval
 
 EUROPE_BERLIN = ZoneInfo("Europe/Berlin")
 
 
 class Model(BaseModel):
-    datetime: DatetimeInterval
+    datetime: BoundedDatetimeInterval
 
 
 # format_timezone was removed from pyrfc3339 (MIT) in v2.1, so included here now
-def format_timezone(utcoffset):
+def format_timezone(utcoffset: int) -> str:
     """
     Return a string representing the timezone offset.
     Remaining seconds are rounded to the nearest minute.
@@ -52,7 +52,7 @@ def rfc3339_strftime(dt: datetime, format: str) -> str:
         "2024-01-29T12:00:00Z/2024-01-28T12:00:00Z",
     ),
 )
-def test_invalid_values(value: str):
+def test_invalid_values(value: str) -> None:
     with raises(ValidationError):
         Model.model_validate_strings({"datetime": value})
 
@@ -70,7 +70,7 @@ def test_invalid_values(value: str):
         ),
     ),
 )
-def test_deserialization(tz: ZoneInfo, format: str):
+def test_deserialization(tz: tzinfo, format: str) -> None:
     start = datetime.now(tz)
     end = start + timedelta(hours=1)
     value = f"{rfc3339_strftime(start, format)}/{rfc3339_strftime(end, format)}"
@@ -81,7 +81,7 @@ def test_deserialization(tz: ZoneInfo, format: str):
 
 
 @mark.parametrize("tz", (UTC, EUROPE_BERLIN))
-def test_serialize(tz):
+def test_serialize(tz: tzinfo) -> None:
     start = datetime.now(tz)
     end = start + timedelta(hours=1)
     model = Model(datetime=(start, end))

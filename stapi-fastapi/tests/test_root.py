@@ -2,8 +2,10 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from stapi_fastapi.conformance import API
 
+from .shared import AssertLink
 
-def test_root(stapi_client: TestClient, assert_link) -> None:
+
+def test_root(stapi_client: TestClient, assert_link: AssertLink) -> None:
     res = stapi_client.get("/")
 
     assert res.status_code == status.HTTP_200_OK

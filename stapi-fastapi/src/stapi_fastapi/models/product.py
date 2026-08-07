@@ -2,8 +2,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from stapi_pydantic import OpportunityProperties, OrderParameters, Queryables
+from stapi_pydantic import (
+    OpportunityProperties,
+    OrderParameters,
+    Queryables,
+    SearchParameters,
+    cql2_property_names,
+)
 from stapi_pydantic import Product as BaseProduct
+
+from stapi_fastapi.errors import QueryablesError
 
 if TYPE_CHECKING:
     from stapi_fastapi.backends.product_backend import (
@@ -94,3 +102,12 @@ class Product(BaseProduct):
     @property
     def order_parameters(self) -> type[OrderParameters]:
         return self._order_parameters
+
+    def validate_required_queryables(self, search_parameters: SearchParameters) -> None:
+        """Raise if the filter omits a predicate for a required queryable."""
+        required = self._queryables.required_property_names()
+        if not required:
+            return
+        missing = required - cql2_property_names(search_parameters.filter)
+        if missing:
+            raise QueryablesError(f"filter must include predicates for required queryables: {sorted(missing)}")

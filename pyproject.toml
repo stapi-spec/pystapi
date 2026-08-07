@@ -66,7 +66,7 @@ files = [
 ]
 
 [[tool.mypy.overrides]]
-module = "pygeofilter.parsers.*"
+module = "respx.*"
 ignore_missing_imports = true
 
 [tool.pymarkdown]
@@ -81,7 +81,11 @@ filterwarnings = [
     "ignore:The 'app' shortcut is now deprecated.:DeprecationWarning",
     "ignore:Pydantic serializer warnings:UserWarning",
     "ignore:jsonschema.exceptions.RefResolutionError is deprecated:DeprecationWarning",
+    # Both raised by schemathesis<4, which still uses the pre-4.18 jsonschema
+    # referencing API. Removable once the validator moves to schemathesis 4.
+    "ignore:jsonschema.RefResolver is deprecated:DeprecationWarning",
 ]
 markers = [
     "mock_products",
+    "root_router_kwargs",
 ]

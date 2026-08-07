@@ -1,10 +1,11 @@
 [project]
 name = "stapi-fastapi"
-version = "0.8.0"
+version = "0.9.0"
 description = "Sensor Tasking API (STAPI) with FastAPI"
 authors = [
     { name = "Christian Wygoda", email = "christian.wygoda@wygoda.net" },
     { name = "Phil Varner", email = "phil@philvarner.com" },
+    { name = "Jarrett Keifer", email = "jkeifer0@gmail.com" },
 ]
 readme = "README.md"
 license = "MIT"
@@ -12,21 +13,17 @@ license = "MIT"
 requires-python = ">=3.11"
 
 dependencies = [
-    "httpx>=0.27.0",
     "fastapi>=0.115.0",
     "pydantic>=2.10",
     "geojson-pydantic>=1.1",
-    "pygeofilter>=0.2",
     "returns>=0.23",
-    "nox>=2024.4.15",
-    "pydantic-settings>=2.2.1",
-    "uvicorn>=0.29.0",
-    "stapi-pydantic>=0.1.0",
+    "stapi-pydantic>=0.2.0",
 ]
 
 [dependency-groups]
 dev = [
     "fastapi[standard]>=0.115.0",
+    "httpx>=0.27.0",  # used by the test client, not by the library
     "pytest>=8.3.5",
 ]
 

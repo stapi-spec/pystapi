@@ -1,8 +1,18 @@
 {
+    "stapi_type": "ProductCollection",
+    "stapi_version": "0.2.0",
     "products": [
         {
             "type": "Collection",
+            "stapi_type": "Product",
+            "stapi_version": "0.2.0",
             "id": "multispectral",
+            "conformsTo": [
+                "https://stapi.example.com/v0.2.0/opportunities",
+                "https://stapi.example.com/v0.2.0/opportunities-async",
+                "https://geojson.org/schema/Point.json",
+                "https://geojson.org/schema/Polygon.json"
+            ],
             "title": "Multispectral",
             "description": "Full color EO image",
             "keywords": [
@@ -103,7 +113,13 @@
         },
         {
             "type": "Collection",
+            "stapi_type": "Product",
+            "stapi_version": "0.2.0",
             "id": "spotlight",
+            "conformsTo": [
+                "https://geojson.org/schema/Point.json",
+                "https://geojson.org/schema/Polygon.json"
+            ],
             "title": "Spotlight",
             "description": "SAR Spotlight frame",
             "keywords": [

@@ -4,19 +4,19 @@ from typing import Any
 
 from fastapi import HTTPException, Request, status
 from fastapi.datastructures import URL
-from returns.maybe import Maybe, Some
+from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Success
 from stapi_pydantic import (
     Conformance,
     Link,
     OpportunitySearchRecord,
-    OpportunitySearchRecords,
-    OpportunitySearchStatus,
+    OpportunitySearchRecordCollection,
+    OpportunitySearchStatusCollection,
     Order,
     OrderCollection,
     OrderStatus,
-    OrderStatuses,
-    ProductsCollection,
+    OrderStatusCollection,
+    ProductCollection,
     RootResponse,
 )
 
@@ -30,21 +30,25 @@ from stapi_fastapi.backends.root_backend import (
 )
 from stapi_fastapi.conformance import API as API_CONFORMANCE
 from stapi_fastapi.constants import TYPE_GEOJSON
-from stapi_fastapi.errors import NotFoundError
+from stapi_fastapi.errors import NotFoundError, PaginationTokenError
 from stapi_fastapi.models.product import Product
+from stapi_fastapi.pagination import Page
+from stapi_fastapi.path_params import OrderIdPath, SearchRecordIdPath
+from stapi_fastapi.query_params import DEFAULT_LIMIT, Limit, NextToken
 from stapi_fastapi.responses import GeoJSONResponse
-from stapi_fastapi.routers.base import StapiFastapiBaseRouter
+from stapi_fastapi.routers.base import NOT_FOUND, SERVER_ERROR, Route, StapiFastapiBaseRouter
 from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_fastapi.routers.route_names import (
     CONFORMANCE,
     GET_OPPORTUNITY_SEARCH_RECORD,
-    GET_OPPORTUNITY_SEARCH_RECORD_STATUSES,
     GET_ORDER,
+    LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES,
     LIST_OPPORTUNITY_SEARCH_RECORDS,
     LIST_ORDER_STATUSES,
     LIST_ORDERS,
     LIST_PRODUCTS,
     ROOT,
+    Tag,
 )
 from stapi_fastapi.routers.utils import json_link
 
@@ -60,7 +64,7 @@ class RootRouter(StapiFastapiBaseRouter):
         get_opportunity_search_records: GetOpportunitySearchRecords | None = None,
         get_opportunity_search_record: GetOpportunitySearchRecord | None = None,
         get_opportunity_search_record_statuses: GetOpportunitySearchRecordStatuses | None = None,
-        conformances: list[str] = [API_CONFORMANCE.core],
+        conformances: list[str] | None = None,
         name: str = "root",
         openapi_endpoint_name: str = "openapi",
         docs_endpoint_name: str = "swagger_ui_html",
@@ -69,7 +73,14 @@ class RootRouter(StapiFastapiBaseRouter):
     ) -> None:
         super().__init__(*args, **kwargs)
 
-        _conformances = set(conformances)
+        # The optional conformance classes are derived from the backends actually
+        # supplied and re-added below alongside their routes: advertising a class
+        # whose routes were never registered would send clients to a 404.
+        _conformances = set(conformances or [API_CONFORMANCE.core]) - {
+            API_CONFORMANCE.order_statuses,
+            API_CONFORMANCE.searches_opportunity,
+            API_CONFORMANCE.searches_opportunity_statuses,
+        }
 
         self._get_orders = get_orders
         self._get_order = get_order
@@ -78,6 +89,7 @@ class RootRouter(StapiFastapiBaseRouter):
         self.__get_opportunity_search_record = get_opportunity_search_record
         self.__get_opportunity_search_record_statuses = get_opportunity_search_record_statuses
         self.name = name
+        self.route_name_prefix = (name,)
         self.openapi_endpoint_name = openapi_endpoint_name
         self.docs_endpoint_name = docs_endpoint_name
         self.product_ids: list[str] = []
@@ -88,96 +100,115 @@ class RootRouter(StapiFastapiBaseRouter):
         # added.
         self.product_routers: dict[str, ProductRouter] = {}
 
-        self.add_api_route(
-            "/",
-            self.get_root,
-            methods=["GET"],
-            name=f"{self.name}:{ROOT}",
-            tags=["Root"],
+        self.register_route(
+            Route(
+                name=ROOT,
+                tag=Tag.ROOT,
+                path="/",
+                endpoint=self.get_root,
+                errors={},
+                summary="Get the API landing page",
+            )
+        )
+        self.register_route(
+            Route(
+                name=CONFORMANCE,
+                tag=Tag.CONFORMANCE,
+                path="/conformance",
+                endpoint=self.get_conformance,
+                errors={},
+                summary="Get conformance urls for the API",
+            )
+        )
+        self.register_route(
+            Route(
+                name=LIST_PRODUCTS,
+                tag=Tag.PRODUCTS,
+                path="/products",
+                endpoint=self.get_products,
+                errors=NOT_FOUND,
+                summary="List all Products",
+            )
+        )
+        self.register_route(
+            Route(
+                name=LIST_ORDERS,
+                tag=Tag.ORDERS,
+                path="/orders",
+                endpoint=self.get_orders,
+                errors=NOT_FOUND | SERVER_ERROR,
+                summary="List all Orders",
+                response_class=GeoJSONResponse,
+            )
+        )
+        self.register_route(
+            Route(
+                name=GET_ORDER,
+                tag=Tag.ORDERS,
+                path="/orders/{orderId}",
+                endpoint=self.get_order,
+                errors=NOT_FOUND | SERVER_ERROR,
+                summary="Get an Order by ID",
+                response_class=GeoJSONResponse,
+            )
         )
 
-        self.add_api_route(
-            "/conformance",
-            self.get_conformance,
-            methods=["GET"],
-            name=f"{self.name}:{CONFORMANCE}",
-            tags=["Conformance"],
-        )
-
-        self.add_api_route(
-            "/products",
-            self.get_products,
-            methods=["GET"],
-            name=f"{self.name}:{LIST_PRODUCTS}",
-            tags=["Products"],
-        )
-
-        self.add_api_route(
-            "/orders",
-            self.get_orders,
-            methods=["GET"],
-            name=f"{self.name}:{LIST_ORDERS}",
-            response_class=GeoJSONResponse,
-            tags=["Orders"],
-        )
-
-        self.add_api_route(
-            "/orders/{order_id}",
-            self.get_order,
-            methods=["GET"],
-            name=f"{self.name}:{GET_ORDER}",
-            response_class=GeoJSONResponse,
-            tags=["Orders"],
-        )
-
-        if self.get_order_statuses is not None:
+        if self.__get_order_statuses is not None:
             _conformances.add(API_CONFORMANCE.order_statuses)
-            self.add_api_route(
-                "/orders/{order_id}/statuses",
-                self.get_order_statuses,
-                methods=["GET"],
-                name=f"{self.name}:{LIST_ORDER_STATUSES}",
-                tags=["Orders"],
+            self.register_route(
+                Route(
+                    name=LIST_ORDER_STATUSES,
+                    tag=Tag.ORDERS,
+                    path="/orders/{orderId}/statuses",
+                    endpoint=self.get_order_statuses,
+                    errors=NOT_FOUND | SERVER_ERROR,
+                    summary="List statuses for an Order",
+                )
             )
 
         if self.supports_async_opportunity_search:
             _conformances.add(API_CONFORMANCE.searches_opportunity)
-            self.add_api_route(
-                "/searches/opportunities",
-                self.get_opportunity_search_records,
-                methods=["GET"],
-                name=f"{self.name}:{LIST_OPPORTUNITY_SEARCH_RECORDS}",
-                summary="List all Opportunity Search Records",
-                tags=["Opportunities"],
+            self.register_route(
+                Route(
+                    name=LIST_OPPORTUNITY_SEARCH_RECORDS,
+                    tag=Tag.OPPORTUNITIES,
+                    path="/searches/opportunities",
+                    endpoint=self.get_opportunity_search_records,
+                    errors=NOT_FOUND | SERVER_ERROR,
+                    summary="List all Opportunity Search Records",
+                )
+            )
+            self.register_route(
+                Route(
+                    name=GET_OPPORTUNITY_SEARCH_RECORD,
+                    tag=Tag.OPPORTUNITIES,
+                    path="/searches/opportunities/{searchRecordId}",
+                    endpoint=self.get_opportunity_search_record,
+                    errors=NOT_FOUND | SERVER_ERROR,
+                    summary="Get an Opportunity Search Record by ID",
+                )
             )
 
-            self.add_api_route(
-                "/searches/opportunities/{search_record_id}",
-                self.get_opportunity_search_record,
-                methods=["GET"],
-                name=f"{self.name}:{GET_OPPORTUNITY_SEARCH_RECORD}",
-                summary="Get an Opportunity Search Record by ID",
-                tags=["Opportunities"],
-            )
+            if self.__get_opportunity_search_record_statuses is not None:
+                _conformances.add(API_CONFORMANCE.searches_opportunity_statuses)
+                self.register_route(
+                    Route(
+                        name=LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES,
+                        tag=Tag.OPPORTUNITIES,
+                        path="/searches/opportunities/{searchRecordId}/statuses",
+                        endpoint=self.get_opportunity_search_record_statuses,
+                        errors=NOT_FOUND | SERVER_ERROR,
+                        summary="List statuses for an Opportunity Search Record",
+                    )
+                )
 
-        if self.__get_opportunity_search_record_statuses is not None:
-            _conformances.add(API_CONFORMANCE.searches_opportunity_statuses)
-            self.add_api_route(
-                "/searches/opportunities/{search_record_id}/statuses",
-                self.get_opportunity_search_record_statuses,
-                methods=["GET"],
-                name=f"{self.name}:{GET_OPPORTUNITY_SEARCH_RECORD_STATUSES}",
-                summary="Get an Opportunity Search Record statuses by ID",
-                tags=["Opportunities"],
-            )
-
-        self.conformances = list(_conformances)
+        self.conformances = sorted(_conformances)
 
     def get_root(self, request: Request) -> RootResponse:
         links = [
             json_link(
                 "self",
-                self.url_for(request, f"{self.name}:{ROOT}"),
+                self.url_for(request, self.route_name(ROOT)),
             ),
             json_link(
                 "service-description",
@@ -188,11 +219,11 @@ class RootRouter(StapiFastapiBaseRouter):
                 href=self.url_for(request, self.docs_endpoint_name),
                 type="text/html",
             ),
-            json_link("conformance", href=self.url_for(request, f"{self.name}:{CONFORMANCE}")),
-            json_link("products", self.url_for(request, f"{self.name}:{LIST_PRODUCTS}")),
+            json_link("conformance", href=self.url_for(request, self.route_name(CONFORMANCE))),
+            json_link("products", self.url_for(request, self.route_name(LIST_PRODUCTS))),
             Link(
                 rel="orders",
-                href=self.url_for(request, f"{self.name}:{LIST_ORDERS}"),
+                href=self.url_for(request, self.route_name(LIST_ORDERS)),
                 type=TYPE_GEOJSON,
             ),
         ]
@@ -200,64 +231,53 @@ class RootRouter(StapiFastapiBaseRouter):
         if self.supports_async_opportunity_search:
             links.append(
                 json_link(
-                    "opportunity-search-records",
-                    self.url_for(request, f"{self.name}:{LIST_OPPORTUNITY_SEARCH_RECORDS}"),
+                    "search-records",
+                    self.url_for(request, self.route_name(LIST_OPPORTUNITY_SEARCH_RECORDS)),
                 ),
             )
 
         return RootResponse(
             id="STAPI API",
-            conformsTo=self.conformances,
+            conforms_to=self.conformances,
             links=links,
         )
 
     def get_conformance(self) -> Conformance:
         return Conformance(conforms_to=self.conformances)
 
-    def get_products(self, request: Request, next: str | None = None, limit: int = 10) -> ProductsCollection:
+    def get_products(self, request: Request, next: NextToken = None, limit: Limit = DEFAULT_LIMIT) -> ProductCollection:
         start = 0
-        limit = min(limit, 100)
-        try:
-            if next:
+        if next:
+            try:
                 start = self.product_ids.index(next)
-        except ValueError:
-            logger.exception("An error occurred while retrieving products")
-            raise NotFoundError(detail="Error finding pagination token for products") from None
+            except ValueError:
+                raise NotFoundError(detail="Error finding pagination token for products") from None
+
         end = start + limit
-        ids = self.product_ids[start:end]
-        links = [
-            json_link(
-                "self",
-                self.url_for(request, f"{self.name}:{LIST_PRODUCTS}"),
-            ),
-        ]
-        if end > 0 and end < len(self.product_ids):
-            links.append(self.pagination_link(request, f"{self.name}:{LIST_PRODUCTS}", self.product_ids[end], limit))
-        return ProductsCollection(
-            products=[self.product_routers[product_id].get_product(request) for product_id in ids],
-            links=links,
+        page = Page(
+            items=[self.product_routers[product_id].get_product(request) for product_id in self.product_ids[start:end]],
+            next_token=Some(self.product_ids[end]) if end < len(self.product_ids) else Nothing,
+            number_matched=Some(len(self.product_ids)),
+        )
+        return ProductCollection(
+            products=page.items,
+            links=self.page_links(request, page, self.route_name(LIST_PRODUCTS), limit),
+            number_matched=page.number_matched.value_or(None),
         )
 
-    async def get_orders(  # noqa: C901
-        self, request: Request, next: str | None = None, limit: int = 10
+    async def get_orders(
+        self, request: Request, next: NextToken = None, limit: Limit = DEFAULT_LIMIT
     ) -> OrderCollection[OrderStatus]:
-        links: list[Link] = []
-        orders_count: int | None = None
         match await self._get_orders(next, limit, request):
-            case Success((orders, maybe_pagination_token, maybe_orders_count)):
-                for order in orders:
+            case Success(page):
+                for order in page.items:
                     order.links.extend(self.order_links(order, request))
-                match maybe_pagination_token:
-                    case Some(next_):
-                        links.append(self.pagination_link(request, f"{self.name}:{LIST_ORDERS}", next_, limit))
-                    case Maybe.empty:
-                        pass
-                match maybe_orders_count:
-                    case Some(x):
-                        orders_count = x
-                    case Maybe.empty:
-                        pass
-            case Failure(ValueError()):
+                return OrderCollection(
+                    features=page.items,
+                    links=self.page_links(request, page, self.route_name(LIST_ORDERS), limit, media_type=TYPE_GEOJSON),
+                    number_matched=page.number_matched.value_or(None),
+                )
+            case Failure(PaginationTokenError()):
                 raise NotFoundError(detail="Error finding pagination token")
             case Failure(e):
                 logger.error(
@@ -271,15 +291,9 @@ class RootRouter(StapiFastapiBaseRouter):
             case _:
                 raise AssertionError("Expected code to be unreachable")
 
-        return OrderCollection(
-            features=orders,
-            links=links,
-            number_matched=orders_count,
-        )
-
-    async def get_order(self, order_id: str, request: Request) -> Order[OrderStatus]:
+    async def get_order(self, order_id: OrderIdPath, request: Request) -> Order[OrderStatus]:
         """
-        Get details for order with `order_id`.
+        Get details for order with `orderId`.
         """
         match await self._get_order(order_id, request):
             case Success(Some(order)):
@@ -302,27 +316,21 @@ class RootRouter(StapiFastapiBaseRouter):
 
     async def get_order_statuses(
         self,
-        order_id: str,
+        order_id: OrderIdPath,
         request: Request,
-        next: str | None = None,
-        limit: int = 10,
-    ) -> OrderStatuses:  # type: ignore
-        links: list[Link] = []
+        next: NextToken = None,
+        limit: Limit = DEFAULT_LIMIT,
+    ) -> OrderStatusCollection:
         match await self._get_order_statuses(order_id, next, limit, request):
-            case Success(Some((statuses, maybe_pagination_token))):
-                links.append(self.order_statuses_link(request, order_id))
-                match maybe_pagination_token:
-                    case Some(next_):
-                        links.append(
-                            self.pagination_link(
-                                request, f"{self.name}:{LIST_ORDER_STATUSES}", next_, limit, order_id=order_id
-                            )
-                        )
-                    case Maybe.empty:
-                        pass
+            case Success(Some(page)):
+                return OrderStatusCollection(
+                    statuses=page.items,
+                    links=self.page_links(request, page, self.route_name(LIST_ORDER_STATUSES), limit, orderId=order_id),
+                    number_matched=page.number_matched.value_or(None),
+                )
             case Success(Maybe.empty):
                 raise NotFoundError("Order not found")
-            case Failure(ValueError()):
+            case Failure(PaginationTokenError()):
                 raise NotFoundError("Error finding pagination token")
             case Failure(e):
                 logger.error(
@@ -335,9 +343,14 @@ class RootRouter(StapiFastapiBaseRouter):
                 )
             case _:
                 raise AssertionError("Expected code to be unreachable")
-        return OrderStatuses(statuses=statuses, links=links)
 
     def add_product(self, product: Product, *args: Any, **kwargs: Any) -> None:
+        # Rejected rather than replaced: `include_router` only appends, so the
+        # first router's routes would keep serving (they match first) while
+        # `product_routers` pointed at the new one.
+        if product.id in self.product_routers:
+            raise ValueError(f"product {product.id!r} is already registered")
+
         # Give the include a prefix from the product router
         product_router = ProductRouter(product, self, *args, **kwargs)
         self.include_router(product_router, prefix=f"/products/{product.id}")
@@ -345,51 +358,42 @@ class RootRouter(StapiFastapiBaseRouter):
         self.product_ids = [*self.product_routers.keys()]
 
     def generate_order_href(self, request: Request, order_id: str) -> URL:
-        return self.url_for(request, f"{self.name}:{GET_ORDER}", order_id=order_id)
+        return self.url_for(request, self.route_name(GET_ORDER), orderId=order_id)
 
     def generate_order_statuses_href(self, request: Request, order_id: str) -> URL:
-        return self.url_for(request, f"{self.name}:{LIST_ORDER_STATUSES}", order_id=order_id)
+        return self.url_for(request, self.route_name(LIST_ORDER_STATUSES), orderId=order_id)
 
     def order_links(self, order: Order[OrderStatus], request: Request) -> list[Link]:
-        return [
+        """Links added to every order response."""
+        links = [
             Link(
                 href=self.generate_order_href(request, order.id),
                 rel="self",
                 type=TYPE_GEOJSON,
             ),
-            json_link(
-                "monitor",
-                self.generate_order_statuses_href(request, order.id),
-            ),
         ]
-
-    def order_statuses_link(self, request: Request, order_id: str) -> Link:
-        return json_link("self", self.url_for(request, f"{self.name}:{LIST_ORDER_STATUSES}", order_id=order_id))
-
-    def pagination_link(self, request: Request, name: str, pagination_token: str, limit: int, **kwargs: Any) -> Link:
-        return json_link(
-            "next",
-            self.url_for(request, name, **kwargs).include_query_params(next=pagination_token, limit=limit),
-        )
+        if self.supports_order_statuses:
+            links.append(
+                json_link(
+                    "monitor",
+                    self.generate_order_statuses_href(request, order.id),
+                )
+            )
+        return links
 
     async def get_opportunity_search_records(
-        self, request: Request, next: str | None = None, limit: int = 10
-    ) -> OpportunitySearchRecords:
-        links: list[Link] = []
+        self, request: Request, next: NextToken = None, limit: Limit = DEFAULT_LIMIT
+    ) -> OpportunitySearchRecordCollection:
         match await self._get_opportunity_search_records(next, limit, request):
-            case Success((records, maybe_pagination_token)):
-                for record in records:
-                    record.links.append(self.opportunity_search_record_self_link(record, request))
-                match maybe_pagination_token:
-                    case Some(next_):
-                        links.append(
-                            self.pagination_link(
-                                request, f"{self.name}:{LIST_OPPORTUNITY_SEARCH_RECORDS}", next_, limit
-                            )
-                        )
-                    case Maybe.empty:
-                        pass
-            case Failure(ValueError()):
+            case Success(page):
+                for record in page.items:
+                    record.links.extend(self.opportunity_search_record_links(record, request))
+                return OpportunitySearchRecordCollection(
+                    records=page.items,
+                    links=self.page_links(request, page, self.route_name(LIST_OPPORTUNITY_SEARCH_RECORDS), limit),
+                    number_matched=page.number_matched.value_or(None),
+                )
+            case Failure(PaginationTokenError()):
                 raise NotFoundError(detail="Error finding pagination token")
             case Failure(e):
                 logger.error(
@@ -402,15 +406,16 @@ class RootRouter(StapiFastapiBaseRouter):
                 )
             case _:
                 raise AssertionError("Expected code to be unreachable")
-        return OpportunitySearchRecords(search_records=records, links=links)
 
-    async def get_opportunity_search_record(self, search_record_id: str, request: Request) -> OpportunitySearchRecord:
+    async def get_opportunity_search_record(
+        self, search_record_id: SearchRecordIdPath, request: Request
+    ) -> OpportunitySearchRecord:
         """
-        Get the Opportunity Search Record with `search_record_id`.
+        Get the Opportunity Search Record with `searchRecordId`.
         """
         match await self._get_opportunity_search_record(search_record_id, request):
             case Success(Some(search_record)):
-                search_record.links.append(self.opportunity_search_record_self_link(search_record, request))
+                search_record.links.extend(self.opportunity_search_record_links(search_record, request))
                 return search_record  # type: ignore
             case Success(Maybe.empty):
                 raise NotFoundError("Opportunity Search Record not found")
@@ -428,16 +433,32 @@ class RootRouter(StapiFastapiBaseRouter):
                 raise AssertionError("Expected code to be unreachable")
 
     async def get_opportunity_search_record_statuses(
-        self, search_record_id: str, request: Request
-    ) -> list[OpportunitySearchStatus]:
+        self,
+        search_record_id: SearchRecordIdPath,
+        request: Request,
+        next: NextToken = None,
+        limit: Limit = DEFAULT_LIMIT,
+    ) -> OpportunitySearchStatusCollection:
         """
-        Get the Opportunity Search Record statuses with `search_record_id`.
+        Get the Opportunity Search Record statuses with `searchRecordId`.
         """
-        match await self._get_opportunity_search_record_statuses(search_record_id, request):
-            case Success(Some(search_record_statuses)):
-                return search_record_statuses  # type: ignore
+        match await self._get_opportunity_search_record_statuses(search_record_id, next, limit, request):
+            case Success(Some(page)):
+                return OpportunitySearchStatusCollection(
+                    statuses=page.items,
+                    links=self.page_links(
+                        request,
+                        page,
+                        self.route_name(LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES),
+                        limit,
+                        searchRecordId=search_record_id,
+                    ),
+                    number_matched=page.number_matched.value_or(None),
+                )
             case Success(Maybe.empty):
                 raise NotFoundError("Opportunity Search Record not found")
+            case Failure(PaginationTokenError()):
+                raise NotFoundError("Error finding pagination token")
             case Failure(e):
                 logger.error(
                     "An error occurred while retrieving opportunity search record statuses '%s': %s",
@@ -454,14 +475,35 @@ class RootRouter(StapiFastapiBaseRouter):
     def generate_opportunity_search_record_href(self, request: Request, search_record_id: str) -> URL:
         return self.url_for(
             request,
-            f"{self.name}:{GET_OPPORTUNITY_SEARCH_RECORD}",
-            search_record_id=search_record_id,
+            self.route_name(GET_OPPORTUNITY_SEARCH_RECORD),
+            searchRecordId=search_record_id,
         )
 
     def opportunity_search_record_self_link(
         self, opportunity_search_record: OpportunitySearchRecord, request: Request
     ) -> Link:
         return json_link("self", self.generate_opportunity_search_record_href(request, opportunity_search_record.id))
+
+    def generate_opportunity_search_record_statuses_href(self, request: Request, search_record_id: str) -> URL:
+        return self.url_for(
+            request,
+            self.route_name(LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES),
+            searchRecordId=search_record_id,
+        )
+
+    def opportunity_search_record_links(
+        self, opportunity_search_record: OpportunitySearchRecord, request: Request
+    ) -> list[Link]:
+        """Links added to every search record response."""
+        links = [self.opportunity_search_record_self_link(opportunity_search_record, request)]
+        if self.supports_opportunity_search_record_statuses:
+            links.append(
+                json_link(
+                    "monitor",
+                    self.generate_opportunity_search_record_statuses_href(request, opportunity_search_record.id),
+                )
+            )
+        return links
 
     @property
     def _get_order_statuses(self) -> GetOrderStatuses:  # type: ignore
@@ -488,5 +530,15 @@ class RootRouter(StapiFastapiBaseRouter):
         return self.__get_opportunity_search_record_statuses
 
     @property
+    def supports_order_statuses(self) -> bool:
+        """Whether the order-statuses endpoint is registered."""
+        return self.__get_order_statuses is not None
+
+    @property
     def supports_async_opportunity_search(self) -> bool:
         return self.__get_opportunity_search_records is not None and self.__get_opportunity_search_record is not None
+
+    @property
+    def supports_opportunity_search_record_statuses(self) -> bool:
+        """Whether the search-record-statuses endpoint is registered."""
+        return self.supports_async_opportunity_search and self.__get_opportunity_search_record_statuses is not None

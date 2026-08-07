@@ -1,34 +1,61 @@
 from datetime import UTC, datetime
+from typing import TypeAlias
 from uuid import uuid4
 
 from fastapi import Request
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, ResultE, Success
+from stapi_fastapi.errors import PaginationTokenError
+from stapi_fastapi.pagination import Page
 from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_pydantic import (
+    Geometry,
     Opportunity,
     OpportunityCollection,
-    OpportunityPayload,
+    OpportunityProperties,
+    OpportunityRequest,
     OpportunitySearchRecord,
     OpportunitySearchStatus,
     OpportunitySearchStatusCode,
     Order,
-    OrderPayload,
+    OrderParameters,
     OrderProperties,
-    OrderSearchParameters,
+    OrderRequest,
     OrderStatus,
     OrderStatusCode,
+    StoredOrderRequest,
 )
+
+# These mocks are shared by every test product, so they are parameterized at
+# the generic bounds rather than at one product's concrete geometry/properties
+# models.
+AnyOpportunity: TypeAlias = Opportunity[Geometry, OpportunityProperties]
+AnyOpportunityCollection: TypeAlias = OpportunityCollection[Geometry, OpportunityProperties]
+
+
+def _offset(token: str) -> int:
+    """The offset a pagination token names, as these mocks encode it.
+
+    The failure is reported as a `PaginationTokenError` rather than the bare
+    `ValueError` `int()` raises, so that the other `ValueError`s these backends
+    can raise stay 500s.
+    """
+    try:
+        return int(token)
+    except ValueError:
+        raise PaginationTokenError(f"not a pagination token: {token!r}") from None
 
 
 async def mock_get_orders(
     next: str | None,
     limit: int,
     request: Request,
-) -> ResultE[tuple[list[Order], Maybe[str], Maybe[int]]]:
+) -> ResultE[Page[Order]]:
     """
     Return orders from backend.  Handle pagination/limit if applicable
     """
+    # Deliberately not len(order_ids): the tests assert that whatever the
+    # backend reports as the total is what reaches `numberMatched`.
     count = 314
     try:
         start = 0
@@ -36,14 +63,16 @@ async def mock_get_orders(
         order_ids = [*request.state._orders_db._orders.keys()]
 
         if next:
-            start = order_ids.index(next)
+            try:
+                start = order_ids.index(next)
+            except ValueError:
+                raise PaginationTokenError(f"unknown pagination token: {next!r}") from None
         end = start + limit
         ids = order_ids[start:end]
         orders = [request.state._orders_db.get_order(order_id) for order_id in ids]
 
-        if end > 0 and end < len(order_ids):
-            return Success((orders, Some(request.state._orders_db._orders[order_ids[end]].id), Some(count)))
-        return Success((orders, Nothing, Some(count)))
+        next_token = Some(request.state._orders_db._orders[order_ids[end]].id) if end < len(order_ids) else Nothing
+        return Success(Page(items=orders, next_token=next_token, number_matched=Some(count)))
     except Exception as e:
         return Failure(e)
 
@@ -60,7 +89,7 @@ async def mock_get_order(order_id: str, request: Request) -> ResultE[Maybe[Order
 
 async def mock_get_order_statuses(
     order_id: str, next: str | None, limit: int, request: Request
-) -> ResultE[Maybe[tuple[list[OrderStatus], Maybe[str]]]]:
+) -> ResultE[Maybe[Page[OrderStatus]]]:
     try:
         start = 0
         limit = min(limit, 100)
@@ -69,43 +98,46 @@ async def mock_get_order_statuses(
             return Success(Nothing)
 
         if next:
-            start = int(next)
+            start = _offset(next)
         end = start + limit
-        stati = statuses[start:end]
 
-        if end > 0 and end < len(statuses):
-            return Success(Some((stati, Some(str(end)))))
-        return Success(Some((stati, Nothing)))
+        return Success(
+            Some(
+                Page(
+                    items=statuses[start:end],
+                    next_token=Some(str(end)) if end < len(statuses) else Nothing,
+                    number_matched=Some(len(statuses)),
+                )
+            )
+        )
     except Exception as e:
         return Failure(e)
 
 
-async def mock_create_order(product_router: ProductRouter, payload: OrderPayload, request: Request) -> ResultE[Order]:
+async def mock_create_order(
+    product_router: ProductRouter, payload: OrderRequest[OrderParameters], request: Request
+) -> ResultE[Order]:
     """
     Create a new order.
     """
     try:
-        status = OrderStatus(
+        status: OrderStatus = OrderStatus(
             timestamp=datetime.now(UTC),
             status_code=OrderStatusCode.received,
         )
         order = Order(
             id=str(uuid4()),
-            geometry=payload.geometry,
+            geometry=payload.search_parameters.geometry,
             properties=OrderProperties(
                 product_id=product_router.product.id,
                 created=datetime.now(UTC),
                 status=status,
-                search_parameters=OrderSearchParameters(
-                    geometry=payload.geometry,
-                    datetime=payload.datetime,
-                    filter=payload.filter,
+                order_request=StoredOrderRequest(
+                    search_parameters=payload.search_parameters,
+                    # declared as BaseOrderParameters; pydantic validates the
+                    # dumped dict into one at runtime
+                    order_parameters=payload.order_parameters.model_dump(),  # type: ignore[arg-type]
                 ),
-                order_parameters=payload.order_parameters.model_dump(),
-                opportunity_properties={
-                    "datetime": "2024-01-29T12:00:00Z/2024-01-30T12:00:00Z",
-                    "off_nadir": 10,
-                },
             ),
             links=[],
         )
@@ -119,39 +151,50 @@ async def mock_create_order(product_router: ProductRouter, payload: OrderPayload
 
 async def mock_search_opportunities(
     product_router: ProductRouter,
-    search: OpportunityPayload,
+    search: OpportunityRequest,
     next: str | None,
     limit: int,
     request: Request,
-) -> ResultE[tuple[list[Opportunity], Maybe[str]]]:
+) -> ResultE[Page[AnyOpportunity]]:
     try:
         start = 0
         limit = min(limit, 100)
         if next:
-            start = int(next)
+            start = _offset(next)
         end = start + limit
-        opportunities = [o.model_copy(update=search.model_dump()) for o in request.state._opportunities[start:end]]
-        if end > 0 and end < len(request.state._opportunities):
-            return Success((opportunities, Some(str(end))))
-        return Success((opportunities, Nothing))
+        # Reflect the searched geometry into the returned opportunities.
+        opportunities = [
+            o.model_copy(update={"geometry": search.search_parameters.geometry})
+            for o in request.state._opportunities[start:end]
+        ]
+        total = len(request.state._opportunities)
+        # `end > 0` because the search body may ask for a limit of 0, and a
+        # token pointing back at offset 0 would page forever.
+        return Success(
+            Page(
+                items=opportunities,
+                next_token=Some(str(end)) if 0 < end < total else Nothing,
+                number_matched=Some(total),
+            )
+        )
     except Exception as e:
         return Failure(e)
 
 
 async def mock_search_opportunities_async(
     product_router: ProductRouter,
-    search: OpportunityPayload,
+    search: OpportunityRequest,
     request: Request,
 ) -> ResultE[OpportunitySearchRecord]:
     try:
-        received_status = OpportunitySearchStatus(
+        received_status: OpportunitySearchStatus = OpportunitySearchStatus(
             timestamp=datetime.now(UTC),
             status_code=OpportunitySearchStatusCode.received,
         )
         search_record = OpportunitySearchRecord(
             id=str(uuid4()),
             product_id=product_router.product.id,
-            opportunity_request=search,
+            search_parameters=search.search_parameters,
             status=received_status,
             links=[],
         )
@@ -162,11 +205,35 @@ async def mock_search_opportunities_async(
 
 
 async def mock_get_opportunity_collection(
-    product_router: ProductRouter, opportunity_collection_id: str, request: Request
-) -> ResultE[Maybe[OpportunityCollection]]:
+    product_router: ProductRouter,
+    opportunity_collection_id: str,
+    next: str | None,
+    limit: int,
+    request: Request,
+) -> ResultE[Maybe[Page[AnyOpportunity]]]:
     try:
+        collection = request.state._opportunities_db.get_opportunity_collection(opportunity_collection_id)
+        if collection is None:
+            return Success(Nothing)
+
+        start = 0
+        limit = min(limit, 100)
+        if next:
+            start = _offset(next)
+        end = start + limit
+        total = len(collection.features)
+
         return Success(
-            Maybe.from_optional(request.state._opportunities_db.get_opportunity_collection(opportunity_collection_id))
+            Some(
+                Page(
+                    items=collection.features[start:end],
+                    next_token=Some(str(end)) if end < total else Nothing,
+                    number_matched=Some(total),
+                    # The stored collection's own links (e.g. `create-order`)
+                    # describe the collection, not this page of it.
+                    links=collection.links,
+                )
+            )
         )
     except Exception as e:
         return Failure(e)
@@ -176,20 +243,23 @@ async def mock_get_opportunity_search_records(
     next: str | None,
     limit: int,
     request: Request,
-) -> ResultE[tuple[list[OpportunitySearchRecord], Maybe[str]]]:
+) -> ResultE[Page[OpportunitySearchRecord]]:
     try:
         start = 0
         limit = min(limit, 100)
         search_records = request.state._opportunities_db.get_search_records()
 
         if next:
-            start = int(next)
+            start = _offset(next)
         end = start + limit
-        page = search_records[start:end]
 
-        if end > 0 and end < len(search_records):
-            return Success((page, Some(str(end))))
-        return Success((page, Nothing))
+        return Success(
+            Page(
+                items=search_records[start:end],
+                next_token=Some(str(end)) if end < len(search_records) else Nothing,
+                number_matched=Some(len(search_records)),
+            )
+        )
     except Exception as e:
         return Failure(e)
 
@@ -204,11 +274,27 @@ async def mock_get_opportunity_search_record(
 
 
 async def mock_get_opportunity_search_record_statuses(
-    search_record_id: str, request: Request
-) -> ResultE[Maybe[list[OpportunitySearchStatus]]]:
+    search_record_id: str, next: str | None, limit: int, request: Request
+) -> ResultE[Maybe[Page[OpportunitySearchStatus]]]:
     try:
+        statuses = request.state._opportunities_db.get_search_record_statuses(search_record_id)
+        if statuses is None:
+            return Success(Nothing)
+
+        start = 0
+        limit = min(limit, 100)
+        if next:
+            start = _offset(next)
+        end = start + limit
+
         return Success(
-            Maybe.from_optional(request.state._opportunities_db.get_search_record_statuses(search_record_id))
+            Some(
+                Page(
+                    items=statuses[start:end],
+                    next_token=Some(str(end)) if end < len(statuses) else Nothing,
+                    number_matched=Some(len(statuses)),
+                )
+            )
         )
     except Exception as e:
         return Failure(e)

@@ -1,13 +1,22 @@
+from typing import Any
+
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 from stapi_fastapi.models.product import Product
+from stapi_fastapi.routers.root_router import RootRouter
 from stapi_pydantic import Conformance
 
-from .shared import pagination_tester
+from .backends import mock_get_order, mock_get_orders
+from .shared import (
+    AssertLink,
+    pagination_tester,
+    product_test_spotlight_no_geojson_conformance,
+    product_test_spotlight_sync_opportunity,
+)
 
 
-def test_products_response(stapi_client: TestClient):
+def test_products_response(stapi_client: TestClient) -> None:
     res = stapi_client.get("/products")
 
     assert res.status_code == status.HTTP_200_OK
@@ -15,7 +24,7 @@ def test_products_response(stapi_client: TestClient):
 
     data = res.json()
 
-    assert data["type"] == "ProductCollection"
+    assert data["stapi_type"] == "ProductCollection"
     assert isinstance(data["products"], list)
 
 
@@ -23,8 +32,8 @@ def test_products_response(stapi_client: TestClient):
 def test_product_response_links(
     product_id: str,
     stapi_client: TestClient,
-    assert_link,
-):
+    assert_link: AssertLink,
+) -> None:
     res = stapi_client.get(f"/products/{product_id}")
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/json"
@@ -46,7 +55,7 @@ def test_product_response_links(
 def test_product_conformance_response(
     product_id: str,
     stapi_client: TestClient,
-):
+) -> None:
     res = stapi_client.get(f"/products/{product_id}/conformance")
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/json"
@@ -59,7 +68,7 @@ def test_product_conformance_response(
 def test_product_queryables_response(
     product_id: str,
     stapi_client: TestClient,
-):
+) -> None:
     res = stapi_client.get(f"/products/{product_id}/queryables")
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/json"
@@ -73,7 +82,7 @@ def test_product_queryables_response(
 def test_product_order_parameters_response(
     product_id: str,
     stapi_client: TestClient,
-):
+) -> None:
     res = stapi_client.get(f"/products/{product_id}/order-parameters")
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/json"
@@ -83,51 +92,50 @@ def test_product_order_parameters_response(
     assert "s3_path" in json_schema["properties"]
 
 
-@pytest.mark.parametrize("limit", [0, 1, 2, 4])
+@pytest.mark.parametrize("limit", [1, 2, 4])
 def test_get_products_pagination(
     limit: int,
     stapi_client: TestClient,
     mock_products: list[Product],
-):
-    expected_returns = []
-    if limit != 0:
-        for product in mock_products:
-            prod = product.model_dump(mode="json", by_alias=True)
-            product_id = prod["id"]
-            prod["links"] = [
-                {
-                    "href": f"http://stapiserver/products/{product_id}",
-                    "rel": "self",
-                    "type": "application/json",
-                },
-                {
-                    "href": f"http://stapiserver/products/{product_id}/conformance",
-                    "rel": "conformance",
-                    "type": "application/json",
-                },
-                {
-                    "href": f"http://stapiserver/products/{product_id}/queryables",
-                    "rel": "queryables",
-                    "type": "application/json",
-                },
-                {
-                    "href": f"http://stapiserver/products/{product_id}/order-parameters",
-                    "rel": "order-parameters",
-                    "type": "application/json",
-                },
-                {
-                    "href": f"http://stapiserver/products/{product_id}/orders",
-                    "rel": "create-order",
-                    "type": "application/json",
-                    "method": "POST",
-                },
-                {
-                    "href": f"http://stapiserver/products/{product_id}/opportunities",
-                    "rel": "opportunities",
-                    "type": "application/json",
-                },
-            ]
-            expected_returns.append(prod)
+) -> None:
+    expected_returns: list[dict[str, Any]] = []
+    for product in mock_products:
+        prod = product.model_dump(mode="json", by_alias=True)
+        product_id = prod["id"]
+        prod["links"] = [
+            {
+                "href": f"http://stapiserver/products/{product_id}",
+                "rel": "self",
+                "type": "application/json",
+            },
+            {
+                "href": f"http://stapiserver/products/{product_id}/conformance",
+                "rel": "conformance",
+                "type": "application/json",
+            },
+            {
+                "href": f"http://stapiserver/products/{product_id}/queryables",
+                "rel": "queryables",
+                "type": "application/json",
+            },
+            {
+                "href": f"http://stapiserver/products/{product_id}/order-parameters",
+                "rel": "order-parameters",
+                "type": "application/json",
+            },
+            {
+                "href": f"http://stapiserver/products/{product_id}/orders",
+                "rel": "create-order",
+                "type": "application/json",
+                "method": "POST",
+            },
+            {
+                "href": f"http://stapiserver/products/{product_id}/opportunities",
+                "rel": "opportunities",
+                "type": "application/json",
+            },
+        ]
+        expected_returns.append(prod)
 
     pagination_tester(
         stapi_client=stapi_client,
@@ -145,9 +153,23 @@ def test_token_not_found(stapi_client: TestClient) -> None:
 
 
 @pytest.mark.mock_products([])
-def test_no_products(stapi_client: TestClient):
+def test_no_products(stapi_client: TestClient) -> None:
     res = stapi_client.get("/products")
     body = res.json()
-    print("hold")
     assert res.status_code == status.HTTP_200_OK
     assert len(body["products"]) == 0
+
+
+def _bare_root_router() -> RootRouter:
+    return RootRouter(get_orders=mock_get_orders, get_order=mock_get_order)
+
+
+def test_product_without_geojson_conformance_is_rejected() -> None:
+    """A Product must declare a geojson conformance to say what geometry it takes."""
+    with pytest.raises(ValueError, match="geojson conformance"):
+        _bare_root_router().add_product(product_test_spotlight_no_geojson_conformance)
+
+
+def test_product_with_geojson_conformance_is_accepted() -> None:
+    """The guard rejects only products missing the declaration."""
+    _bare_root_router().add_product(product_test_spotlight_sync_opportunity)

@@ -4,6 +4,7 @@
 import dataclasses
 from dataclasses import dataclass
 
+from stapi_pydantic.conformance import CORE_CONFORMANCE
 from stapi_pydantic.constants import STAPI_VERSION
 
 
@@ -15,7 +16,7 @@ class _All:
 
 @dataclass(frozen=True)
 class _Api(_All):
-    core: str = f"https://stapi.example.com/v{STAPI_VERSION}/core"
+    core: str = CORE_CONFORMANCE
     order_statuses: str = f"https://stapi.example.com/v{STAPI_VERSION}/order-statuses"
     searches_opportunity: str = f"https://stapi.example.com/v{STAPI_VERSION}/searches-opportunity"
     searches_opportunity_statuses: str = f"https://stapi.example.com/v{STAPI_VERSION}/searches-opportunity-statuses"

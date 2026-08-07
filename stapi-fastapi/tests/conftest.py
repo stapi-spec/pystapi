@@ -7,16 +7,14 @@ from urllib.parse import urljoin
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from stapi_fastapi.conformance import API, PRODUCT
+from stapi_fastapi.conformance import API
 from stapi_fastapi.models.product import (
     Product,
 )
 from stapi_fastapi.routers.root_router import RootRouter
-from stapi_pydantic import (
-    Opportunity,
-)
 
 from .backends import (
+    AnyOpportunity,
     mock_get_opportunity_search_record,
     mock_get_opportunity_search_record_statuses,
     mock_get_opportunity_search_records,
@@ -25,6 +23,7 @@ from .backends import (
     mock_get_orders,
 )
 from .shared import (
+    AssertLink,
     InMemoryOpportunityDB,
     InMemoryOrderDB,
     create_mock_opportunity,
@@ -41,9 +40,11 @@ def base_url() -> Iterator[str]:
 
 
 @pytest.fixture
-def mock_products(request) -> list[Product]:
-    if request.node.get_closest_marker("mock_products") is not None:
-        return request.node.get_closest_marker("mock_products").args[0]
+def mock_products(request: pytest.FixtureRequest) -> list[Product]:
+    marker = request.node.get_closest_marker("mock_products")
+    if marker is not None:
+        marked_products: list[Product] = marker.args[0]
+        return marked_products
     return [
         product_test_spotlight_sync_opportunity,
         product_test_satellite_provider_sync_opportunity,
@@ -51,15 +52,33 @@ def mock_products(request) -> list[Product]:
 
 
 @pytest.fixture
-def mock_opportunities() -> list[Opportunity]:
+def mock_opportunities() -> list[AnyOpportunity]:
     return [create_mock_opportunity()]
+
+
+@pytest.fixture
+def root_router_kwargs(request: pytest.FixtureRequest) -> dict[str, Any]:
+    """Per-test overrides for the RootRouter the client fixtures build.
+
+    Mark a test with `@pytest.mark.root_router_kwargs({...})` to add or replace
+    router arguments; pass None for a backend to withhold it, which is how a
+    capability is turned off.
+    """
+    marker = request.node.get_closest_marker("root_router_kwargs")
+    return dict(marker.args[0]) if marker is not None else {}
+
+
+def _root_router(overrides: dict[str, Any], **defaults: Any) -> RootRouter:
+    kwargs = {**defaults, **overrides}
+    return RootRouter(**{k: v for k, v in kwargs.items() if v is not None})
 
 
 @pytest.fixture
 def stapi_client(
     mock_products: list[Product],
     base_url: str,
-    mock_opportunities: list[Opportunity],
+    mock_opportunities: list[AnyOpportunity],
+    root_router_kwargs: dict[str, Any],
 ) -> Generator[TestClient, None, None]:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, Any]]:
@@ -71,7 +90,8 @@ def stapi_client(
         finally:
             pass
 
-    root_router = RootRouter(
+    root_router = _root_router(
+        root_router_kwargs,
         get_orders=mock_get_orders,
         get_order=mock_get_order,
         get_order_statuses=mock_get_order_statuses,
@@ -79,7 +99,6 @@ def stapi_client(
     )
 
     for mock_product in mock_products:
-        mock_product.conformsTo = [PRODUCT.opportunities, PRODUCT.opportunities_async, PRODUCT.geojson_point]
         root_router.add_product(mock_product)
 
     app = FastAPI(lifespan=lifespan)
@@ -93,7 +112,8 @@ def stapi_client(
 def stapi_client_async_opportunity(
     mock_products: list[Product],
     base_url: str,
-    mock_opportunities: list[Opportunity],
+    mock_opportunities: list[AnyOpportunity],
+    root_router_kwargs: dict[str, Any],
 ) -> Generator[TestClient, None, None]:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, Any]]:
@@ -106,7 +126,8 @@ def stapi_client_async_opportunity(
         finally:
             pass
 
-    root_router = RootRouter(
+    root_router = _root_router(
+        root_router_kwargs,
         get_orders=mock_get_orders,
         get_order=mock_get_order,
         get_order_statuses=mock_get_order_statuses,
@@ -121,7 +142,6 @@ def stapi_client_async_opportunity(
     )
 
     for mock_product in mock_products:
-        mock_product.conformsTo = [PRODUCT.opportunities, PRODUCT.opportunities_async, PRODUCT.geojson_point]
         root_router.add_product(mock_product)
 
     app = FastAPI(lifespan=lifespan)
@@ -143,7 +163,7 @@ def url_for(base_url: str) -> Iterator[Callable[[str], str]]:
 
 
 @pytest.fixture
-def assert_link(url_for) -> Callable:
+def assert_link(url_for: Callable[[str], str]) -> AssertLink:
     def _assert_link(
         req: str,
         body: dict[str, Any],
@@ -151,7 +171,7 @@ def assert_link(url_for) -> Callable:
         path: str,
         media_type: str = "application/json",
         method: str | None = None,
-    ):
+    ) -> None:
         link = find_link(body["links"], rel)
         assert link, f"{req} Link[rel={rel}] should exist"
         assert link["type"] == media_type
@@ -168,7 +188,7 @@ def limit() -> int:
 
 
 @pytest.fixture
-def opportunity_search(limit) -> dict[str, Any]:
+def opportunity_search(limit: int) -> dict[str, Any]:
     now = datetime.now(UTC)
     end = now + timedelta(days=5)
     format = "%Y-%m-%dT%H:%M:%S.%f%z"
@@ -176,17 +196,19 @@ def opportunity_search(limit) -> dict[str, Any]:
     end_string = rfc3339_strftime(end, format)
 
     return {
-        "geometry": {
-            "type": "Point",
-            "coordinates": [0, 0],
-        },
-        "datetime": f"{start_string}/{end_string}",
-        "filter": {
-            "op": "and",
-            "args": [
-                {"op": ">", "args": [{"property": "off_nadir"}, 0]},
-                {"op": "<", "args": [{"property": "off_nadir"}, 45]},
-            ],
+        "search_parameters": {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [0, 0],
+            },
+            "datetime": f"{start_string}/{end_string}",
+            "filter": {
+                "op": "and",
+                "args": [
+                    {"op": ">", "args": [{"property": "off_nadir"}, 0]},
+                    {"op": "<", "args": [{"property": "off_nadir"}, 45]},
+                ],
+            },
         },
         "limit": limit,
     }

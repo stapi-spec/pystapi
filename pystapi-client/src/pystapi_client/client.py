@@ -11,15 +11,18 @@ from httpx._types import TimeoutTypes
 from pydantic import AnyUrl
 from stapi_pydantic import (
     CQL2Filter,
+    Geometry,
     Link,
     Opportunity,
     OpportunityCollection,
-    OpportunityPayload,
+    OpportunityProperties,
+    OpportunityRequest,
     Order,
     OrderCollection,
-    OrderPayload,
+    OrderParameters,
+    OrderRequest,
     Product,
-    ProductsCollection,
+    ProductCollection,
 )
 
 from pystapi_client.conformance import ConformanceClasses
@@ -257,13 +260,52 @@ class Client:
 
         return any(re.match(conformance_class.pattern, uri) for uri in self.get_conforms_to())
 
-    def _supports_opportunities(self) -> bool:
-        """Check if the API supports opportunities"""
-        return self.has_conformance(ConformanceClasses.OPPORTUNITIES)
+    def _product_has_conformance(
+        self,
+        product: str | Product,
+        conformance_class: ConformanceClasses,
+    ) -> bool:
+        """Check whether a Product advertises the given conformance class.
 
-    def _supports_async_opportunities(self) -> bool:
-        """Check if the API supports asynchronous opportunities"""
-        return self.has_conformance(ConformanceClasses.ASYNC_OPPORTUNITIES)
+        Opportunity capability classes are advertised per-Product, not in the
+        root landing page.
+
+        Args:
+            product: A Product ID or an already-fetched
+                :class:`~stapi_pydantic.Product`. If an ID is given the Product
+                is fetched from the API.
+            conformance_class: The conformance class to check for.
+
+        Return:
+            Whether the Product conforms to the given class.
+        """
+        if isinstance(product, str):
+            product = self.get_product(product)
+        return any(re.match(conformance_class.pattern, uri) for uri in product.conforms_to)
+
+    def product_supports_opportunities(self, product: str | Product) -> bool:
+        """Check if a Product supports synchronous opportunity search.
+
+        Args:
+            product: A Product ID or an already-fetched
+                :class:`~stapi_pydantic.Product`.
+
+        Return:
+            Whether the Product supports synchronous opportunity search.
+        """
+        return self._product_has_conformance(product, ConformanceClasses.OPPORTUNITIES)
+
+    def product_supports_async_opportunities(self, product: str | Product) -> bool:
+        """Check if a Product supports asynchronous opportunity search.
+
+        Args:
+            product: A Product ID or an already-fetched
+                :class:`~stapi_pydantic.Product`.
+
+        Return:
+            Whether the Product supports asynchronous opportunity search.
+        """
+        return self._product_has_conformance(product, ConformanceClasses.ASYNC_OPPORTUNITIES)
 
     def get_products(self, limit: int | None = None) -> Iterator[Product]:
         """Get all products from this STAPI API
@@ -282,7 +324,7 @@ class Client:
 
         products_collection_iterator = self.stapi_io.get_pages(link=products_link, lookup_key="products")
         for products_collection in products_collection_iterator:
-            yield from ProductsCollection.model_validate(products_collection).products
+            yield from ProductCollection.model_validate(products_collection).products
 
     def get_product(self, product_id: str) -> Product:
         """Get a single product from this STAPI API
@@ -302,10 +344,9 @@ class Client:
         product_id: str,
         date_range: tuple[str, str],
         geometry: dict[str, Any],
-        cql2_filter: CQL2Filter | None = None,  # type: ignore[type-arg]
+        cql2_filter: CQL2Filter | None = None,
         limit: int = 10,
-    ) -> Iterator[Opportunity]:  # type: ignore[type-arg]
-        # TODO Update return type after the pydantic model generic type is fixed
+    ) -> Iterator[Opportunity[Geometry, OpportunityProperties]]:
         """Get all opportunities for a product from this STAPI API
         Args:
             product_id: The Product ID to get opportunities for
@@ -316,14 +357,16 @@ class Client:
         """
         product_opportunities_endpoint = self._get_products_href(product_id, subpath="opportunities")
 
-        opportunity_parameters = OpportunityPayload.model_validate(
+        opportunity_parameters = OpportunityRequest.model_validate(
             {
-                "datetime": (
-                    datetime.fromisoformat(date_range[0]),
-                    datetime.fromisoformat(date_range[1]),
-                ),
-                "geometry": geometry,
-                "filter": cql2_filter,
+                "search_parameters": {
+                    "datetime": (
+                        datetime.fromisoformat(date_range[0]),
+                        datetime.fromisoformat(date_range[1]),
+                    ),
+                    "geometry": geometry,
+                    "filter": cql2_filter,
+                },
                 "limit": limit,
             }
         )
@@ -348,8 +391,7 @@ class Client:
         for opportunity_collection in product_opportunities_json:
             yield from OpportunityCollection.model_validate(opportunity_collection).features
 
-    def create_product_order(self, product_id: str, order_parameters: OrderPayload) -> Order:  # type: ignore[type-arg]
-        # TODO Update return type after the pydantic model generic type is fixed
+    def create_product_order(self, product_id: str, order_parameters: OrderRequest[OrderParameters]) -> Order:
         """Create an order for a product
 
         Args:
@@ -393,8 +435,7 @@ class Client:
 
         return str(product_url)
 
-    def get_orders(self, limit: int | None = None) -> Iterator[Order]:  # type: ignore[type-arg]
-        # TODO Update return type after the pydantic model generic type is fixed
+    def get_orders(self, limit: int | None = None) -> Iterator[Order]:
         """Get orders from this STAPI API
 
         Args:
@@ -416,8 +457,7 @@ class Client:
         for orders_collection in orders_collection_iterator:
             yield from OrderCollection.model_validate(orders_collection).features
 
-    def get_order(self, order_id: str) -> Order:  # type: ignore[type-arg]
-        # TODO Update return type after the pydantic model generic type is fixed
+    def get_order(self, order_id: str) -> Order:
         """Get a single order from this STAPI API
 
         Args:

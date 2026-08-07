@@ -1,36 +1,52 @@
 from __future__ import annotations
 
 import datetime
-from collections.abc import Iterator
 from enum import StrEnum
-from typing import Any, Generic, Literal, TypeVar
+from typing import Annotated, Any, Generic, Literal, Self, TypeVar, cast
 
-from geojson_pydantic.base import _GeoJsonBase
-from geojson_pydantic.geometries import Geometry
+from geojson_pydantic import Feature, FeatureCollection
 from pydantic import (
     AwareDatetime,
     BaseModel,
     ConfigDict,
     Field,
     StrictStr,
-    field_validator,
 )
+from typing_extensions import TypeVar as DefaultTypeVar
 
 from .constants import STAPI_VERSION
-from .datetime_interval import DatetimeInterval
-from .filter import CQL2Filter
-from .opportunity import OpportunityProperties
-from .shared import Link
+from .geometry import Geometry
+from .search_parameters import SearchParameters
+from .shared import (
+    STAPI_RESPONSE_CONFIG,
+    STAPI_RESPONSE_CONFIG_ALLOW_EXTRA,
+    UNSET_BBOX,
+    ComputedBBox,
+    DerivedCollectionBBox,
+    DerivedItemBBox,
+    Link,
+    NumberMatched,
+    OptionalBBox,
+    StapiGenericModel,
+    omitted_when_none,
+)
 
-Props = TypeVar("Props", bound=dict[str, Any] | BaseModel)
-Geom = TypeVar("Geom", bound=Geometry)
+
+class BaseOrderParameters(BaseModel):
+    """Minimum-expectations type for order parameters at rest.
+
+    Permissive so stored parameters from any product round-trip.
+    """
+
+    model_config = ConfigDict(extra="allow")
 
 
-class OrderParameters(BaseModel):
+class OrderParameters(BaseOrderParameters):
+    """Boundary base for product-specific order parameters (strict)."""
+
     model_config = ConfigDict(extra="forbid")
 
 
-OPP = TypeVar("OPP", bound=OpportunityProperties)
 ORP = TypeVar("ORP", bound=OrderParameters)
 
 
@@ -50,57 +66,79 @@ class OrderStatusCode(StrEnum):
     failed = "failed"
 
 
-class OrderStatus(BaseModel):
+AnyOrderStatusCode = Annotated[OrderStatusCode | str, Field(union_mode="left_to_right")]
+
+StatusCode = DefaultTypeVar("StatusCode", bound=str, default=AnyOrderStatusCode)
+
+
+class OrderStatus(StapiGenericModel, Generic[StatusCode]):
+    """An order status; parameterize with a StrEnum (``OrderStatus[MyCodes]``)
+    to constrain status_code to an implementation-defined set."""
+
     timestamp: AwareDatetime
-    status_code: OrderStatusCode
-    reason_code: str | None = None
-    reason_text: str | None = None
+    status_code: StatusCode
+    reason_code: str | None = omitted_when_none()
+    reason_text: str | None = omitted_when_none()
     links: list[Link] = Field(default_factory=list)
 
-    model_config = ConfigDict(extra="allow")
+    model_config = STAPI_RESPONSE_CONFIG_ALLOW_EXTRA
 
     @classmethod
     def new(
-        cls, status_code: OrderStatusCode, reason_code: str | None = None, reason_text: str | None = None
-    ) -> OrderStatus:
+        cls, status_code: OrderStatusCode | str, reason_code: str | None = None, reason_text: str | None = None
+    ) -> Self:
         """Creates a new order status with timestamp set to now in UTC."""
-        return OrderStatus(
+        return cls(
             timestamp=datetime.datetime.now(tz=datetime.UTC),
-            status_code=status_code,
+            # the accepted codes are whatever cls was parameterized with, which
+            # the signature can't name; validation enforces it.
+            status_code=cast(StatusCode, status_code),
             reason_code=reason_code,
             reason_text=reason_text,
         )
 
 
-T = TypeVar("T", bound=OrderStatus)
+# Defaulted so an unparameterized Order resolves to OrderStatus itself rather
+# than the bound OrderStatus[Any], which would emit a second, unconstrained
+# OrderStatus schema.
+T = DefaultTypeVar("T", bound=OrderStatus[Any], default=OrderStatus)
 
 
-class OrderStatuses(BaseModel, Generic[T]):
+class OrderStatusCollection(StapiGenericModel, Generic[T]):
+    model_config = STAPI_RESPONSE_CONFIG
+
+    stapi_type: Literal["OrderStatusCollection"] = "OrderStatusCollection"
+    stapi_version: str = STAPI_VERSION
     statuses: list[T]
     links: list[Link] = Field(default_factory=list)
+    number_matched: NumberMatched = None
 
 
-class OrderSearchParameters(BaseModel):
-    datetime: DatetimeInterval
-    geometry: Geometry
-    # TODO: validate the CQL2 filter?
-    filter: CQL2Filter | None = None  # type: ignore [type-arg]
+class StoredOrderRequest(BaseModel):
+    """Stored form of an Order Request within Order properties.
+
+    order_parameters is typed as BaseOrderParameters because a persisted order
+    can no longer be validated against a product's strict OrderParameters model.
+    """
+
+    model_config = STAPI_RESPONSE_CONFIG_ALLOW_EXTRA
+
+    search_parameters: SearchParameters
+    order_parameters: BaseOrderParameters = Field(default_factory=BaseOrderParameters)
 
 
-class OrderProperties(BaseModel, Generic[T]):
+class OrderProperties(StapiGenericModel, Generic[T]):
+    model_config = STAPI_RESPONSE_CONFIG_ALLOW_EXTRA
+
     product_id: str
     created: AwareDatetime
     status: T
-
-    search_parameters: OrderSearchParameters
-    opportunity_properties: dict[str, Any]
-    order_parameters: dict[str, Any]
-
-    model_config = ConfigDict(extra="allow")
+    order_request: StoredOrderRequest
 
 
-# derived from geojson_pydantic.Feature
-class Order(_GeoJsonBase, Generic[T]):
+class Order(Feature[Geometry, OrderProperties[T]], StapiGenericModel, DerivedItemBBox, Generic[T]):
+    model_config = STAPI_RESPONSE_CONFIG
+
     # We need to enforce that orders have an id defined, as that is required to
     # retrieve them via the API
     id: StrictStr
@@ -109,49 +147,31 @@ class Order(_GeoJsonBase, Generic[T]):
     stapi_version: str = STAPI_VERSION
 
     geometry: Geometry = Field(...)
+    bbox: ComputedBBox = UNSET_BBOX
     properties: OrderProperties[T] = Field(...)
 
     links: list[Link] = Field(default_factory=list)
 
-    __geojson_exclude_if_none__ = {"bbox", "id"}
 
-    @field_validator("geometry", mode="before")
-    def set_geometry(cls, geometry: Any) -> Any:
-        """set geometry from geo interface or input"""
-        if hasattr(geometry, "__geo_interface__"):
-            return geometry.__geo_interface__
+class OrderCollection(FeatureCollection[Order[T]], StapiGenericModel, DerivedCollectionBBox, Generic[T]):
+    model_config = STAPI_RESPONSE_CONFIG
 
-        return geometry
-
-
-# derived from geojson_pydantic.FeatureCollection
-class OrderCollection(_GeoJsonBase, Generic[T]):
     type: Literal["FeatureCollection"] = "FeatureCollection"
-    features: list[Order[T]]
+    stapi_type: Literal["OrderCollection"] = "OrderCollection"
+    stapi_version: str = STAPI_VERSION
+    bbox: OptionalBBox = None
     links: list[Link] = Field(default_factory=list)
-    number_matched: int | None = Field(
-        serialization_alias="numberMatched", default=None, exclude_if=lambda x: x is None
-    )
-
-    def __iter__(self) -> Iterator[Order[T]]:  # type: ignore [override]
-        """iterate over features"""
-        return iter(self.features)
-
-    def __len__(self) -> int:
-        """return features length"""
-        return len(self.features)
-
-    def __getitem__(self, index: int) -> Order[T]:
-        """get feature at a given index"""
-        return self.features[index]
+    number_matched: NumberMatched = None
 
 
-class OrderPayload(BaseModel, Generic[ORP]):
-    datetime: DatetimeInterval = Field(examples=["2018-02-12T00:00:00Z/2018-03-18T12:31:12Z"])
-    geometry: Geometry
-    # TODO: validate the CQL2 filter?
-    filter: CQL2Filter | None = None  # type: ignore [type-arg]
+class OrderRequest(StapiGenericModel, Generic[ORP]):
+    """STAPI Order Request Object.
 
-    order_parameters: ORP
+    An omitted order_parameters is equivalent to an empty object, so products
+    with required order parameters make the field effectively required.
+    """
+
+    search_parameters: SearchParameters
+    order_parameters: ORP = Field(default_factory=dict, validate_default=True)
 
     model_config = ConfigDict(strict=True)

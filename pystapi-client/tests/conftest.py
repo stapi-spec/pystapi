@@ -14,7 +14,7 @@ WORKING_DIR = Path(__file__).parent
 
 def load_fixture(name: str) -> dict[str, Any]:
     with open(WORKING_DIR / "fixtures" / f"{name}.json") as f:
-        return cast(dict, json.load(f))
+        return cast(dict[str, Any], json.load(f))
 
 
 @pytest.fixture
@@ -37,7 +37,9 @@ def api() -> Iterator[MockRouter]:
                 start_index = (page - 1) * int(limit)
                 end_index = start_index + int(limit)
                 products_limited["products"] = products_limited["products"][start_index:end_index]
-                has_next_page = end_index < len(products_limited["products"]) + 1
+                # `products` is the whole fixture; `products_limited` has already
+                # been sliced down to this page
+                has_next_page = end_index < len(products["products"])
                 if has_next_page:
                     products_limited["links"].append(
                         {
@@ -50,5 +52,8 @@ def api() -> Iterator[MockRouter]:
 
         respx_mock.get("/products").mock(side_effect=mock_products_response)
         respx_mock.get("/products", params={"limit": 1}).mock(side_effect=mock_products_response)
+
+        for product in products["products"]:
+            respx_mock.get(f"/products/{product['id']}").return_value = Response(200, json=product)
 
         yield respx_mock

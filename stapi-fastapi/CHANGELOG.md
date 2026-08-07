@@ -4,6 +4,141 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-08-07
+
+The routers implement STAPI v0.2.0. This is a breaking release for anyone implementing a backend, generating a client, or calling the API: the backend protocols, the request bodies, and the published OpenAPI document all changed. Every item that will break existing code is marked **BREAKING** and says what to do about it.
+
+The request and response models come from stapi-pydantic 0.2.0. The model-level changes you have to make are repeated below so that everything a stapi-fastapi upgrade requires is in one place; [the stapi-pydantic changelog](../stapi-pydantic/CHANGELOG.md) has the full detail and the rationale for each.
+
+### Migrating
+
+If you implement a backend:
+
+1. Return a `Page` from every list backend. The token and total move out of the tuple and into fields.
+
+   | Backend | Before | After |
+   | --- | --- | --- |
+   | `GetOrders` | `tuple[list[Order], Maybe[str], Maybe[int]]` | `Page[Order]` |
+   | `GetOrderStatuses` | `Maybe[tuple[list[OrderStatus], Maybe[str]]]` | `Maybe[Page[OrderStatus]]` |
+   | `SearchOpportunities` | `tuple[list[Opportunity], Maybe[str]]` | `Page[Opportunity]` |
+   | `GetOpportunitySearchRecords` | `tuple[list[OpportunitySearchRecord], Maybe[str]]` | `Page[OpportunitySearchRecord]` |
+   | `GetOpportunitySearchRecordStatuses` | `Maybe[list[OpportunitySearchStatus]]` | `Maybe[Page[OpportunitySearchStatus]]` |
+   | `GetOpportunityCollection` | `Maybe[OpportunityCollection]` | `Maybe[Page[Opportunity]]` |
+
+   ```python
+   # before
+   return Success((orders, Some(token), Some(total)))
+   # after
+   return Success(Page(items=orders, next_token=Some(token), number_matched=Some(total)))
+   ```
+
+   `GetOpportunityCollection` no longer builds the collection: return the opportunities and any collection-level links, and the handler sets the collection's `id` and its `self`/`next` links.
+
+2. Accept `next` and `limit` in `GetOpportunitySearchRecordStatuses` and `GetOpportunityCollection`, which are now paginated.
+
+3. Return `PaginationTokenError` inside a `Failure` when a pagination token identifies no page. A bare `ValueError` is no longer read as a missing page, so an incidental one is now correctly a 500 rather than a 404.
+
+4. Pass camelCase keywords to `url_for`: `orderId=`, `searchRecordId=`, `opportunityCollectionId=`. Request URLs are unchanged; only the parameter names are.
+
+5. Rename `GET_OPPORTUNITY_SEARCH_RECORD_STATUSES` to `LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES`, and `ProductRouter.pagination_link` to `search_pagination_link`.
+
+6. Declare `summary`, `tag` and `errors` on any `Route` you register yourself. `errors` is the set of error responses that route can actually produce, e.g. `errors=NOT_FOUND | SERVER_ERROR`, or `{}` for a route that produces none.
+
+7. Register each product id once. `RootRouter.add_product` now raises on a duplicate rather than silently leaving the first product's routes serving.
+
+8. Depend directly on `httpx`, `pygeofilter`, `nox`, `pydantic-settings` or `uvicorn` if your application imports them. They are no longer runtime dependencies of this library.
+
+If you use the models directly (from stapi-pydantic 0.2.0):
+
+1. Rename the classes that moved. The pre-0.2.0 compatibility aliases are gone, so these are import errors rather than deprecation warnings.
+
+   | Before | After |
+   | --- | --- |
+   | `OrderPayload` | `OrderRequest` |
+   | `OpportunityPayload` | `OpportunityRequest` |
+   | `OrderSearchParameters` | `SearchParameters` |
+   | `OrderStatuses` | `OrderStatusCollection` |
+   | `OpportunitySearchRecords` | `OpportunitySearchRecordCollection` |
+   | `ProductsCollection` | `ProductCollection` |
+
+2. Nest search parameters inside requests: `OpportunityRequest(search_parameters=SearchParameters(...))` in place of top-level `datetime`, `geometry` and `filter`.
+
+3. Follow the fields that moved on response entities.
+
+   | Before | After |
+   | --- | --- |
+   | `OrderProperties.search_parameters`, `.opportunity_properties`, `.order_parameters` | `OrderProperties.order_request` (a `StoredOrderRequest`) |
+   | `OpportunitySearchRecord.opportunity_request` | `OpportunitySearchRecord.search_parameters` |
+   | `OpportunitySearchRecordCollection.search_records` | `.records` |
+
+4. Rename `conformsTo` to `conforms_to` where you construct or read `Product` and `RootResponse` in Python, and replace `JsonSchemaModel` with `JsonSchema.from_model(YourModel)`.
+
+5. Iterate collections with `collection.iter()` and `collection.length`; supply `Product.description`, which is now required; and handle a plain `str` from `status_code`, or parameterize with your own `StrEnum` (`OrderStatus[MyCodes]`).
+
+6. Switch to `BoundedDatetimeInterval` anywhere you relied on both ends of an interval being present, and import `geojson_pydantic.geometries.Geometry` directly if you need `GeometryCollection`.
+
+If you call the API or generate a client:
+
+1. Nest request bodies. `POST /products/{productId}/opportunities` and `POST /products/{productId}/orders` take a `search_parameters` object in place of top-level `datetime`, `geometry` and `filter`; `order_parameters` is optional.
+
+2. Regenerate clients. Path parameters are camelCase, every `operationId` changed, and parameterized component names are now readable rather than 200-character reprs, so a client generated against 0.8.x binds to names that no longer exist.
+
+3. Expect a 422 for a `limit` below 1 (an over-large one is clamped, not rejected), a 400 (was 422) when a required queryable has no filter predicate, and the `search-records` rel on the landing page in place of `opportunity-search-records`.
+
+### Added
+
+- `Route`, a declarative route descriptor, with `Route.to_api_route()` returning the keyword arguments for FastAPI's own `add_api_route`, and `StapiFastapiBaseRouter.register_route()` handing them over. `Route` requires a `summary`, a `tag` (the new `Tag` enum) and an `errors` set, so an operation cannot be published without a title, a heading, or an accurate statement of how it can fail.
+- `Page`, exported from `stapi_fastapi`, is the one shape every list backend returns. It carries `items`, a `next_token`, an optional `number_matched`, and any collection-level `links` only the backend can know (e.g. `create-order` on a stored Opportunity Collection).
+- Pagination on `GET /searches/opportunities/{searchRecordId}/statuses` and `GET /products/{productId}/opportunities/{opportunityCollectionId}`, which previously published neither `next` nor `limit` because their backends had nothing to paginate.
+- `RootRouter.supports_order_statuses` and `RootRouter.supports_opportunity_search_record_statuses`, reporting whether those endpoints are registered.
+- `RootRouter.opportunity_search_record_links()`, which adds a `monitor` link to a search record when the statuses endpoint is registered.
+- `Product.validate_required_queryables()`, which rejects a search or order whose filter omits a predicate for a queryable the product requires.
+- `PaginationTokenError`, which a backend returns inside a `Failure` when a pagination token identifies no page. The handler answers it with a 404.
+- `numberMatched` is populated on every collection response the backend can count, including `GET /products`.
+- `stapi_fastapi.query_params` provides the shared `Limit` and `NextToken` annotations and `DEFAULT_LIMIT`, so every paginated endpoint validates identically and publishes its bounds.
+- `stapi_fastapi.path_params` provides the camelCase path parameter annotations.
+- `Responses` type alias for the response-declaration mapping, and `BAD_REQUEST` / `NOT_FOUND` / `SERVER_ERROR` to compose an `errors` set from, e.g. `errors=NOT_FOUND | SERVER_ERROR`.
+- Every route declares its 400 and 404 responses. 404 was raised from nine places and declared nowhere; 400 likewise.
+- The opportunity search declares the `Preference-Applied` response header on both its 200 and 201 responses, and `Location` headers are documented on order creation and on async opportunity search.
+- Operation summaries on the six routes that had none, where FastAPI was deriving titles like `Root:List-Orders` from route names.
+
+### Changed
+
+- **BREAKING** A request that omits a predicate for a required queryable is answered with 400 rather than 422, since it is a malformed request rather than an unprocessable one. `QueryablesError` carries the new status.
+- **BREAKING** `GetOpportunitySearchRecordStatuses` and `GetOpportunityCollection` gained `next` and `limit` parameters. `GetOpportunitySearchRecordStatuses` returned `Maybe[list[OpportunitySearchStatus]]` and now returns `Maybe[Page[OpportunitySearchStatus]]`; the endpoint answers with an `OpportunitySearchStatusCollection` rather than a bare JSON array, so it can carry links and a total like every other collection. `GetOpportunityCollection` returned `Maybe[OpportunityCollection]` and now returns `Maybe[Page[Opportunity]]`; the handler assembles the collection, setting its `id` from the path and its `self`/`next` links, so a backend returns only the opportunities plus any collection-level links.
+- **BREAKING** Every list backend must now return a `Page`. `GetOrders` returned `tuple[list[Order], Maybe[str], Maybe[int]]`, `SearchOpportunities` and `GetOpportunitySearchRecords` returned `tuple[list[...], Maybe[str]]`, and `GetOrderStatuses` returned `Maybe[tuple[list[...], Maybe[str]]]`. All now return `Page` (wrapped in `Maybe` where they were before): put the items in `Page.items`, the pagination token in `Page.next_token`, and the total in `Page.number_matched`.
+- **BREAKING** A `limit` below 1 is rejected with a 422 instead of being silently accepted, on every paginated endpoint and in the opportunity search body. Previously the 100-item cap was applied only to `GET /products`, `limit=0` dead-ended paging, and a negative limit silently truncated the result set with no `next` link. An over-large `limit` is clamped rather than rejected: the spec makes it what the client asks for, not what the server owes, and publishes no maximum -- so neither does the document.
+- **BREAKING** Path parameters are camelCase in the routes and in the exported OpenAPI document: `{orderId}`, `{searchRecordId}`, and `{opportunityCollectionId}`, joining the existing `{productId}`. Request URLs are unchanged, since path parameter names never appear in them, but generated clients that bind by parameter name need regenerating, and `url_for` calls must pass the camelCase keyword (`url_for(request, name, orderId=...)`, not `order_id=...`).
+- **BREAKING** A route is declared as a `Route` and registered with `StapiFastapiBaseRouter.register_route`, which hands it to FastAPI's own `add_api_route`. `summary`, `tag` and `errors` are required, so a route cannot be registered without saying what it is called, where it is filed, or which errors it can produce. `errors` is deliberately not defaulted: a shared set merged into every route cannot be narrowed, and so published a 404 for the landing page, an endpoint that takes no input and calls no backend.
+- OpenAPI tags come from the route family rather than the owning router: creating an order for a product is filed under Orders, and the opportunity routes under Opportunities, rather than all of them under Products.
+- `Preference-Applied` is sent whenever the request carried a `Prefer` header, as the spec requires. It was previously sent only when the preference was `wait` and the root router supported async search, so a client that asked for a preference the server did not honour was told nothing at all.
+- **BREAKING** The landing page publishes the search records link under the spec's `search-records` rel, not `opportunity-search-records`.
+- An async-only product no longer documents a 200 `OpportunityCollection` it can never return: the search route's response class, status code and model are chosen from what the product actually supports.
+- A product advertises the opportunity conformance classes it is actually served under, rather than whatever it declared. An async-only product mounted on a root router without async support previously advertised classes whose routes were never registered.
+- The root router advertises only the optional conformance classes whose backends were supplied, mirroring what `build_conformances` already did per product. `RootRouter(conformances=...)` now defaults to `None` rather than a fixed list.
+- Conformance lists are sorted, so they no longer vary between processes.
+- The `self` link of a paginated response carries the request's query parameters, so it points at the page that was returned rather than at the first page.
+- **BREAKING** `ProductRouter.pagination_link` is renamed `search_pagination_link`, distinguishing the POST-bodied opportunity search `next` link from the shared query-parameter one, which now lives on the base router.
+- **BREAKING** The `GET_OPPORTUNITY_SEARCH_RECORD_STATUSES` route name constant is renamed `LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES`, matching its sibling list routes, and the registered route name changes with it.
+
+### Fixed
+
+- The opportunity search record statuses endpoint and its conformance class are gated on async opportunity search support, since the search-record endpoints they hang off only exist when async search is supported.
+- `RootRouter.add_product` rejects a product whose id is already registered. `include_router` only appends, so a second product with the same id left the first router's routes serving every request -- they match first -- while `product_routers` pointed at the new one, making the two disagree about what was mounted.
+- A withheld `get_order_statuses` backend is now actually withheld. The gate tested the router's own handler method instead of the backend, so it was always truthy: a server that supplied no backend still advertised the order-statuses conformance class, published `GET /orders/{orderId}/statuses`, and emitted a `monitor` link on every order, then returned a 500 when a client followed it. Every sibling gate was audited and this was the only one wrong.
+- An unusable pagination token is distinguished from an incidental failure. The handlers matched a bare `Failure(ValueError())` and answered 404, so any `ValueError` a backend raised in passing -- an `int()` on unparseable input, an unrelated `list.index` miss -- was reported to the client as a page that does not exist rather than as the server error it was. Backends now return `PaginationTokenError` for a bad token; everything else stays a 500.
+- A collection's `self` and `next` links carry the media type their target serves. `next` was hard-coded to `application/json`, so every geo+json collection published a next link contradicting its own response.
+- A query parameter named `self` no longer fails the request. The raw query params were splatted into `URL.include_query_params` as Python keywords, colliding with that method's own `self`; repeated parameters were also collapsed to the last value.
+- Operations declare only the error responses they can actually produce. A shared set was previously merged into every route and could not be narrowed, so `GET /` and `GET /conformance` published a 404 despite taking no input and calling no backend.
+- `500` is declared. It is returned deliberately when a backend reports failure, so a client has to be prepared for it.
+- Every operation publishes a stable `operationId`, derived from the route's prefixed name so it stays unique across a deployment mounting several products.
+
+### Removed
+
+- `RootRouter.order_statuses_link`. The order statuses response builds its `self` link through the shared `page_links` helper.
+- A duplicate definition of the `LIST_PRODUCTS` route name constant.
+- **BREAKING** The runtime dependencies the library never imported: `httpx`, `pygeofilter`, `nox`, `pydantic-settings`, and `uvicorn`. If your application imports any of these, depend on it directly. `httpx` remains a development dependency, for the test client.
+
 ## [0.8.0] - 2025-12-18
 
 ### Added

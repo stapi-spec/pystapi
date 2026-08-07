@@ -2,20 +2,39 @@
 
 set -e
 
+# Validate the stapi-fastapi test server against an OpenAPI document.
+#
+# The document must be supplied, so that this checks conformance to the spec
+# rather than that an export matches the app it came from.
+#
+# Usage:
+#   scripts/validate-stapi-fastapi <openapi-document>
+
+if [ $# -ne 1 ]; then
+    echo "usage: $0 <openapi-document>" >&2
+    exit 2
+fi
+
+schema=$1
+if [ ! -f "$schema" ]; then
+    echo "$0: no such document: $schema" >&2
+    exit 2
+fi
+
 scripts="$(cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 root=$(dirname "$scripts")
 
 uv run --package stapi-fastapi fastapi dev "$root/stapi-fastapi/tests/application.py" >/dev/null 2>&1 &
 server_pid=$!
+# tolerate the server having already exited: a bare `kill` with no arguments
+# fails, and under `set -e` that would fail a run that passed
+trap 'kill $(pgrep -P "$server_pid") "$server_pid" 2>/dev/null || true' EXIT
 
 set +e
-"$scripts"/wait-for-it.sh localhost:8000 -- test 0 # TODO update to validate
+"$scripts"/wait-for-it.sh localhost:8000 -- \
+    env STAPI_OPENAPI_SCHEMA="$schema" STAPI_BASE_URL="http://localhost:8000" \
+    uv run --package pystapi-validator --directory "$root/pystapi-validator" pytest -q
 result=$?
 set -e
 
-kill $(pgrep -P $server_pid)
-if [ $result ]; then
-    echo "Validated OK!"
-else
-    exit $result
-fi
+exit "$result"

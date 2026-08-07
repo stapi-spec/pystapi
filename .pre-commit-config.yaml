@@ -17,7 +17,7 @@ repos:
 
       - id: mypy
         name: Check typing with mypy
-        entry: uv run mypy
+        entry: ./scripts/run-mypy.sh
         language: system
         types: [python]
         pass_filenames: false

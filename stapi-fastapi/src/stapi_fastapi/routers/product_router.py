@@ -13,18 +13,17 @@ from fastapi import (
     status,
 )
 from fastapi.responses import JSONResponse
-from geojson_pydantic.geometries import Geometry
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
 from stapi_pydantic import (
     Conformance,
-    JsonSchemaModel,
+    Geometry,
+    JsonSchema,
     Link,
     OpportunityCollection,
-    OpportunityPayload,
-    OpportunitySearchRecord,
+    OpportunityRequest,
     Order,
-    OrderPayload,
+    OrderRequest,
     OrderStatus,
     Prefer,
 )
@@ -33,11 +32,20 @@ from stapi_pydantic import (
 )
 
 from stapi_fastapi.conformance import PRODUCT as PRODUCT_CONFORMACES
-from stapi_fastapi.constants import TYPE_JSON
-from stapi_fastapi.errors import NotFoundError, QueryablesError
+from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
+from stapi_fastapi.errors import NotFoundError, PaginationTokenError, QueryablesError
 from stapi_fastapi.models.product import Product
+from stapi_fastapi.path_params import OpportunityCollectionIdPath
+from stapi_fastapi.query_params import DEFAULT_LIMIT, Limit, NextToken, clamp_limit
 from stapi_fastapi.responses import GeoJSONResponse
-from stapi_fastapi.routers.base import StapiFastapiBaseRouter
+from stapi_fastapi.routers.base import (
+    BAD_REQUEST,
+    NOT_FOUND,
+    SERVER_ERROR,
+    Responses,
+    Route,
+    StapiFastapiBaseRouter,
+)
 from stapi_fastapi.routers.route_names import (
     CONFORMANCE,
     CREATE_ORDER,
@@ -46,6 +54,7 @@ from stapi_fastapi.routers.route_names import (
     GET_PRODUCT,
     GET_QUERYABLES,
     SEARCH_OPPORTUNITIES,
+    Tag,
 )
 from stapi_fastapi.routers.utils import json_link
 
@@ -70,24 +79,28 @@ def get_prefer(prefer: str | None = Header(None)) -> str | None:
 
 def build_conformances(product: Product, root_router: RootRouter) -> list[str]:
     # FIXME we can make this check more robust
-    if not any(conformance.startswith("https://geojson.org/schema/") for conformance in product.conformsTo):
+    if not any(conformance.startswith("https://geojson.org/schema/") for conformance in product.conforms_to):
         raise ValueError("product conformance does not contain at least one geojson conformance")
 
-    conformances = set(product.conformsTo)
+    # The opportunity conformance classes are derived from what this router
+    # actually serves: an async-only product mounted on a root router without
+    # async support gets no opportunity routes, so declaring them is not enough.
+    conformances = set(product.conforms_to) - {
+        PRODUCT_CONFORMACES.opportunities,
+        PRODUCT_CONFORMACES.opportunities_async,
+    }
 
     if product.supports_opportunity_search:
         conformances.add(PRODUCT_CONFORMACES.opportunities)
 
     if product.supports_async_opportunity_search and root_router.supports_async_opportunity_search:
-        conformances.add(PRODUCT_CONFORMACES.opportunities)
         conformances.add(PRODUCT_CONFORMACES.opportunities_async)
 
-    return list(conformances)
+    return sorted(conformances)
 
 
 class ProductRouter(StapiFastapiBaseRouter):
-    # FIXME ruff is complaining that the init is too complex
-    def __init__(  # noqa
+    def __init__(
         self,
         product: Product,
         root_router: RootRouter,
@@ -98,42 +111,48 @@ class ProductRouter(StapiFastapiBaseRouter):
 
         self.product = product
         self.root_router = root_router
+        self.route_name_prefix = (root_router.name, product.id)
         self.conformances = build_conformances(product, root_router)
 
-        self.add_api_route(
-            path="",
-            endpoint=self.get_product,
-            name=f"{self.root_router.name}:{self.product.id}:{GET_PRODUCT}",
-            methods=["GET"],
-            summary="Retrieve this product",
-            tags=["Products"],
+        self.register_route(
+            Route(
+                name=GET_PRODUCT,
+                tag=Tag.PRODUCTS,
+                path="",
+                endpoint=self.get_product,
+                errors={},
+                summary="Retrieve this product",
+            )
         )
-
-        self.add_api_route(
-            path="/conformance",
-            endpoint=self.get_product_conformance,
-            name=f"{self.root_router.name}:{self.product.id}:{CONFORMANCE}",
-            methods=["GET"],
-            summary="Get conformance urls for the product",
-            tags=["Products"],
+        self.register_route(
+            Route(
+                name=CONFORMANCE,
+                tag=Tag.CONFORMANCE,
+                path="/conformance",
+                endpoint=self.get_product_conformance,
+                errors={},
+                summary="Get conformance urls for the product",
+            )
         )
-
-        self.add_api_route(
-            path="/queryables",
-            endpoint=self.get_product_queryables,
-            name=f"{self.root_router.name}:{self.product.id}:{GET_QUERYABLES}",
-            methods=["GET"],
-            summary="Get queryables for the product",
-            tags=["Products"],
+        self.register_route(
+            Route(
+                name=GET_QUERYABLES,
+                tag=Tag.PRODUCTS,
+                path="/queryables",
+                endpoint=self.get_product_queryables,
+                errors={},
+                summary="Get queryables for the product",
+            )
         )
-
-        self.add_api_route(
-            path="/order-parameters",
-            endpoint=self.get_product_order_parameters,
-            name=f"{self.root_router.name}:{self.product.id}:{GET_ORDER_PARAMETERS}",
-            methods=["GET"],
-            summary="Get order parameters for the product",
-            tags=["Products"],
+        self.register_route(
+            Route(
+                name=GET_ORDER_PARAMETERS,
+                tag=Tag.PRODUCTS,
+                path="/order-parameters",
+                endpoint=self.get_product_order_parameters,
+                errors={},
+                summary="Get order parameters for the product",
+            )
         )
 
         # This wraps `self.create_order` to explicitly parameterize `OrderRequest`
@@ -144,75 +163,124 @@ class ProductRouter(StapiFastapiBaseRouter):
         # the annotation on every `ProductRouter` instance's `create_order`, not just
         # this one's.
         async def _create_order(
-            payload: OrderPayload,  # type: ignore
+            payload: OrderRequest,  # type: ignore
             request: Request,
             response: Response,
         ) -> Order[OrderStatus]:
             return await self.create_order(payload, request, response)
 
-        _create_order.__annotations__["payload"] = OrderPayload[
+        _create_order.__annotations__["payload"] = OrderRequest[
             self.product.order_parameters  # type: ignore
         ]
 
-        self.add_api_route(
-            path="/orders",
-            endpoint=_create_order,
-            name=f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}",
-            methods=["POST"],
-            response_class=GeoJSONResponse,
-            status_code=status.HTTP_201_CREATED,
-            summary="Create an order for the product",
-            tags=["Products"],
-        )
-
-        if product.supports_opportunity_search or (
-            self.product.supports_async_opportunity_search and self.root_router.supports_async_opportunity_search
-        ):
-            self.add_api_route(
-                path="/opportunities",
-                endpoint=self.search_opportunities,
-                name=f"{self.root_router.name}:{self.product.id}:{SEARCH_OPPORTUNITIES}",
-                methods=["POST"],
+        self.register_route(
+            Route(
+                name=CREATE_ORDER,
+                tag=Tag.ORDERS,
+                path="/orders",
+                endpoint=_create_order,
+                errors=BAD_REQUEST | SERVER_ERROR,
+                summary="Create an order for the product",
+                methods=("POST",),
                 response_class=GeoJSONResponse,
-                # unknown why mypy can't see the queryables property on Product, ignoring
-                response_model=OpportunityCollection[
-                    Geometry,
-                    self.product.opportunity_properties,  # type: ignore
-                ],
+                status_code=status.HTTP_201_CREATED,
                 responses={
                     201: {
-                        "model": OpportunitySearchRecord,
-                        "content": {TYPE_JSON: {}},
-                    }
+                        "headers": {
+                            "Location": {
+                                "description": "URL of the created Order.",
+                                "schema": {"type": "string", "format": "uri"},
+                            },
+                        },
+                    },
                 },
-                summary="Search Opportunities for the product",
-                tags=["Products"],
+            )
+        )
+
+        supports_async = (
+            self.product.supports_async_opportunity_search and self.root_router.supports_async_opportunity_search
+        )
+        if product.supports_opportunity_search or supports_async:
+            preference_applied = {
+                "Preference-Applied": {
+                    "description": (
+                        "Which preference the server applied, sent whenever the request "
+                        "carried a `Prefer` header. It may differ from the requested "
+                        "preference when the Product cannot honour it."
+                    ),
+                    "schema": {"type": "string", "enum": [preference.value for preference in Prefer]},
+                },
+            }
+
+            # Each outcome is declared only when this product can produce it: the
+            # async 201 also `$ref`s OpportunitySearchRecord, which is registered
+            # in the components schemas only when the async endpoints exist.
+            extra_responses: Responses = {}
+            if product.supports_opportunity_search:
+                extra_responses[200] = {"headers": {**preference_applied}}
+            if supports_async:
+                extra_responses[201] = {
+                    "description": "Created (async opportunity search record)",
+                    "content": {TYPE_JSON: {"schema": {"$ref": "#/components/schemas/OpportunitySearchRecord"}}},
+                    "headers": {
+                        "Location": {
+                            "description": "URL of the created Opportunity Search Record.",
+                            "schema": {"type": "string", "format": "uri"},
+                        },
+                        **preference_applied,
+                    },
+                }
+
+            self.register_route(
+                Route(
+                    name=SEARCH_OPPORTUNITIES,
+                    tag=Tag.OPPORTUNITIES,
+                    path="/opportunities",
+                    endpoint=self.search_opportunities,
+                    errors=BAD_REQUEST | NOT_FOUND | SERVER_ERROR,
+                    summary="Search Opportunities for the product",
+                    methods=("POST",),
+                    # An async-only product answers with a search record, which
+                    # is JSON rather than GeoJSON.
+                    response_class=GeoJSONResponse if product.supports_opportunity_search else JSONResponse,
+                    status_code=None if product.supports_opportunity_search else status.HTTP_201_CREATED,
+                    # unknown why mypy can't see the queryables property on Product, ignoring
+                    response_model=(
+                        OpportunityCollection[
+                            Geometry,
+                            self.product.opportunity_properties,  # type: ignore
+                        ]
+                        if product.supports_opportunity_search
+                        else None
+                    ),
+                    responses=extra_responses,
+                )
             )
 
         if product.supports_async_opportunity_search and root_router.supports_async_opportunity_search:
-            self.add_api_route(
-                path="/opportunities/{opportunity_collection_id}",
-                endpoint=self.get_opportunity_collection,
-                name=f"{self.root_router.name}:{self.product.id}:{GET_OPPORTUNITY_COLLECTION}",
-                methods=["GET"],
-                response_class=GeoJSONResponse,
-                summary="Get an Opportunity Collection by ID",
-                tags=["Products"],
+            self.register_route(
+                Route(
+                    name=GET_OPPORTUNITY_COLLECTION,
+                    tag=Tag.OPPORTUNITIES,
+                    path="/opportunities/{opportunityCollectionId}",
+                    endpoint=self.get_opportunity_collection,
+                    errors=NOT_FOUND | SERVER_ERROR,
+                    summary="Get an Opportunity Collection by ID",
+                    response_class=GeoJSONResponse,
+                )
             )
 
     def get_product(self, request: Request) -> ProductPydantic:
         links = [
-            json_link("self", self.url_for(request, f"{self.root_router.name}:{self.product.id}:{GET_PRODUCT}")),
-            json_link("conformance", self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CONFORMANCE}")),
-            json_link(
-                "queryables", self.url_for(request, f"{self.root_router.name}:{self.product.id}:{GET_QUERYABLES}")
-            ),
+            json_link("self", self.url_for(request, self.route_name(GET_PRODUCT))),
+            json_link("conformance", self.url_for(request, self.route_name(CONFORMANCE))),
+            json_link("queryables", self.url_for(request, self.route_name(GET_QUERYABLES))),
             json_link(
                 "order-parameters",
-                self.url_for(request, f"{self.root_router.name}:{self.product.id}:{GET_ORDER_PARAMETERS}"),
+                self.url_for(request, self.route_name(GET_ORDER_PARAMETERS)),
             ),
             Link(
-                href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}"),
+                href=self.url_for(request, self.route_name(CREATE_ORDER)),
                 rel="create-order",
                 type=TYPE_JSON,
                 method="POST",
@@ -225,7 +293,7 @@ class ProductRouter(StapiFastapiBaseRouter):
             links.append(
                 json_link(
                     "opportunities",
-                    self.url_for(request, f"{self.root_router.name}:{self.product.id}:{SEARCH_OPPORTUNITIES}"),
+                    self.url_for(request, self.route_name(SEARCH_OPPORTUNITIES)),
                 ),
             )
 
@@ -233,7 +301,7 @@ class ProductRouter(StapiFastapiBaseRouter):
 
     async def search_opportunities(
         self,
-        search: OpportunityPayload,
+        search: OpportunityRequest,
         request: Request,
         response: Response,
         prefer: Prefer | None = Depends(get_prefer),
@@ -264,28 +332,35 @@ class ProductRouter(StapiFastapiBaseRouter):
 
     async def search_opportunities_sync(
         self,
-        search: OpportunityPayload,
+        search: OpportunityRequest,
         request: Request,
         response: Response,
         prefer: Prefer | None,
     ) -> OpportunityCollection:  # type: ignore
+        # The POST body carries its own `limit`, so it is held to the same bound
+        # as the GET collections' query parameter. Its lower bound is the
+        # model's, so only the clamp is applied here.
+        limit = DEFAULT_LIMIT if search.limit is None else clamp_limit(search.limit)
+
+        self.product.validate_required_queryables(search.search_parameters)
         links: list[Link] = []
         match await self.product.search_opportunities(
             self,
             search,
             search.next,
-            search.limit,
+            limit,
             request,
         ):
-            case Success((features, maybe_pagination_token)):
+            case Success(page):
+                links.extend(page.links)
                 links.append(self.order_link(request, search))
-                match maybe_pagination_token:
-                    case Some(x):
-                        links.append(self.pagination_link(request, search, x))
-                    case Maybe.empty:
-                        pass
+                next_token = page.next_token.value_or(None)
+                if next_token is not None:
+                    links.append(self.search_pagination_link(request, search, next_token))
             case Failure(e) if isinstance(e, QueryablesError):
                 raise e
+            case Failure(PaginationTokenError()):
+                raise NotFoundError(detail="Error finding pagination token")
             case Failure(e):
                 logger.error(
                     "An error occurred while searching opportunities: %s",
@@ -298,20 +373,25 @@ class ProductRouter(StapiFastapiBaseRouter):
             case x:
                 raise AssertionError(f"Expected code to be unreachable {x}")
 
-        if prefer is Prefer.wait and self.root_router.supports_async_opportunity_search:
+        if prefer is not None:
             response.headers["Preference-Applied"] = "wait"
 
-        return OpportunityCollection(features=features, links=links)
+        return OpportunityCollection(
+            features=page.items,
+            links=links,
+            number_matched=page.number_matched.value_or(None),
+        )
 
     async def search_opportunities_async(
         self,
-        search: OpportunityPayload,
+        search: OpportunityRequest,
         request: Request,
         prefer: Prefer | None,
     ) -> JSONResponse:
+        self.product.validate_required_queryables(search.search_parameters)
         match await self.product.search_opportunities_async(self, search, request):
             case Success(search_record):
-                search_record.links.append(self.root_router.opportunity_search_record_self_link(search_record, request))
+                search_record.links.extend(self.root_router.opportunity_search_record_links(search_record, request))
                 headers = {}
                 headers["Location"] = str(
                     self.root_router.generate_opportunity_search_record_href(request, search_record.id)
@@ -341,24 +421,25 @@ class ProductRouter(StapiFastapiBaseRouter):
         """
         Return conformance urls of a specific product
         """
-        return Conformance.model_validate({"conforms_to": self.conformances})
+        return Conformance(conforms_to=self.conformances)
 
-    def get_product_queryables(self) -> JsonSchemaModel:
+    def get_product_queryables(self) -> JsonSchema:
         """
         Return supported queryables of a specific product
         """
-        return self.product.queryables
+        return JsonSchema.from_model(self.product.queryables)
 
-    def get_product_order_parameters(self) -> JsonSchemaModel:
+    def get_product_order_parameters(self) -> JsonSchema:
         """
         Return supported order parameters of a specific product
         """
-        return self.product.order_parameters
+        return JsonSchema.from_model(self.product.order_parameters)
 
-    async def create_order(self, payload: OrderPayload, request: Request, response: Response) -> Order:  # type: ignore
+    async def create_order(self, payload: OrderRequest, request: Request, response: Response) -> Order:  # type: ignore
         """
         Create a new order.
         """
+        self.product.validate_required_queryables(payload.search_parameters)
         match await self.product.create_order(
             self,
             payload,
@@ -383,28 +464,39 @@ class ProductRouter(StapiFastapiBaseRouter):
             case x:
                 raise AssertionError(f"Expected code to be unreachable {x}")
 
-    def order_link(self, request: Request, opp_req: OpportunityPayload) -> Link:
+    def order_link(self, request: Request, opp_req: OpportunityRequest) -> Link:
         return Link(
-            href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}"),
+            href=self.url_for(request, self.route_name(CREATE_ORDER)),
             rel="create-order",
             type=TYPE_JSON,
             method="POST",
             body=opp_req.search_body(),
         )
 
-    def pagination_link(self, request: Request, opp_req: OpportunityPayload, pagination_token: str) -> Link:
+    def search_pagination_link(self, request: Request, opp_req: OpportunityRequest, pagination_token: str) -> Link:
+        """The `next` link of a paged synchronous opportunity search.
+
+        Spelled differently from the shared `pagination_link` because search is a
+        POST: the next page is identified by a body, not by query params.
+        """
         body = opp_req.body()
         body["next"] = pagination_token
         return Link(
             href=request.url,
             rel="next",
-            type=TYPE_JSON,
+            # a next link only appears on the synchronous result, which is an
+            # Opportunity Collection
+            type=TYPE_GEOJSON,
             method="POST",
             body=body,
         )
 
     async def get_opportunity_collection(
-        self, opportunity_collection_id: str, request: Request
+        self,
+        opportunity_collection_id: OpportunityCollectionIdPath,
+        request: Request,
+        next: NextToken = None,
+        limit: Limit = DEFAULT_LIMIT,
     ) -> OpportunityCollection:  # type: ignore
         """
         Fetch an opportunity collection generated by an asynchronous opportunity search.
@@ -412,22 +504,28 @@ class ProductRouter(StapiFastapiBaseRouter):
         match await self.product.get_opportunity_collection(
             self,
             opportunity_collection_id,
+            next,
+            limit,
             request,
         ):
-            case Success(Some(opportunity_collection)):
-                opportunity_collection.links.append(
-                    json_link(
-                        "self",
-                        self.url_for(
-                            request,
-                            f"{self.root_router.name}:{self.product.id}:{GET_OPPORTUNITY_COLLECTION}",
-                            opportunity_collection_id=opportunity_collection_id,
-                        ),
+            case Success(Some(page)):
+                return OpportunityCollection(
+                    id=opportunity_collection_id,
+                    features=page.items,
+                    links=self.page_links(
+                        request,
+                        page,
+                        self.route_name(GET_OPPORTUNITY_COLLECTION),
+                        limit,
+                        media_type=TYPE_GEOJSON,
+                        opportunityCollectionId=opportunity_collection_id,
                     ),
+                    number_matched=page.number_matched.value_or(None),
                 )
-                return opportunity_collection  # type: ignore
             case Success(Maybe.empty):
                 raise NotFoundError("Opportunity Collection not found")
+            case Failure(PaginationTokenError()):
+                raise NotFoundError("Error finding pagination token")
             case Failure(e):
                 logger.error(
                     "An error occurred while fetching opportunity collection: '%s': %s",
