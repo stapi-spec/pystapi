@@ -79,7 +79,7 @@ def stapi_client(
     )
 
     for mock_product in mock_products:
-        mock_product.conformsTo = [PRODUCT.opportunities, PRODUCT.opportunities_async, PRODUCT.geojson_point]
+        mock_product.conforms_to = [PRODUCT.opportunities, PRODUCT.opportunities_async, PRODUCT.geojson_point]
         root_router.add_product(mock_product)
 
     app = FastAPI(lifespan=lifespan)
@@ -121,7 +121,7 @@ def stapi_client_async_opportunity(
     )
 
     for mock_product in mock_products:
-        mock_product.conformsTo = [PRODUCT.opportunities, PRODUCT.opportunities_async, PRODUCT.geojson_point]
+        mock_product.conforms_to = [PRODUCT.opportunities, PRODUCT.opportunities_async, PRODUCT.geojson_point]
         root_router.add_product(mock_product)
 
     app = FastAPI(lifespan=lifespan)

@@ -3,8 +3,9 @@ from typing import Any, Literal, Self
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
+from .conformance import ConformsTo
 from .constants import STAPI_VERSION
-from .shared import Link
+from .shared import STAPI_RESPONSE_CONFIG, Link, omitted_when_empty, omitted_when_none
 
 
 class ProviderRole(StrEnum):
@@ -16,27 +17,29 @@ class ProviderRole(StrEnum):
 
 class Provider(BaseModel):
     name: str
-    description: str | None = None
-    roles: list[ProviderRole]
-    url: AnyHttpUrl
+    description: str | None = omitted_when_none()
+    roles: list[ProviderRole] = omitted_when_empty(default_factory=list)
+    url: AnyHttpUrl | None = omitted_when_none()
 
     # redefining init is a hack to get str type to validate for `url`,
     # as str is ultimately coerced into an AnyHttpUrl automatically anyway
-    def __init__(self, url: AnyHttpUrl | str, **kwargs: Any) -> None:
+    def __init__(self, url: AnyHttpUrl | str | None = None, **kwargs: Any) -> None:
         super().__init__(url=url, **kwargs)
 
 
 class Product(BaseModel):
+    model_config = STAPI_RESPONSE_CONFIG
+
     type_: Literal["Collection"] = Field(default="Collection", alias="type")
     stapi_type: Literal["Product"] = "Product"
     stapi_version: str = STAPI_VERSION
-    conformsTo: list[str] = Field(default_factory=list)
+    conforms_to: ConformsTo = []
     id: str
-    title: str = ""
+    title: str = omitted_when_empty(default="")
     description: str = ""
-    keywords: list[str] = Field(default_factory=list)
+    keywords: list[str] = omitted_when_empty(default_factory=list)
     license: str
-    providers: list[Provider] = Field(default_factory=list)
+    providers: list[Provider] = omitted_when_empty(default_factory=list)
     links: list[Link] = Field(default_factory=list)
 
     def with_links(self, links: list[Link] | None = None) -> Self:

@@ -70,10 +70,10 @@ def get_prefer(prefer: str | None = Header(None)) -> str | None:
 
 def build_conformances(product: Product, root_router: RootRouter) -> list[str]:
     # FIXME we can make this check more robust
-    if not any(conformance.startswith("https://geojson.org/schema/") for conformance in product.conformsTo):
+    if not any(conformance.startswith("https://geojson.org/schema/") for conformance in product.conforms_to):
         raise ValueError("product conformance does not contain at least one geojson conformance")
 
-    conformances = set(product.conformsTo)
+    conformances = set(product.conforms_to)
 
     if product.supports_opportunity_search:
         conformances.add(PRODUCT_CONFORMACES.opportunities)
@@ -341,7 +341,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         """
         Return conformance urls of a specific product
         """
-        return Conformance.model_validate({"conforms_to": self.conformances})
+        return Conformance(conforms_to=self.conformances)
 
     def get_product_queryables(self) -> JsonSchema:
         """

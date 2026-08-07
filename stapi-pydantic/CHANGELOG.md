@@ -27,6 +27,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - `CQL2Filter` is typed as `dict[str, Any]` rather than a bare `dict`.
 - **BREAKING** `Link` omits its unset fields from `model_dump()` as well as from JSON output. The `None`-filtering serializer it previously carried applied only to JSON dumps.
+- **BREAKING** Models that declare aliases now serialize by alias. `model_dump()` emits `conformsTo` on `Conformance` and `type` on `Product`, where it previously emitted the Python field names `conforms_to` and `type_`. Callers already passing `by_alias=True` are unaffected; callers reading the Python names out of a dump must switch to the wire names.
+- **BREAKING** `Product.conformsTo` and `RootResponse.conformsTo` are spelled `conforms_to` in Python, matching `Conformance`. The wire name is unchanged: all three validate from either `conformsTo` or `conforms_to` and serialize as `conformsTo`. Keyword construction and attribute access must use the new name.
+- **BREAKING** `Provider.roles` and `Provider.url` are optional. Both were required, which made a provider that publishes neither unrepresentable; they are now omitted from output rather than published empty or null.
+- Spec-REQUIRED fields that carry defaults (`type`, `stapi_type`, `stapi_version`, `links`, `conformsTo`, and so on) are now marked required in the serialization JSON Schema, since they are always present in a response.
 
 ### Fixed
 

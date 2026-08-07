@@ -207,7 +207,7 @@ class RootRouter(StapiFastapiBaseRouter):
 
         return RootResponse(
             id="STAPI API",
-            conformsTo=self.conformances,
+            conforms_to=self.conformances,
             links=links,
         )
 
