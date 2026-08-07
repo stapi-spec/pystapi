@@ -267,7 +267,7 @@ class RootRouter(StapiFastapiBaseRouter):
                     order.links.extend(self.order_links(order, request))
                 return OrderCollection(
                     features=page.items,
-                    links=self.page_links(request, page, self.route_name(LIST_ORDERS), limit),
+                    links=self.page_links(request, page, self.route_name(LIST_ORDERS), limit, media_type=TYPE_GEOJSON),
                     number_matched=page.number_matched.value_or(None),
                 )
             case Failure(ValueError()):

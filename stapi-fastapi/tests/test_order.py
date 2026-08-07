@@ -28,7 +28,7 @@ def test_empty_order(stapi_client: TestClient):
             {
                 "href": "http://stapiserver/orders",
                 "rel": "self",
-                "type": "application/json",
+                "type": "application/geo+json",
             },
         ],
         "numberMatched": 314,

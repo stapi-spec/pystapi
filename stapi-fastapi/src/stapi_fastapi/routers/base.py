@@ -131,14 +131,31 @@ class StapiFastapiBaseRouter(APIRouter):
         """The registered name of the route this router serves under `name`."""
         return ":".join((*self.route_name_prefix, name))
 
-    def self_link(self, request: Request, name: str, **path_params: Any) -> Link:
-        """A `self` link for the current request."""
-        return Link(href=self.url_for(request, name, **path_params), rel="self", type=TYPE_JSON)
+    def self_link(self, request: Request, name: str, media_type: str = TYPE_JSON, **path_params: Any) -> Link:
+        """A `self` link for the current request, query params and all, so a
+        paged response points at the page actually returned.
+        """
+        url = self.url_for(request, name, **path_params)
+        # The raw query string is copied rather than splatted into
+        # `include_query_params`: those are user-controlled *names*, and passing
+        # them as Python keywords both collides with that method's own `self`
+        # (a 500 on `?self=...`) and collapses repeated params.
+        if request.url.query:
+            url = url.replace(query=request.url.query)
+        return Link(href=url, rel="self", type=media_type)
 
-    def pagination_link(self, request: Request, name: str, pagination_token: str, limit: int, **kwargs: Any) -> Link:
+    def pagination_link(
+        self,
+        request: Request,
+        name: str,
+        pagination_token: str,
+        limit: int,
+        media_type: str = TYPE_JSON,
+        **kwargs: Any,
+    ) -> Link:
         """A `next` link for the page after the one being returned."""
         url = self.url_for(request, name, **kwargs).include_query_params(next=pagination_token, limit=limit)
-        return Link(href=url, rel="next", type=TYPE_JSON)
+        return Link(href=url, rel="next", type=media_type)
 
     def page_links(
         self,
@@ -146,6 +163,7 @@ class StapiFastapiBaseRouter(APIRouter):
         page: Page[Any],
         name: str,
         limit: int,
+        media_type: str = TYPE_JSON,
         **path_params: Any,
     ) -> list[Link]:
         """The links published on a collection response for `page`.
@@ -153,10 +171,10 @@ class StapiFastapiBaseRouter(APIRouter):
         Backend-supplied links come first: they describe the collection rather
         than this page of it.
         """
-        links = [*page.links, self.self_link(request, name, **path_params)]
+        links = [*page.links, self.self_link(request, name, media_type=media_type, **path_params)]
         next_token = page.next_token.value_or(None)
         if next_token is not None:
-            links.append(self.pagination_link(request, name, next_token, limit, **path_params))
+            links.append(self.pagination_link(request, name, next_token, limit, media_type=media_type, **path_params))
         return links
 
     def register_route(self, route: Route) -> None:

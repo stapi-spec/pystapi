@@ -1,6 +1,7 @@
 """Tests for the shared pagination query parameters, `self` links and totals."""
 
 from typing import Any, cast
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from fastapi import FastAPI, status
@@ -8,6 +9,7 @@ from fastapi.testclient import TestClient
 from stapi_fastapi.query_params import MAX_LIMIT, clamp_limit
 
 from .shared import (
+    find_link,
     product_test_spotlight_async_opportunity,
 )
 
@@ -81,3 +83,63 @@ def test_clamp_limit_caps_at_the_maximum() -> None:
     assert clamp_limit(MAX_LIMIT + 1) == MAX_LIMIT
     assert clamp_limit(MAX_LIMIT) == MAX_LIMIT
     assert clamp_limit(1) == 1
+
+
+def query_of(href: str) -> dict[str, list[str]]:
+    return parse_qs(urlsplit(href).query)
+
+
+def test_self_link_carries_query_params(stapi_client: TestClient) -> None:
+    res = stapi_client.get("/products", params={"limit": 1})
+    assert res.status_code == status.HTTP_200_OK
+
+    self_link = find_link(res.json()["links"], "self")
+    assert self_link is not None
+    assert query_of(self_link["href"]) == {"limit": ["1"]}
+
+
+def test_self_link_of_second_page_points_at_second_page(stapi_client: TestClient) -> None:
+    first = stapi_client.get("/products", params={"limit": 1}).json()
+    next_link = find_link(first["links"], "next")
+    assert next_link is not None
+
+    second = stapi_client.get(next_link["href"]).json()
+    self_link = find_link(second["links"], "self")
+    assert self_link is not None
+    assert query_of(self_link["href"]) == query_of(next_link["href"])
+
+
+def test_self_link_survives_a_query_param_named_self(stapi_client: TestClient) -> None:
+    """Query param names are data, not Python keywords: `?self=` used to 500."""
+    res = stapi_client.get("/products", params={"self": "x"})
+    assert res.status_code == status.HTTP_200_OK, res.text
+
+    self_link = find_link(res.json()["links"], "self")
+    assert self_link is not None
+    assert query_of(self_link["href"]) == {"self": ["x"]}
+
+
+def test_self_link_preserves_repeated_query_params(stapi_client: TestClient) -> None:
+    """A repeated query param keeps every value; it used to collapse to the last."""
+    res = stapi_client.get("/products", params=[("limit", "2"), ("a", "1"), ("a", "2")])
+    assert res.status_code == status.HTTP_200_OK, res.text
+
+    self_link = find_link(res.json()["links"], "self")
+    assert self_link is not None
+    assert query_of(self_link["href"]) == {"limit": ["2"], "a": ["1", "2"]}
+
+
+def test_orders_collection_has_self_link(stapi_client: TestClient) -> None:
+    body = stapi_client.get("/orders").json()
+    self_link = find_link(body["links"], "self")
+    assert self_link is not None
+    assert self_link["href"] == "http://stapiserver/orders"
+    assert self_link["type"] == "application/geo+json"
+
+
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
+def test_search_records_collection_has_self_link(stapi_client_async_opportunity: TestClient) -> None:
+    body = stapi_client_async_opportunity.get("/searches/opportunities").json()
+    self_link = find_link(body["links"], "self")
+    assert self_link is not None
+    assert self_link["href"] == "http://stapiserver/searches/opportunities"

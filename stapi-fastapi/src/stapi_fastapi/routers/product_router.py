@@ -33,7 +33,7 @@ from stapi_pydantic import (
 )
 
 from stapi_fastapi.conformance import PRODUCT as PRODUCT_CONFORMACES
-from stapi_fastapi.constants import TYPE_JSON
+from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
 from stapi_fastapi.errors import NotFoundError, QueryablesError
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.path_params import OpportunityCollectionIdPath
@@ -425,7 +425,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         return Link(
             href=request.url,
             rel="next",
-            type=TYPE_JSON,
+            type=TYPE_GEOJSON,
             method="POST",
             body=body,
         )

@@ -24,11 +24,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - **BREAKING** Path parameters are camelCase in the routes and in the exported OpenAPI document: `{orderId}`, `{searchRecordId}`, and `{opportunityCollectionId}`, joining the existing `{productId}`. Request URLs are unchanged, since path parameter names never appear in them, but generated clients that bind by parameter name need regenerating, and `url_for` calls must pass the camelCase keyword (`url_for(request, name, orderId=...)`, not `order_id=...`).
 - **BREAKING** A route is declared as a `Route` and registered with `StapiFastapiBaseRouter.register_route`, which hands it to FastAPI's own `add_api_route`. `summary`, `tag` and `errors` are required, so a route cannot be registered without saying what it is called, where it is filed, or which errors it can produce. `errors` is deliberately not defaulted: a shared set merged into every route cannot be narrowed, and so published a 404 for the landing page, an endpoint that takes no input and calls no backend.
 - OpenAPI tags come from the route family rather than the owning router: creating an order for a product is filed under Orders, and the opportunity routes under Opportunities, rather than all of them under Products.
+- The `self` link of a paginated response carries the request's query parameters, so it points at the page that was returned rather than at the first page.
 - **BREAKING** `ProductRouter.pagination_link` is renamed `search_pagination_link`, distinguishing the POST-bodied opportunity search `next` link from the shared query-parameter one, which now lives on the base router.
 - **BREAKING** The `GET_OPPORTUNITY_SEARCH_RECORD_STATUSES` route name constant is renamed `LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES`, matching its sibling list routes, and the registered route name changes with it.
 
 ### Fixed
 
+- A collection's `self` and `next` links carry the media type their target serves. `next` was hard-coded to `application/json`, so every geo+json collection published a next link contradicting its own response.
+- A query parameter named `self` no longer fails the request. The raw query params were splatted into `URL.include_query_params` as Python keywords, colliding with that method's own `self`; repeated parameters were also collapsed to the last value.
 - Operations declare only the error responses they can actually produce. A shared set was previously merged into every route and could not be narrowed, so `GET /` and `GET /conformance` published a 404 despite taking no input and calling no backend.
 - `500` is declared. It is returned deliberately when a backend reports failure, so a client has to be prepared for it.
 - Every operation publishes a stable `operationId`, derived from the route's prefixed name so it stays unique across a deployment mounting several products.
