@@ -18,7 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `cql2_property_names`, which collects the property names referenced by a CQL2 JSON filter.
 - `SearchParameters`, the Search Parameters Object (`datetime`, `geometry`, `filter`) shared by the Opportunity Request and the Order Request. It permits extra fields, so provider extension parameters round-trip instead of being dropped.
 - `ProductCollection`, the new name for `ProductsCollection` (see Changed).
-- `stapi_type` and `stapi_version` on `OpportunitySearchRecord` and `OpportunitySearchRecordCollection`.
+- `OpportunitySearchStatusCollection`, the collection wrapper for the statuses of an Opportunity Search Record.
+- `stapi_type` and `stapi_version` on `OpportunitySearchRecord`, `OpportunitySearchRecordCollection` and `OrderStatusCollection`.
 - `BaseOrderParameters`, a permissive base for order parameters at rest, and `StoredOrderRequest`, the form an Order Request takes once it is persisted inside `OrderProperties`. `OrderParameters` is now a strict (`extra="forbid"`) subclass of `BaseOrderParameters`.
 - `OrderStatus` and `OpportunitySearchStatus` are generic over their status code set, so an implementation can constrain it with its own `StrEnum`, e.g. `OrderStatus[MyCodes]`.
 - `STAPI_VERSION` is now exported from the package root.
@@ -33,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **BREAKING** Models that declare aliases now serialize by alias. `model_dump()` emits `conformsTo` on `Conformance` and `type` on `Product`, where it previously emitted the Python field names `conforms_to` and `type_`. Callers already passing `by_alias=True` are unaffected; callers reading the Python names out of a dump must switch to the wire names.
 - **BREAKING** `Product.conformsTo` and `RootResponse.conformsTo` are spelled `conforms_to` in Python, matching `Conformance`. The wire name is unchanged: all three validate from either `conformsTo` or `conforms_to` and serialize as `conformsTo`. Keyword construction and attribute access must use the new name.
 - **BREAKING** `Provider.roles` and `Provider.url` are optional. Both were required, which made a provider that publishes neither unrepresentable; they are now omitted from output rather than published empty or null.
+- **BREAKING** `OrderStatuses` is renamed `OrderStatusCollection`, matching its sibling collections, and gains `stapi_type` and `stapi_version`.
 - **BREAKING** `status_code` on `OrderStatus` and `OpportunitySearchStatus` accepts any string by default, since the spec lets providers add statuses through extensions. Known codes still validate to the enum. Code that assumed an `OrderStatusCode` instance must handle a plain `str`, or parameterize the model with its own code set.
 - Optional status fields (`reason_code`, `reason_text`) are omitted rather than serialized as null, and so are correspondingly not marked required.
 - `typing-extensions >= 4.12` is now required, for `TypeVar` defaults.
@@ -54,7 +56,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Removed
 
-- **BREAKING** The pre-0.2.0 compatibility aliases `ProductsCollection`, `OrderPayload`, `OpportunityPayload`, `OrderSearchParameters` and `OpportunitySearchRecords` are gone. Use `ProductCollection`, `OrderRequest`, `OpportunityRequest`, `SearchParameters` and `OpportunitySearchRecordCollection`.
+- **BREAKING** The pre-0.2.0 compatibility aliases `ProductsCollection`, `OrderPayload`, `OpportunityPayload`, `OrderSearchParameters`, `OpportunitySearchRecords` and `OrderStatuses` are gone. Use `ProductCollection`, `OrderRequest`, `OpportunityRequest`, `SearchParameters`, `OpportunitySearchRecordCollection` and `OrderStatusCollection`.
 - The unused `Props`, `Geom`, and `OPP` type variables in `stapi_pydantic.order`.
 - **BREAKING** `JsonSchemaModel` is gone. It annotated a `type[BaseModel]` with a `PlainValidator`/`PlainSerializer` pair so a model class could stand in for its own schema, which meant the published document carried an orphan `BaseModel` component and the value could not be read back. Build a `JsonSchema` with `JsonSchema.from_model(YourModel)` instead.
 

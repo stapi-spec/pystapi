@@ -5,6 +5,7 @@ from stapi_pydantic import (
     OpportunitySearchRecord,
     OpportunitySearchRecordCollection,
     OpportunitySearchStatus,
+    OpportunitySearchStatusCollection,
     OrderParameters,
     OrderRequest,
 )
@@ -87,3 +88,12 @@ def test_opportunity_search_status_code_constrainable_with_custom_enum() -> None
         OpportunitySearchStatus[NarrowCodes].model_validate(
             {"timestamp": "2024-04-10T09:15:00Z", "status_code": "received"}
         )
+
+
+def test_opportunity_search_status_collection() -> None:
+    collection = OpportunitySearchStatusCollection.model_validate(
+        {"statuses": [{"timestamp": "2024-04-10T09:15:00Z", "status_code": "received"}]}
+    )
+    dumped = collection.model_dump(mode="json")
+    assert dumped["stapi_type"] == "OpportunitySearchStatusCollection"
+    assert len(dumped["statuses"]) == 1

@@ -15,7 +15,7 @@ from stapi_pydantic import (
     Order,
     OrderCollection,
     OrderStatus,
-    OrderStatuses,
+    OrderStatusCollection,
     ProductCollection,
     RootResponse,
 )
@@ -306,7 +306,7 @@ class RootRouter(StapiFastapiBaseRouter):
         request: Request,
         next: str | None = None,
         limit: int = 10,
-    ) -> OrderStatuses:  # type: ignore
+    ) -> OrderStatusCollection:  # type: ignore
         links: list[Link] = []
         match await self._get_order_statuses(order_id, next, limit, request):
             case Success(Some((statuses, maybe_pagination_token))):
@@ -335,7 +335,7 @@ class RootRouter(StapiFastapiBaseRouter):
                 )
             case _:
                 raise AssertionError("Expected code to be unreachable")
-        return OrderStatuses(statuses=statuses, links=links)
+        return OrderStatusCollection(statuses=statuses, links=links)
 
     def add_product(self, product: Product, *args: Any, **kwargs: Any) -> None:
         # Give the include a prefix from the product router

@@ -19,7 +19,7 @@ from typing_extensions import TypeVar as DefaultTypeVar
 from .constants import STAPI_VERSION
 from .geometry import Geometry
 from .search_parameters import SearchParameters
-from .shared import STAPI_RESPONSE_CONFIG_ALLOW_EXTRA, Link, omitted_when_none
+from .shared import STAPI_RESPONSE_CONFIG, STAPI_RESPONSE_CONFIG_ALLOW_EXTRA, Link, omitted_when_none
 
 
 class BaseOrderParameters(BaseModel):
@@ -94,7 +94,11 @@ class OrderStatus(BaseModel, Generic[StatusCode]):
 T = DefaultTypeVar("T", bound=OrderStatus[Any], default=OrderStatus)
 
 
-class OrderStatuses(BaseModel, Generic[T]):
+class OrderStatusCollection(BaseModel, Generic[T]):
+    model_config = STAPI_RESPONSE_CONFIG
+
+    stapi_type: Literal["OrderStatusCollection"] = "OrderStatusCollection"
+    stapi_version: str = STAPI_VERSION
     statuses: list[T]
     links: list[Link] = Field(default_factory=list)
 

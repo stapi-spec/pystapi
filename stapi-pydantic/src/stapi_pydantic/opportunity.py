@@ -110,6 +110,15 @@ class OpportunitySearchRecordCollection(BaseModel):
     links: list[Link] = Field(default_factory=list)
 
 
+class OpportunitySearchStatusCollection(BaseModel):
+    model_config = STAPI_RESPONSE_CONFIG
+
+    stapi_type: Literal["OpportunitySearchStatusCollection"] = "OpportunitySearchStatusCollection"
+    stapi_version: str = STAPI_VERSION
+    statuses: list[OpportunitySearchStatus]
+    links: list[Link] = Field(default_factory=list)
+
+
 class Prefer(StrEnum):
     respond_async = "respond-async"
     wait = "wait"

@@ -13,6 +13,7 @@ from .opportunity import (
     OpportunitySearchRecordCollection,
     OpportunitySearchStatus,
     OpportunitySearchStatusCode,
+    OpportunitySearchStatusCollection,
     Prefer,
 )
 from .order import (
@@ -24,7 +25,7 @@ from .order import (
     OrderRequest,
     OrderStatus,
     OrderStatusCode,
-    OrderStatuses,
+    OrderStatusCollection,
     StoredOrderRequest,
 )
 from .product import Product, ProductCollection, Provider, ProviderRole
@@ -50,6 +51,7 @@ __all__ = [
     "OpportunitySearchRecordCollection",
     "OpportunitySearchStatus",
     "OpportunitySearchStatusCode",
+    "OpportunitySearchStatusCollection",
     "Order",
     "OrderCollection",
     "OrderParameters",
@@ -57,7 +59,7 @@ __all__ = [
     "OrderProperties",
     "OrderStatus",
     "OrderStatusCode",
-    "OrderStatuses",
+    "OrderStatusCollection",
     "Prefer",
     "Product",
     "ProductCollection",
