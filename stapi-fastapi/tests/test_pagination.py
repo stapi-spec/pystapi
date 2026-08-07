@@ -13,6 +13,7 @@ from stapi_fastapi.pagination import Page
 from stapi_fastapi.query_params import MAX_LIMIT, clamp_limit
 from stapi_fastapi.routers.root_router import RootRouter
 from stapi_pydantic import (
+    OpportunityCollection,
     OpportunitySearchStatus,
     OpportunitySearchStatusCode,
     Order,
@@ -20,10 +21,14 @@ from stapi_pydantic import (
     OrderStatusCode,
 )
 
-from .backends import mock_get_order
+from .backends import (
+    mock_get_order,
+)
 from .shared import (
+    create_mock_opportunity,
     find_link,
     product_test_spotlight_async_opportunity,
+    product_test_spotlight_sync_opportunity,
 )
 
 PAGINATED_PATHS = [
@@ -252,3 +257,110 @@ def test_search_record_statuses_are_paginated(
         key=lambda status_: status_["status_code"],
     )
     assert codes == ["received", "in_progress", "completed"]
+
+
+@pytest.mark.parametrize("limit", LIMITS)
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
+def test_opportunity_collection_is_paginated(
+    limit: int,
+    stapi_client_async_opportunity: TestClient,
+) -> None:
+    """The async search's Opportunity Collection pages too."""
+    client = stapi_client_async_opportunity
+    collection = OpportunityCollection(
+        id="an-opportunity-collection",
+        features=[create_mock_opportunity() for _ in range(3)],
+    )
+    client.app_state["_opportunities_db"].put_opportunity_collection(collection)
+
+    ids = follow_pages(
+        client,
+        f"/products/{PRODUCT_ID}/opportunities/{collection.id}",
+        "features",
+        limit,
+    )
+    assert ids == [opportunity.id for opportunity in collection.features]
+
+
+def test_products_publishes_number_matched(stapi_client: TestClient) -> None:
+    # The default fixture registers two products, and the router knows it.
+    body = stapi_client.get("/products", params={"limit": 1}).json()
+    assert len(body["products"]) == 1
+    assert body["numberMatched"] == 2
+
+
+def test_orders_publishes_number_matched(stapi_client: TestClient) -> None:
+    # Whatever the backend reports as the total is what is published.
+    assert stapi_client.get("/orders").json()["numberMatched"] == 314
+
+
+def test_order_statuses_publishes_number_matched(stapi_client: TestClient) -> None:
+    """`numberMatched` is the total across pages, not the length of this page."""
+    created = stapi_client.post(f"/products/{PRODUCT_ID}/orders", json=ORDER_PAYLOAD)
+    assert created.status_code == status.HTTP_201_CREATED
+    order_id = created.json()["id"]
+    add_order_statuses(stapi_client, order_id, OrderStatusCode.accepted, OrderStatusCode.completed)
+
+    body = stapi_client.get(f"/orders/{order_id}/statuses", params={"limit": 1}).json()
+    assert len(body["statuses"]) == 1
+    assert body["numberMatched"] == 3
+
+
+@pytest.mark.mock_products([product_test_spotlight_sync_opportunity])
+def test_opportunity_search_publishes_number_matched(
+    stapi_client: TestClient,
+    opportunity_search: dict[str, Any],
+) -> None:
+    stapi_client.app_state["_opportunities"] = [create_mock_opportunity() for _ in range(3)]
+    opportunity_search["limit"] = 1
+
+    body = stapi_client.post(f"/products/{PRODUCT_ID}/opportunities", json=opportunity_search).json()
+    assert len(body["features"]) == 1
+    assert body["numberMatched"] == 3
+
+
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
+def test_search_records_publish_number_matched(
+    stapi_client_async_opportunity: TestClient,
+    opportunity_search: dict[str, Any],
+) -> None:
+    client = stapi_client_async_opportunity
+    for _ in range(3):
+        assert (
+            client.post(f"/products/{PRODUCT_ID}/opportunities", json=opportunity_search).status_code
+            == status.HTTP_201_CREATED
+        )
+
+    body = client.get("/searches/opportunities", params={"limit": 1}).json()
+    assert len(body["records"]) == 1
+    assert body["numberMatched"] == 3
+
+
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
+def test_search_record_statuses_publish_number_matched(
+    stapi_client_async_opportunity: TestClient,
+    opportunity_search: dict[str, Any],
+) -> None:
+    client = stapi_client_async_opportunity
+    record_id = client.post(f"/products/{PRODUCT_ID}/opportunities", json=opportunity_search).json()["id"]
+    add_search_record_statuses(client, record_id, OpportunitySearchStatusCode.completed)
+
+    body = client.get(f"/searches/opportunities/{record_id}/statuses", params={"limit": 1}).json()
+    assert len(body["statuses"]) == 1
+    assert body["numberMatched"] == 2
+
+
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
+def test_opportunity_collection_publishes_number_matched(
+    stapi_client_async_opportunity: TestClient,
+) -> None:
+    client = stapi_client_async_opportunity
+    collection = OpportunityCollection(
+        id="an-opportunity-collection",
+        features=[create_mock_opportunity() for _ in range(3)],
+    )
+    client.app_state["_opportunities_db"].put_opportunity_collection(collection)
+
+    body = client.get(f"/products/{PRODUCT_ID}/opportunities/{collection.id}", params={"limit": 1}).json()
+    assert len(body["features"]) == 1
+    assert body["numberMatched"] == 3

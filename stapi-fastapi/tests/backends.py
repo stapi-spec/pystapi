@@ -9,7 +9,6 @@ from stapi_fastapi.errors import PaginationTokenError
 from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_pydantic import (
     Opportunity,
-    OpportunityCollection,
     OpportunityRequest,
     OpportunitySearchRecord,
     OpportunitySearchStatus,
@@ -192,11 +191,35 @@ async def mock_search_opportunities_async(
 
 
 async def mock_get_opportunity_collection(
-    product_router: ProductRouter, opportunity_collection_id: str, request: Request
-) -> ResultE[Maybe[OpportunityCollection]]:
+    product_router: ProductRouter,
+    opportunity_collection_id: str,
+    next: str | None,
+    limit: int,
+    request: Request,
+) -> ResultE[Maybe[Page[Opportunity]]]:
     try:
+        collection = request.state._opportunities_db.get_opportunity_collection(opportunity_collection_id)
+        if collection is None:
+            return Success(Nothing)
+
+        start = 0
+        limit = min(limit, 100)
+        if next:
+            start = _offset(next)
+        end = start + limit
+        total = len(collection.features)
+
         return Success(
-            Maybe.from_optional(request.state._opportunities_db.get_opportunity_collection(opportunity_collection_id))
+            Some(
+                Page(
+                    items=collection.features[start:end],
+                    next_token=Some(str(end)) if end < total else Nothing,
+                    number_matched=Some(total),
+                    # The stored collection's own links (e.g. `create-order`)
+                    # describe the collection, not this page of it.
+                    links=collection.links,
+                )
+            )
         )
     except Exception as e:
         return Failure(e)
