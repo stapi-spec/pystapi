@@ -25,6 +25,7 @@ from stapi_pydantic import (
     OrderStatus,
     Provider,
     ProviderRole,
+    Queryables,
 )
 
 from .backends import (
@@ -94,7 +95,7 @@ class InMemoryOpportunityDB:
         self._collections[collection.id] = deepcopy(collection)
 
 
-class MyProductQueryables(BaseModel):
+class MyProductQueryables(Queryables):
     off_nadir: int
 
 

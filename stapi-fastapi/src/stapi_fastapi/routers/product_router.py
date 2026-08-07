@@ -288,6 +288,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         # model's, so only the clamp is applied here.
         limit = DEFAULT_LIMIT if search.limit is None else clamp_limit(search.limit)
 
+        self.product.validate_required_queryables(search.search_parameters)
         links: list[Link] = []
         match await self.product.search_opportunities(
             self,
@@ -333,6 +334,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         request: Request,
         prefer: Prefer | None,
     ) -> JSONResponse:
+        self.product.validate_required_queryables(search.search_parameters)
         match await self.product.search_opportunities_async(self, search, request):
             case Success(search_record):
                 search_record.links.append(self.root_router.opportunity_search_record_self_link(search_record, request))
@@ -383,6 +385,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         """
         Create a new order.
         """
+        self.product.validate_required_queryables(payload.search_parameters)
         match await self.product.create_order(
             self,
             payload,

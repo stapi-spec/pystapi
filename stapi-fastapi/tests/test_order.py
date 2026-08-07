@@ -35,6 +35,15 @@ def test_empty_order(stapi_client: TestClient):
     }
 
 
+REQUIRED_QUERYABLE_FILTER = {
+    "op": "and",
+    "args": [
+        {"op": ">", "args": [{"property": "off_nadir"}, 0]},
+        {"op": "<", "args": [{"property": "off_nadir"}, 45]},
+    ],
+}
+
+
 @pytest.fixture
 def create_order_payloads() -> list[OrderRequest]:
     datetimes = [
@@ -51,7 +60,7 @@ def create_order_payloads() -> list[OrderRequest]:
                     datetime.fromisoformat(start),
                     datetime.fromisoformat(end),
                 ),
-                filter=None,
+                filter=REQUIRED_QUERYABLE_FILTER,
             ),
             order_parameters=MyOrderParameters(s3_path="s3://my-bucket"),
         )
@@ -245,3 +254,20 @@ def test_get_order_statuses_bad_token(
     order_id = "non_existing_order_id"
     res = stapi_client.get(f"/orders/{order_id}/statuses")
     assert res.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_create_order_rejects_missing_required_queryable_predicate(stapi_client: TestClient) -> None:
+    # test-spotlight's queryables model (MyProductQueryables) requires `off_nadir`;
+    # omitting a filter predicate for it should be rejected before hitting the backend.
+    product_id = "test-spotlight"
+    response = stapi_client.post(
+        f"/products/{product_id}/orders",
+        json={
+            "search_parameters": {
+                "datetime": "2024-04-18T10:56:00Z/2024-04-25T10:56:00Z",
+                "geometry": {"type": "Point", "coordinates": [13.4, 52.5]},
+            },
+            "order_parameters": {"s3_path": "s3://my-bucket"},
+        },
+    )
+    assert response.status_code == 400

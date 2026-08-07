@@ -316,3 +316,21 @@ def test_get_search_records_pagination(
         target="records",
         expected_returns=expected_returns,
     )
+
+
+def test_async_search_rejects_missing_required_queryable_predicate(
+    stapi_client_async_opportunity: TestClient,
+) -> None:
+    # test-spotlight's queryables model (MyProductQueryables) requires `off_nadir`;
+    # omitting a filter predicate for it should be rejected before hitting the backend.
+    product_id = "test-spotlight"
+    response = stapi_client_async_opportunity.post(
+        f"/products/{product_id}/opportunities",
+        json={
+            "search_parameters": {
+                "datetime": "2024-04-18T10:56:00Z/2024-04-25T10:56:00Z",
+                "geometry": {"type": "Point", "coordinates": [13.4, 52.5]},
+            },
+        },
+    )
+    assert response.status_code == 400

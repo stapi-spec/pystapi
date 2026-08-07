@@ -86,3 +86,21 @@ def test_search_opportunities_clamps_an_over_large_limit(
         json={**opportunity_search, "limit": MAX_LIMIT + 1},
     )
     assert response.status_code == 200, response.text
+
+
+def test_search_opportunities_rejects_missing_required_queryable_predicate(
+    stapi_client: TestClient,
+) -> None:
+    # test-spotlight's queryables model (MyProductQueryables) requires `off_nadir`;
+    # omitting a filter predicate for it should be rejected before hitting the backend.
+    product_id = "test-spotlight"
+    response = stapi_client.post(
+        f"/products/{product_id}/opportunities",
+        json={
+            "search_parameters": {
+                "datetime": "2024-04-18T10:56:00Z/2024-04-25T10:56:00Z",
+                "geometry": {"type": "Point", "coordinates": [13.4, 52.5]},
+            },
+        },
+    )
+    assert response.status_code == 400
