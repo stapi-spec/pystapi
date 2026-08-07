@@ -1,4 +1,5 @@
 from .conformance import Conformance
+from .constants import STAPI_VERSION
 from .datetime_interval import DatetimeInterval
 from .filter import CQL2Filter
 from .json_schema_model import JsonSchemaModel
@@ -59,4 +60,5 @@ __all__ = [
     "ProviderRole",
     "Queryables",
     "RootResponse",
+    "STAPI_VERSION",
 ]
