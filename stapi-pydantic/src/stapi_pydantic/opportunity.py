@@ -11,7 +11,16 @@ from .constants import STAPI_VERSION
 from .datetime_interval import BoundedDatetimeInterval
 from .geometry import Geometry
 from .search_parameters import SearchParameters
-from .shared import STAPI_RESPONSE_CONFIG, Link, omitted_when_none
+from .shared import (
+    STAPI_RESPONSE_CONFIG,
+    UNSET_BBOX,
+    ComputedBBox,
+    DerivedCollectionBBox,
+    DerivedItemBBox,
+    Link,
+    OptionalBBox,
+    omitted_when_none,
+)
 
 
 # Copied and modified from https://github.com/stac-utils/stac-pydantic/blob/main/stac_pydantic/item.py#L11
@@ -51,7 +60,7 @@ G = TypeVar("G", bound=Geometry)
 P = TypeVar("P", bound=OpportunityProperties)
 
 
-class Opportunity(Feature[G, P]):
+class Opportunity(Feature[G, P], DerivedItemBBox):
     model_config = STAPI_RESPONSE_CONFIG
 
     id: str | None = omitted_when_none()
@@ -59,16 +68,18 @@ class Opportunity(Feature[G, P]):
     stapi_type: Literal["Opportunity"] = "Opportunity"
     stapi_version: str = STAPI_VERSION
     geometry: G = Field(...)
+    bbox: ComputedBBox = UNSET_BBOX
     properties: P = Field(...)
     links: list[Link] = Field(default_factory=list)
 
 
-class OpportunityCollection(FeatureCollection[Opportunity[G, P]]):
+class OpportunityCollection(FeatureCollection[Opportunity[G, P]], DerivedCollectionBBox):
     model_config = STAPI_RESPONSE_CONFIG
 
     type: Literal["FeatureCollection"] = "FeatureCollection"
     stapi_type: Literal["OpportunityCollection"] = "OpportunityCollection"
     stapi_version: str = STAPI_VERSION
+    bbox: OptionalBBox = None
     links: list[Link] = Field(default_factory=list)
     id: str | None = omitted_when_none()
 

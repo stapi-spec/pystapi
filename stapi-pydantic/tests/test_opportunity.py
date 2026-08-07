@@ -147,3 +147,62 @@ def test_opportunity_collection_stapi_fields() -> None:
     dumped = collection.model_dump(mode="json")
     assert dumped["stapi_type"] == "OpportunityCollection"
     assert dumped["stapi_version"] == "0.2.0"
+
+
+def test_opportunity_bbox_3d_geometry() -> None:
+    opportunity_dict: dict[str, Any] = {
+        **OPPORTUNITY_DICT,
+        "geometry": {
+            "type": "LineString",
+            "coordinates": [[13.0, 52.0, 10.0], [14.0, 53.0, 200.0]],
+        },
+    }
+    opportunity: Opportunity[Any, Any] = Opportunity.model_validate(opportunity_dict)
+    assert opportunity.model_dump(mode="json")["bbox"] == [13.0, 52.0, 10.0, 14.0, 53.0, 200.0]
+
+
+def test_opportunity_serialization_schema_marks_spec_required_fields() -> None:
+    schema = Opportunity[Point, OpportunityProperties].model_json_schema(mode="serialization")
+    assert {"type", "stapi_type", "stapi_version", "links", "bbox"} <= set(schema["required"])
+    assert {"type": "null"} not in schema["properties"]["bbox"].get("anyOf", [])
+
+
+def test_opportunity_bbox_is_optional_to_supply_but_always_emitted() -> None:
+    """Validation and serialization differ on bbox: a caller may omit it (the
+    before-validator derives it), but a response always carries it, and neither
+    mode may permit null.
+    """
+    validation = Opportunity.model_json_schema(mode="validation")
+    serialization = Opportunity.model_json_schema(mode="serialization")
+
+    assert "bbox" not in validation["required"]
+    assert "bbox" in serialization["required"]
+    for schema in (validation, serialization):
+        assert "null" not in str(schema["properties"]["bbox"]).lower()
+
+
+def test_opportunity_bbox_may_still_be_omitted_by_callers() -> None:
+    # the before-validator supplies bbox, so declaring it required costs
+    # callers nothing
+    model = Opportunity[Point, OpportunityProperties]
+    assert model.model_validate(OPPORTUNITY_DICT).bbox == (13.4, 52.5, 13.4, 52.5)
+    assert model(**OPPORTUNITY_DICT).bbox == (13.4, 52.5, 13.4, 52.5)
+
+
+def test_opportunity_collection_bbox_is_none_for_empty_features() -> None:
+    # union_bboxes returns None for an empty sequence; assigning that back into
+    # bbox re-triggers the validator under validate_assignment, unbounded
+    class ValidatedOnAssignment(OpportunityCollection[Point, OpportunityProperties]):
+        model_config = pydantic.ConfigDict(validate_assignment=True)
+
+    assert OpportunityCollection(features=[]).bbox is None
+    assert ValidatedOnAssignment(features=[]).bbox is None
+
+
+def test_opportunity_collection_bbox_unions_features() -> None:
+    model = Opportunity[Point, OpportunityProperties]
+    other = {**OPPORTUNITY_DICT, "geometry": {"type": "Point", "coordinates": [14.4, 53.5]}}
+    collection = OpportunityCollection[Point, OpportunityProperties](
+        features=[model.model_validate(OPPORTUNITY_DICT), model.model_validate(other)]
+    )
+    assert collection.bbox == (13.4, 52.5, 14.4, 53.5)

@@ -5,6 +5,8 @@ from pydantic import BaseModel
 from stapi_pydantic import (
     Conformance,
     Link,
+    OpportunityCollection,
+    OrderCollection,
     Product,
     Provider,
     RootResponse,
@@ -73,3 +75,17 @@ def test_unset_optional_fields_are_omitted_not_published_as_null(
 
     schema = model.model_json_schema(mode="serialization")
     assert optional.isdisjoint(schema.get("required", []))
+
+
+@pytest.mark.parametrize("model", [OrderCollection, OpportunityCollection], ids=lambda m: m.__name__)
+def test_collection_bbox_is_omitted_when_there_is_no_extent(model: type[BaseModel]) -> None:
+    """A collection bbox is absent when unknown, not null, which is also what
+    keeps it out of the serialization-required set.
+    """
+    assert "bbox" not in model(features=[]).model_dump(mode="json")
+    for mode in ("validation", "serialization"):
+        assert "bbox" not in model.model_json_schema(mode=mode).get("required", [])
+
+
+#: Models whose spec-OPTIONAL fields must be omitted rather than published as
+#: null, and so must not appear in the serialization-required set.

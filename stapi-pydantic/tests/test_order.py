@@ -176,3 +176,104 @@ def test_order_collection_stapi_fields() -> None:
     dumped = collection.model_dump(mode="json")
     assert dumped["stapi_type"] == "OrderCollection"
     assert dumped["stapi_version"] == "0.2.0"
+
+
+def test_order_bbox_computed_and_serialized() -> None:
+    order = Order[OrderStatus].model_validate(ORDER_DICT)
+    dumped = order.model_dump(mode="json")
+    assert dumped["bbox"] == [13.4, 52.5, 13.4, 52.5]
+
+
+def test_order_bbox_3d_geometry() -> None:
+    order_dict: dict[str, Any] = {
+        **ORDER_DICT,
+        "geometry": {
+            "type": "LineString",
+            "coordinates": [[13.0, 52.0, 10.0], [14.0, 53.0, 200.0]],
+        },
+    }
+    order = Order[OrderStatus].model_validate(order_dict)
+    assert order.model_dump(mode="json")["bbox"] == [13.0, 52.0, 10.0, 14.0, 53.0, 200.0]
+
+
+def test_order_serialization_schema_marks_spec_required_fields() -> None:
+    schema = Order[OrderStatus].model_json_schema(mode="serialization")
+    assert {"type", "stapi_type", "stapi_version", "links", "bbox"} <= set(schema["required"])
+
+
+def test_order_bbox_serialization_schema_is_not_nullable() -> None:
+    schema = Order[OrderStatus].model_json_schema(mode="serialization")
+    bbox = schema["properties"]["bbox"]
+    assert {"type": "null"} not in bbox.get("anyOf", [])
+
+
+def test_order_bbox_is_optional_to_supply_but_always_emitted() -> None:
+    """Validation and serialization differ on bbox: a caller may omit it (the
+    before-validator derives it), but a response always carries it, and neither
+    mode may permit null.
+    """
+    validation = Order[OrderStatus].model_json_schema(mode="validation")
+    serialization = Order[OrderStatus].model_json_schema(mode="serialization")
+
+    assert "bbox" not in validation["required"]
+    assert "bbox" in serialization["required"]
+    for schema in (validation, serialization):
+        assert "null" not in str(schema["properties"]["bbox"]).lower()
+
+
+def test_order_bbox_may_still_be_omitted_by_callers() -> None:
+    # the before-validator supplies bbox, so declaring it required costs
+    # callers nothing
+    assert Order[OrderStatus].model_validate(ORDER_DICT).bbox == (13.4, 52.5, 13.4, 52.5)
+    assert Order[OrderStatus](**ORDER_DICT).bbox == (13.4, 52.5, 13.4, 52.5)
+
+
+def test_order_collection_bbox_is_none_for_empty_features() -> None:
+    # union_bboxes returns None for an empty sequence; assigning that back into
+    # bbox re-triggers the validator under validate_assignment, unbounded
+    class ValidatedOnAssignment(OrderCollection[OrderStatus]):
+        model_config = pydantic.ConfigDict(validate_assignment=True)
+
+    assert OrderCollection[OrderStatus](features=[]).bbox is None
+    assert ValidatedOnAssignment(features=[]).bbox is None
+
+
+def test_order_collection_bbox_unions_features() -> None:
+    other = {**ORDER_DICT, "id": "order-2", "geometry": {"type": "Point", "coordinates": [14.4, 53.5]}}
+    collection = OrderCollection[OrderStatus](
+        features=[Order[OrderStatus].model_validate(ORDER_DICT), Order[OrderStatus].model_validate(other)]
+    )
+    assert collection.bbox == (13.4, 52.5, 14.4, 53.5)
+
+
+def _order_with(geometry: dict[str, Any], id_: str) -> Order[OrderStatus]:
+    return Order[OrderStatus].model_validate({**ORDER_DICT, "id": id_, "geometry": geometry})
+
+
+LINE_3D = {"type": "LineString", "coordinates": [[13.0, 52.0, 10.0], [16.0, 55.0, 200.0]]}
+
+
+LINE_3D_LOWER = {"type": "LineString", "coordinates": [[12.0, 51.0, 5.0], [12.5, 51.5, 100.0]]}
+
+
+def test_order_collection_bbox_unions_3d_features() -> None:
+    collection = OrderCollection[OrderStatus](
+        features=[_order_with(LINE_3D, "order-1"), _order_with(LINE_3D_LOWER, "order-2")]
+    )
+    assert collection.bbox == (12.0, 51.0, 5.0, 16.0, 55.0, 200.0)
+
+
+def test_order_collection_bbox_degrades_to_2d_when_members_are_mixed() -> None:
+    # elevation is unknown for the 2D member, so the union cannot claim one
+    collection = OrderCollection[OrderStatus](
+        features=[
+            _order_with(LINE_3D, "order-1"),
+            _order_with({"type": "Point", "coordinates": [12.0, 51.0]}, "order-2"),
+        ]
+    )
+    assert collection.bbox == (12.0, 51.0, 16.0, 55.0)
+
+
+def test_order_empty_geometry_bbox_error_is_clear() -> None:
+    with pytest.raises(pydantic.ValidationError, match="bbox"):
+        Order[OrderStatus].model_validate({**ORDER_DICT, "geometry": {"type": "MultiPoint", "coordinates": []}})

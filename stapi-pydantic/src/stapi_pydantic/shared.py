@@ -1,11 +1,15 @@
-from typing import Any
+from typing import TYPE_CHECKING, Annotated, Any, Self, TypeAlias, cast
 
+from geojson_pydantic.types import BBox
 from pydantic import (
     AnyUrl,
     BaseModel,
     ConfigDict,
     Field,
+    model_validator,
 )
+
+from .geometry import bbox_from_geometry_input, union_bboxes
 
 # Shared config for the models that make up STAPI responses. Must be set on
 # every model that declares an alias, not just the outermost one: model config
@@ -38,6 +42,61 @@ def omitted_when_empty(**kwargs: Any) -> Any:
     For fields whose "unset" is an empty list or string rather than None.
     """
     return Field(exclude_if=lambda v: not v, **kwargs)
+
+
+# A bbox the model derives from its geometry when the caller omits it. Declare
+# it as ``bbox: ComputedBBox = UNSET_BBOX``.
+#
+# The two schema modes differ here on purpose: a caller may omit bbox, but a
+# response always carries it. The ``UNSET_BBOX`` default gives the former, and
+# ``json_schema_serialization_defaults_required`` the latter.
+ComputedBBox: TypeAlias = BBox
+
+# A collection bbox, derived from the members when there are any. Declare it as
+# ``bbox: OptionalBBox = None``. Unlike the item bbox it is spec-OPTIONAL, and
+# an empty collection has no extent, so it is absent rather than null.
+OptionalBBox = Annotated[
+    BBox | None,
+    Field(exclude_if=lambda v: v is None),
+]
+
+#: Placeholder standing in for "derive this from the geometry". Assigned in the
+#: class body rather than via ``Field(default=...)`` so the type checker also
+#: treats the field as omittable: pydantic's synthesized ``__init__`` reads
+#: defaults from the assignment, not from ``Annotated``.
+UNSET_BBOX: BBox = cast(BBox, None)
+
+
+class DerivedItemBBox(BaseModel):
+    """Mixin deriving a ``ComputedBBox`` from ``geometry`` when it is omitted."""
+
+    # Before field validation, where the geometry is still input, so ``bbox`` can
+    # be declared required and non-nullable.
+    @model_validator(mode="before")
+    @classmethod
+    def set_bbox(cls, data: Any) -> Any:
+        if isinstance(data, dict) and data.get("bbox") is None and data.get("geometry") is not None:
+            return {**data, "bbox": bbox_from_geometry_input(data["geometry"])}
+        return data
+
+
+class DerivedCollectionBBox(BaseModel):
+    """Mixin deriving an ``OptionalBBox`` from the members' bboxes."""
+
+    # declared for the type checker only; the models mixing this in own the
+    # real fields
+    if TYPE_CHECKING:
+        bbox: BBox | None
+        features: list[Any]
+
+    @model_validator(mode="after")
+    def set_bbox(self) -> Self:
+        # `self.features` is checked because union_bboxes returns None for an
+        # empty sequence: assigning that back would re-trigger this validator
+        # under validate_assignment, unbounded.
+        if self.bbox is None and self.features:
+            self.bbox = union_bboxes([feature.bbox for feature in self.features])
+        return self
 
 
 class Link(BaseModel):

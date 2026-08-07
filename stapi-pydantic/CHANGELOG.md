@@ -35,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **BREAKING** `Product.conformsTo` and `RootResponse.conformsTo` are spelled `conforms_to` in Python, matching `Conformance`. The wire name is unchanged: all three validate from either `conformsTo` or `conforms_to` and serialize as `conformsTo`. Keyword construction and attribute access must use the new name.
 - **BREAKING** `Provider.roles` and `Provider.url` are optional. Both were required, which made a provider that publishes neither unrepresentable; they are now omitted from output rather than published empty or null.
 - **BREAKING** `OrderStatuses` is renamed `OrderStatusCollection`, matching its sibling collections, and gains `stapi_type` and `stapi_version`.
+- **BREAKING** `bbox` is required and non-nullable on `Order` and `Opportunity`, and is derived from the geometry when the caller omits it. `Order` previously excluded `bbox` from its output when unset. Collection `bbox` stays optional and is unioned from the members, and is omitted rather than emitted as null when there are none.
 - `Order` and `OrderCollection` derive from `geojson_pydantic`'s `Feature` and `FeatureCollection` again, rather than re-implementing them on top of `_GeoJsonBase`. Field order in a dump follows the base classes, so `id` now trails `geometry` and `properties`.
 - **BREAKING** `OrderCollection` offers the same iteration surface as `OpportunityCollection`: `collection.iter()` and `collection.length`, in place of `iter(collection)`, `len(collection)`, and `collection[i]`. Its `__iter__` override shadowed the one pydantic reserves, which broke `dict(collection)`.
 - **BREAKING** `Opportunity.geometry` and `Opportunity.properties` are required and non-nullable, and `Opportunity.id` is string-only. `Feature` typed geometry and properties as nullable, so `model_validate({"geometry": None, ...})` was accepted and produced a dump that violated the spec.
@@ -52,6 +53,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Collection `bbox` computation no longer recurses without bound on a collection with no features.
+- Computing a bbox for a geometry with no coordinates raises a clear error.
 - `OrderStatus.new` respects the class it is called on. It constructed a bare `OrderStatus` regardless, so a parameterized `OrderStatus[MyCodes]` returned the wrong type and accepted codes outside its enum.
 - `OrderStatusCollection` no longer emits a second, unconstrained `OrderStatus-2` schema whose `status_code` had no schema at all.
 - Stored order requests and search parameters round-trip unknown fields rather than dropping them.

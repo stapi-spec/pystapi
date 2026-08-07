@@ -17,7 +17,17 @@ from typing_extensions import TypeVar as DefaultTypeVar
 from .constants import STAPI_VERSION
 from .geometry import Geometry
 from .search_parameters import SearchParameters
-from .shared import STAPI_RESPONSE_CONFIG, STAPI_RESPONSE_CONFIG_ALLOW_EXTRA, Link, omitted_when_none
+from .shared import (
+    STAPI_RESPONSE_CONFIG,
+    STAPI_RESPONSE_CONFIG_ALLOW_EXTRA,
+    UNSET_BBOX,
+    ComputedBBox,
+    DerivedCollectionBBox,
+    DerivedItemBBox,
+    Link,
+    OptionalBBox,
+    omitted_when_none,
+)
 
 
 class BaseOrderParameters(BaseModel):
@@ -123,7 +133,7 @@ class OrderProperties(BaseModel, Generic[T]):
     order_request: StoredOrderRequest
 
 
-class Order(Feature[Geometry, OrderProperties[T]], Generic[T]):
+class Order(Feature[Geometry, OrderProperties[T]], DerivedItemBBox, Generic[T]):
     model_config = STAPI_RESPONSE_CONFIG
 
     # We need to enforce that orders have an id defined, as that is required to
@@ -134,17 +144,19 @@ class Order(Feature[Geometry, OrderProperties[T]], Generic[T]):
     stapi_version: str = STAPI_VERSION
 
     geometry: Geometry = Field(...)
+    bbox: ComputedBBox = UNSET_BBOX
     properties: OrderProperties[T] = Field(...)
 
     links: list[Link] = Field(default_factory=list)
 
 
-class OrderCollection(FeatureCollection[Order[T]], Generic[T]):
+class OrderCollection(FeatureCollection[Order[T]], DerivedCollectionBBox, Generic[T]):
     model_config = STAPI_RESPONSE_CONFIG
 
     type: Literal["FeatureCollection"] = "FeatureCollection"
     stapi_type: Literal["OrderCollection"] = "OrderCollection"
     stapi_version: str = STAPI_VERSION
+    bbox: OptionalBBox = None
     links: list[Link] = Field(default_factory=list)
     number_matched: int | None = Field(
         serialization_alias="numberMatched", default=None, exclude_if=lambda x: x is None
