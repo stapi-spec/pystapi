@@ -342,7 +342,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         self.product.validate_required_queryables(search.search_parameters)
         match await self.product.search_opportunities_async(self, search, request):
             case Success(search_record):
-                search_record.links.append(self.root_router.opportunity_search_record_self_link(search_record, request))
+                search_record.links.extend(self.root_router.opportunity_search_record_links(search_record, request))
                 headers = {}
                 headers["Location"] = str(
                     self.root_router.generate_opportunity_search_record_href(request, search_record.id)

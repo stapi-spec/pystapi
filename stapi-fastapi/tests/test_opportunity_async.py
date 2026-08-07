@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
-from stapi_fastapi.conformance import PRODUCT
+from stapi_fastapi.conformance import API, PRODUCT
 from stapi_pydantic import (
     Link,
     OpportunityCollection,
@@ -15,6 +15,7 @@ from stapi_pydantic import (
     OpportunitySearchStatusCode,
 )
 
+from .backends import mock_get_opportunity_search_record_statuses
 from .shared import (
     create_mock_opportunity,
     find_link,
@@ -38,7 +39,7 @@ def test_no_opportunity_search_advertised(stapi_client: TestClient) -> None:
     # the `searches/opportunities` link should not be advertised on the root
     root_response = stapi_client.get("/")
     root_body = root_response.json()
-    assert find_link(root_body["links"], "opportunity-search-records") is None
+    assert find_link(root_body["links"], "search-records") is None
 
 
 @pytest.mark.mock_products([product_test_spotlight_sync_opportunity])
@@ -53,7 +54,7 @@ def test_only_sync_search_advertised(stapi_client: TestClient) -> None:
     # the `searches/opportunities` link should not be advertised on the root
     root_response = stapi_client.get("/")
     root_body = root_response.json()
-    assert find_link(root_body["links"], "opportunity-search-records") is None
+    assert find_link(root_body["links"], "search-records") is None
 
 
 # test async search offered
@@ -75,7 +76,7 @@ def test_async_search_advertised(stapi_client_async_opportunity: TestClient) -> 
     # the `searches/opportunities` link should be advertised on the root
     root_response = stapi_client_async_opportunity.get("/")
     root_body = root_response.json()
-    assert find_link(root_body["links"], "opportunity-search-records")
+    assert find_link(root_body["links"], "search-records")
 
 
 @pytest.mark.mock_products([product_test_spotlight_async_opportunity])
@@ -366,3 +367,89 @@ def test_sync_async_product_conformance(stapi_client_async_opportunity: TestClie
     conforms_to = res.json()["conformsTo"]
     assert PRODUCT.opportunities in conforms_to
     assert PRODUCT.opportunities_async in conforms_to
+
+
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
+def test_monitor_link_present_on_search_records(
+    stapi_client_async_opportunity: TestClient,
+    opportunity_search: dict[str, Any],
+    url_for: Callable[[str], str],
+) -> None:
+    client = stapi_client_async_opportunity
+    product_id = "test-spotlight"
+
+    # 201 create
+    create_res = client.post(f"/products/{product_id}/opportunities", json=opportunity_search)
+    assert create_res.status_code == 201
+    create_body = create_res.json()
+    record_id = create_body["id"]
+    statuses_href = url_for(f"/searches/opportunities/{record_id}/statuses")
+
+    monitor = find_link(create_body["links"], "monitor")
+    assert monitor
+    assert monitor["href"] == statuses_href
+
+    # GET single record
+    get_res = client.get(f"/searches/opportunities/{record_id}")
+    assert get_res.status_code == 200
+    get_monitor = find_link(get_res.json()["links"], "monitor")
+    assert get_monitor
+    assert get_monitor["href"] == statuses_href
+
+    # GET record list
+    list_res = client.get("/searches/opportunities")
+    assert list_res.status_code == 200
+    record = next(r for r in list_res.json()["records"] if r["id"] == record_id)
+    list_monitor = find_link(record["links"], "monitor")
+    assert list_monitor
+    assert list_monitor["href"] == statuses_href
+
+
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
+@pytest.mark.root_router_kwargs({"get_opportunity_search_record_statuses": None})
+def test_monitor_link_absent_without_statuses_backend(
+    stapi_client_async_opportunity: TestClient,
+    opportunity_search: dict[str, Any],
+) -> None:
+    client = stapi_client_async_opportunity
+    product_id = "test-spotlight"
+
+    create_res = client.post(f"/products/{product_id}/opportunities", json=opportunity_search)
+    assert create_res.status_code == 201
+    record_id = create_res.json()["id"]
+    assert find_link(create_res.json()["links"], "monitor") is None
+
+    get_res = client.get(f"/searches/opportunities/{record_id}")
+    assert find_link(get_res.json()["links"], "monitor") is None
+
+    list_res = client.get("/searches/opportunities")
+    record = next(r for r in list_res.json()["records"] if r["id"] == record_id)
+    assert find_link(record["links"], "monitor") is None
+
+
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
+def test_statuses_unknown_id_returns_404(
+    stapi_client_async_opportunity: TestClient,
+) -> None:
+    res = stapi_client_async_opportunity.get("/searches/opportunities/does-not-exist/statuses")
+    assert res.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
+@pytest.mark.root_router_kwargs(
+    {
+        # A statuses backend is supplied but the async search record backends
+        # are withheld, so the statuses route must not be registered and its
+        # conformance must be absent.
+        "get_opportunity_search_records": None,
+        "get_opportunity_search_record": None,
+        "get_opportunity_search_record_statuses": mock_get_opportunity_search_record_statuses,
+        "conformances": [API.core],
+    }
+)
+def test_statuses_endpoint_gated_on_async_support(stapi_client_async_opportunity: TestClient) -> None:
+    res = stapi_client_async_opportunity.get("/searches/opportunities/anything/statuses")
+    assert res.status_code == status.HTTP_404_NOT_FOUND
+
+    conformance = stapi_client_async_opportunity.get("/conformance").json()["conformsTo"]
+    assert API.searches_opportunity_statuses not in conformance

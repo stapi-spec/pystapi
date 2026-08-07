@@ -189,18 +189,18 @@ class RootRouter(StapiFastapiBaseRouter):
                 )
             )
 
-        if self.__get_opportunity_search_record_statuses is not None:
-            _conformances.add(API_CONFORMANCE.searches_opportunity_statuses)
-            self.register_route(
-                Route(
-                    name=LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES,
-                    tag=Tag.OPPORTUNITIES,
-                    path="/searches/opportunities/{searchRecordId}/statuses",
-                    endpoint=self.get_opportunity_search_record_statuses,
-                    errors=NOT_FOUND | SERVER_ERROR,
-                    summary="List statuses for an Opportunity Search Record",
+            if self.__get_opportunity_search_record_statuses is not None:
+                _conformances.add(API_CONFORMANCE.searches_opportunity_statuses)
+                self.register_route(
+                    Route(
+                        name=LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES,
+                        tag=Tag.OPPORTUNITIES,
+                        path="/searches/opportunities/{searchRecordId}/statuses",
+                        endpoint=self.get_opportunity_search_record_statuses,
+                        errors=NOT_FOUND | SERVER_ERROR,
+                        summary="List statuses for an Opportunity Search Record",
+                    )
                 )
-            )
 
         self.conformances = sorted(_conformances)
 
@@ -231,7 +231,7 @@ class RootRouter(StapiFastapiBaseRouter):
         if self.supports_async_opportunity_search:
             links.append(
                 json_link(
-                    "opportunity-search-records",
+                    "search-records",
                     self.url_for(request, self.route_name(LIST_OPPORTUNITY_SEARCH_RECORDS)),
                 ),
             )
@@ -381,7 +381,7 @@ class RootRouter(StapiFastapiBaseRouter):
         match await self._get_opportunity_search_records(next, limit, request):
             case Success(page):
                 for record in page.items:
-                    record.links.append(self.opportunity_search_record_self_link(record, request))
+                    record.links.extend(self.opportunity_search_record_links(record, request))
                 return OpportunitySearchRecordCollection(
                     records=page.items,
                     links=self.page_links(request, page, self.route_name(LIST_OPPORTUNITY_SEARCH_RECORDS), limit),
@@ -409,7 +409,7 @@ class RootRouter(StapiFastapiBaseRouter):
         """
         match await self._get_opportunity_search_record(search_record_id, request):
             case Success(Some(search_record)):
-                search_record.links.append(self.opportunity_search_record_self_link(search_record, request))
+                search_record.links.extend(self.opportunity_search_record_links(search_record, request))
                 return search_record  # type: ignore
             case Success(Maybe.empty):
                 raise NotFoundError("Opportunity Search Record not found")
@@ -473,6 +473,27 @@ class RootRouter(StapiFastapiBaseRouter):
             searchRecordId=search_record_id,
         )
 
+    def generate_opportunity_search_record_statuses_href(self, request: Request, search_record_id: str) -> URL:
+        return self.url_for(
+            request,
+            self.route_name(LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES),
+            searchRecordId=search_record_id,
+        )
+
+    def opportunity_search_record_links(
+        self, opportunity_search_record: OpportunitySearchRecord, request: Request
+    ) -> list[Link]:
+        """Links added to every search record response."""
+        links = [self.opportunity_search_record_self_link(opportunity_search_record, request)]
+        if self.supports_opportunity_search_record_statuses:
+            links.append(
+                json_link(
+                    "monitor",
+                    self.generate_opportunity_search_record_statuses_href(request, opportunity_search_record.id),
+                )
+            )
+        return links
+
     def opportunity_search_record_self_link(
         self, opportunity_search_record: OpportunitySearchRecord, request: Request
     ) -> Link:
@@ -501,6 +522,11 @@ class RootRouter(StapiFastapiBaseRouter):
         if not self.__get_opportunity_search_record_statuses:
             raise AttributeError("Root router does not support async opportunity search status history")
         return self.__get_opportunity_search_record_statuses
+
+    @property
+    def supports_opportunity_search_record_statuses(self) -> bool:
+        """Whether the search-record-statuses endpoint is registered."""
+        return self.supports_async_opportunity_search and self.__get_opportunity_search_record_statuses is not None
 
     @property
     def supports_order_statuses(self) -> bool:
