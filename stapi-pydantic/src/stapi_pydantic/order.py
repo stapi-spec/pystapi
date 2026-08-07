@@ -27,6 +27,7 @@ from .shared import (
     Link,
     NumberMatched,
     OptionalBBox,
+    StapiGenericModel,
     omitted_when_none,
 )
 
@@ -70,7 +71,7 @@ AnyOrderStatusCode = Annotated[OrderStatusCode | str, Field(union_mode="left_to_
 StatusCode = DefaultTypeVar("StatusCode", bound=str, default=AnyOrderStatusCode)
 
 
-class OrderStatus(BaseModel, Generic[StatusCode]):
+class OrderStatus(StapiGenericModel, Generic[StatusCode]):
     """An order status; parameterize with a StrEnum (``OrderStatus[MyCodes]``)
     to constrain status_code to an implementation-defined set."""
 
@@ -103,7 +104,7 @@ class OrderStatus(BaseModel, Generic[StatusCode]):
 T = DefaultTypeVar("T", bound=OrderStatus[Any], default=OrderStatus)
 
 
-class OrderStatusCollection(BaseModel, Generic[T]):
+class OrderStatusCollection(StapiGenericModel, Generic[T]):
     model_config = STAPI_RESPONSE_CONFIG
 
     stapi_type: Literal["OrderStatusCollection"] = "OrderStatusCollection"
@@ -126,7 +127,7 @@ class StoredOrderRequest(BaseModel):
     order_parameters: BaseOrderParameters = Field(default_factory=BaseOrderParameters)
 
 
-class OrderProperties(BaseModel, Generic[T]):
+class OrderProperties(StapiGenericModel, Generic[T]):
     model_config = STAPI_RESPONSE_CONFIG_ALLOW_EXTRA
 
     product_id: str
@@ -135,7 +136,7 @@ class OrderProperties(BaseModel, Generic[T]):
     order_request: StoredOrderRequest
 
 
-class Order(Feature[Geometry, OrderProperties[T]], DerivedItemBBox, Generic[T]):
+class Order(Feature[Geometry, OrderProperties[T]], StapiGenericModel, DerivedItemBBox, Generic[T]):
     model_config = STAPI_RESPONSE_CONFIG
 
     # We need to enforce that orders have an id defined, as that is required to
@@ -152,7 +153,7 @@ class Order(Feature[Geometry, OrderProperties[T]], DerivedItemBBox, Generic[T]):
     links: list[Link] = Field(default_factory=list)
 
 
-class OrderCollection(FeatureCollection[Order[T]], DerivedCollectionBBox, Generic[T]):
+class OrderCollection(FeatureCollection[Order[T]], StapiGenericModel, DerivedCollectionBBox, Generic[T]):
     model_config = STAPI_RESPONSE_CONFIG
 
     type: Literal["FeatureCollection"] = "FeatureCollection"
@@ -163,7 +164,7 @@ class OrderCollection(FeatureCollection[Order[T]], DerivedCollectionBBox, Generi
     number_matched: NumberMatched = None
 
 
-class OrderRequest(BaseModel, Generic[ORP]):
+class OrderRequest(StapiGenericModel, Generic[ORP]):
     """STAPI Order Request Object.
 
     An omitted order_parameters is equivalent to an empty object, so products

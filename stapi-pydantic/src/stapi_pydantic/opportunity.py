@@ -20,6 +20,7 @@ from .shared import (
     Link,
     NumberMatched,
     OptionalBBox,
+    StapiGenericModel,
     omitted_when_none,
 )
 
@@ -61,7 +62,7 @@ G = TypeVar("G", bound=Geometry)
 P = TypeVar("P", bound=OpportunityProperties)
 
 
-class Opportunity(Feature[G, P], DerivedItemBBox):
+class Opportunity(Feature[G, P], StapiGenericModel, DerivedItemBBox):
     model_config = STAPI_RESPONSE_CONFIG
 
     id: str | None = omitted_when_none()
@@ -74,7 +75,7 @@ class Opportunity(Feature[G, P], DerivedItemBBox):
     links: list[Link] = Field(default_factory=list)
 
 
-class OpportunityCollection(FeatureCollection[Opportunity[G, P]], DerivedCollectionBBox):
+class OpportunityCollection(FeatureCollection[Opportunity[G, P]], StapiGenericModel, DerivedCollectionBBox):
     model_config = STAPI_RESPONSE_CONFIG
 
     type: Literal["FeatureCollection"] = "FeatureCollection"
@@ -99,7 +100,7 @@ AnySearchStatusCode = Annotated[OpportunitySearchStatusCode | str, Field(union_m
 SearchStatusCode = DefaultTypeVar("SearchStatusCode", bound=str, default=AnySearchStatusCode)
 
 
-class OpportunitySearchStatus(BaseModel, Generic[SearchStatusCode]):
+class OpportunitySearchStatus(StapiGenericModel, Generic[SearchStatusCode]):
     """A search record status; parameterize with a StrEnum
     (``OpportunitySearchStatus[MyCodes]``) to constrain status_code to an
     implementation-defined set."""

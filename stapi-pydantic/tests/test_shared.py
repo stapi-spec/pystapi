@@ -1,13 +1,17 @@
-from typing import Any
+from typing import Annotated, Any
 
 import pytest
 import stapi_pydantic
-from pydantic import BaseModel
+from geojson_pydantic.geometries import Point
+from pydantic import BaseModel, Field
 from stapi_pydantic import (
     Conformance,
+    Geometry,
     Link,
     OpportunityCollection,
+    OpportunityProperties,
     OrderCollection,
+    OrderStatus,
     Product,
     Provider,
     RootResponse,
@@ -179,3 +183,35 @@ def test_number_matched_stays_optional_and_aliased_in_json_schema(
     serialization = model.model_json_schema(mode="serialization")
     assert "numberMatched" in serialization["properties"]
     assert "numberMatched" not in serialization.get("required", [])
+
+
+def test_parameterized_generics_are_named_readably() -> None:
+    """Pydantic names a parameterization after the *repr* of its parameters, which
+    for the `Geometry` union is 150 characters. Only the parameter spelling
+    changes here; the surrounding `Model[param, ...]` form is still pydantic's.
+    """
+    assert OpportunityCollection[Geometry, OpportunityProperties].__name__ == (
+        "OpportunityCollection[Geometry, OpportunityProperties]"
+    )
+    assert OrderCollection[OrderStatus].__name__ == "OrderCollection[OrderStatus]"
+
+
+def test_parameterizations_are_named_apart() -> None:
+    """A server mounting several products has several parameterizations of one
+    generic, so the name has to keep them distinct rather than collapse them."""
+
+    class OtherProperties(OpportunityProperties):
+        pass
+
+    assert (
+        OpportunityCollection[Geometry, OpportunityProperties].__name__
+        != OpportunityCollection[Geometry, OtherProperties].__name__
+    )
+
+
+def test_unnameable_parameter_falls_back_to_pydantic() -> None:
+    """A parameter with no short name must not be given one that could collide."""
+    name = OpportunityCollection[Annotated[Point, Field(title="anything")], OpportunityProperties].__name__
+
+    assert name.startswith("OpportunityCollection[")
+    assert "OpportunityProperties" in name

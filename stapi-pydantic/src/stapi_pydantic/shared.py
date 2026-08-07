@@ -10,7 +10,7 @@ from pydantic import (
     model_validator,
 )
 
-from .geometry import bbox_from_geometry_input, union_bboxes
+from .geometry import Geometry, bbox_from_geometry_input, union_bboxes
 
 # Shared config for the models that make up STAPI responses. Must be set on
 # every model that declares an alias, not just the outermost one: model config
@@ -25,6 +25,42 @@ STAPI_RESPONSE_CONFIG = ConfigDict(
 # which type checkers reject: they cannot prove the unpacked TypedDict does not
 # already carry ``extra``.
 STAPI_RESPONSE_CONFIG_ALLOW_EXTRA: ConfigDict = {**STAPI_RESPONSE_CONFIG, "extra": "allow"}
+
+
+#: Readable names for the type aliases the STAPI generics are parameterized
+#: with. A list of pairs rather than a dict because an ``Annotated`` alias is
+#: not hashable in every Python version.
+_ALIAS_NAMES: list[tuple[Any, str]] = [(Geometry, "Geometry")]
+
+
+def _parameter_name(parameter: Any) -> str | None:
+    """A short, readable name for one generic parameter, or None if it has none.
+
+    A class supplies its own; a type alias does not -- ``Geometry.__name__`` is
+    the useless ``"Annotated"``.
+    """
+    for alias, name in _ALIAS_NAMES:
+        if parameter is alias:
+            return name
+    return parameter.__name__ if isinstance(parameter, type) else None
+
+
+class StapiGenericModel(BaseModel):
+    """Base giving a generic STAPI model a readable parameterized name.
+
+    Pydantic names a parameterized schema using each parameter's *repr*, which
+    for the ``Geometry`` union is 150 characters of
+    ``Annotated_Union_Point__MultiPoint__...``, published as a component name
+    and in every ``$ref`` to it. Only the parameter spelling changes here, so
+    the result is e.g. ``OpportunityCollection[Geometry, MyProperties]``.
+    """
+
+    @classmethod
+    def model_parametrized_name(cls, params: tuple[type[Any], ...]) -> str:
+        names = [_parameter_name(param) for param in params]
+        if any(name is None for name in names):
+            return super().model_parametrized_name(params)
+        return f"{cls.__name__}[{', '.join(name for name in names if name is not None)}]"
 
 
 def omitted_when_none(**kwargs: Any) -> Any:
