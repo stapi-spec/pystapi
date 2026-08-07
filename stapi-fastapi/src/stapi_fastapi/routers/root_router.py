@@ -38,8 +38,8 @@ from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_fastapi.routers.route_names import (
     CONFORMANCE,
     GET_OPPORTUNITY_SEARCH_RECORD,
-    GET_OPPORTUNITY_SEARCH_RECORD_STATUSES,
     GET_ORDER,
+    LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES,
     LIST_OPPORTUNITY_SEARCH_RECORDS,
     LIST_ORDER_STATUSES,
     LIST_ORDERS,
@@ -166,7 +166,7 @@ class RootRouter(StapiFastapiBaseRouter):
                 "/searches/opportunities/{search_record_id}/statuses",
                 self.get_opportunity_search_record_statuses,
                 methods=["GET"],
-                name=f"{self.name}:{GET_OPPORTUNITY_SEARCH_RECORD_STATUSES}",
+                name=f"{self.name}:{LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES}",
                 summary="Get an Opportunity Search Record statuses by ID",
                 tags=["Opportunities"],
             )

@@ -6,8 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING** The `GET_OPPORTUNITY_SEARCH_RECORD_STATUSES` route name constant is renamed `LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES`, matching its sibling list routes, and the registered route name changes with it.
+
 ### Removed
 
+- A duplicate definition of the `LIST_PRODUCTS` route name constant.
 - **BREAKING** The runtime dependencies the library never imported: `httpx`, `pygeofilter`, `nox`, `pydantic-settings`, and `uvicorn`. If your application imports any of these, depend on it directly. `httpx` remains a development dependency, for the test client.
 
 ## [0.8.0] - 2025-12-18
