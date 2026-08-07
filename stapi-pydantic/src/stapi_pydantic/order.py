@@ -19,6 +19,7 @@ from .constants import STAPI_VERSION
 from .datetime_interval import DatetimeInterval
 from .filter import CQL2Filter
 from .geometry import Geometry
+from .search_parameters import SearchParameters
 from .shared import Link
 
 
@@ -152,12 +153,14 @@ class OrderCollection(_GeoJsonBase, Generic[T]):
         return self.features[index]
 
 
-class OrderPayload(BaseModel, Generic[ORP]):
-    datetime: DatetimeInterval = Field(examples=["2018-02-12T00:00:00Z/2018-03-18T12:31:12Z"])
-    geometry: Geometry
-    # TODO: validate the CQL2 filter?
-    filter: CQL2Filter | None = None  # type: ignore [type-arg]
+class OrderRequest(BaseModel, Generic[ORP]):
+    """STAPI Order Request Object.
 
-    order_parameters: ORP
+    An omitted order_parameters is equivalent to an empty object, so products
+    with required order parameters make the field effectively required.
+    """
+
+    search_parameters: SearchParameters
+    order_parameters: ORP = Field(default_factory=dict, validate_default=True)
 
     model_config = ConfigDict(strict=True)

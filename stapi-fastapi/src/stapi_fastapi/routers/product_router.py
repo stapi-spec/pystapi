@@ -21,10 +21,10 @@ from stapi_pydantic import (
     JsonSchema,
     Link,
     OpportunityCollection,
-    OpportunityPayload,
+    OpportunityRequest,
     OpportunitySearchRecord,
     Order,
-    OrderPayload,
+    OrderRequest,
     OrderStatus,
     Prefer,
 )
@@ -144,13 +144,13 @@ class ProductRouter(StapiFastapiBaseRouter):
         # the annotation on every `ProductRouter` instance's `create_order`, not just
         # this one's.
         async def _create_order(
-            payload: OrderPayload,  # type: ignore
+            payload: OrderRequest,  # type: ignore
             request: Request,
             response: Response,
         ) -> Order[OrderStatus]:
             return await self.create_order(payload, request, response)
 
-        _create_order.__annotations__["payload"] = OrderPayload[
+        _create_order.__annotations__["payload"] = OrderRequest[
             self.product.order_parameters  # type: ignore
         ]
 
@@ -233,7 +233,7 @@ class ProductRouter(StapiFastapiBaseRouter):
 
     async def search_opportunities(
         self,
-        search: OpportunityPayload,
+        search: OpportunityRequest,
         request: Request,
         response: Response,
         prefer: Prefer | None = Depends(get_prefer),
@@ -264,7 +264,7 @@ class ProductRouter(StapiFastapiBaseRouter):
 
     async def search_opportunities_sync(
         self,
-        search: OpportunityPayload,
+        search: OpportunityRequest,
         request: Request,
         response: Response,
         prefer: Prefer | None,
@@ -305,7 +305,7 @@ class ProductRouter(StapiFastapiBaseRouter):
 
     async def search_opportunities_async(
         self,
-        search: OpportunityPayload,
+        search: OpportunityRequest,
         request: Request,
         prefer: Prefer | None,
     ) -> JSONResponse:
@@ -355,7 +355,7 @@ class ProductRouter(StapiFastapiBaseRouter):
         """
         return JsonSchema.from_model(self.product.order_parameters)
 
-    async def create_order(self, payload: OrderPayload, request: Request, response: Response) -> Order:  # type: ignore
+    async def create_order(self, payload: OrderRequest, request: Request, response: Response) -> Order:  # type: ignore
         """
         Create a new order.
         """
@@ -383,7 +383,7 @@ class ProductRouter(StapiFastapiBaseRouter):
             case x:
                 raise AssertionError(f"Expected code to be unreachable {x}")
 
-    def order_link(self, request: Request, opp_req: OpportunityPayload) -> Link:
+    def order_link(self, request: Request, opp_req: OpportunityRequest) -> Link:
         return Link(
             href=self.url_for(request, f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}"),
             rel="create-order",
@@ -392,7 +392,7 @@ class ProductRouter(StapiFastapiBaseRouter):
             body=opp_req.search_body(),
         )
 
-    def pagination_link(self, request: Request, opp_req: OpportunityPayload, pagination_token: str) -> Link:
+    def pagination_link(self, request: Request, opp_req: OpportunityRequest, pagination_token: str) -> Link:
         body = opp_req.body()
         body["next"] = pagination_token
         return Link(

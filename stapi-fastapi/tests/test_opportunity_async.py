@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -23,7 +23,6 @@ from .shared import (
     product_test_spotlight_sync_async_opportunity,
     product_test_spotlight_sync_opportunity,
 )
-from .test_datetime_interval import rfc3339_strftime
 
 
 @pytest.mark.mock_products([product_test_spotlight])
@@ -282,34 +281,12 @@ def test_bad_ids(stapi_client_async_opportunity: TestClient) -> None:
 @pytest.fixture
 def setup_search_record_pagination(
     stapi_client_async_opportunity: TestClient,
+    opportunity_search: dict[str, Any],
 ) -> list[dict[str, Any]]:
     product_id = "test-spotlight"
     search_records = []
     for _ in range(3):
-        now = datetime.now(UTC)
-        end = now + timedelta(days=5)
-        format = "%Y-%m-%dT%H:%M:%S.%f%z"
-        start_string = rfc3339_strftime(now, format)
-        end_string = rfc3339_strftime(end, format)
-
-        opportunity_request = {
-            "geometry": {
-                "type": "Point",
-                "coordinates": [0, 0],
-            },
-            "datetime": f"{start_string}/{end_string}",
-            "filter": {
-                "op": "and",
-                "args": [
-                    {"op": ">", "args": [{"property": "off_nadir"}, 0]},
-                    {"op": "<", "args": [{"property": "off_nadir"}, 45]},
-                ],
-            },
-        }
-
-        response = stapi_client_async_opportunity.post(
-            f"/products/{product_id}/opportunities", json=opportunity_request
-        )
+        response = stapi_client_async_opportunity.post(f"/products/{product_id}/opportunities", json=opportunity_search)
         assert response.status_code == 201
 
         body = response.json()
@@ -318,7 +295,7 @@ def setup_search_record_pagination(
     return search_records
 
 
-@pytest.mark.parametrize("limit", [0, 1, 2, 4])
+@pytest.mark.parametrize("limit", [1, 2, 4])
 @pytest.mark.mock_products([product_test_spotlight_async_opportunity])
 def test_get_search_records_pagination(
     stapi_client_async_opportunity: TestClient,

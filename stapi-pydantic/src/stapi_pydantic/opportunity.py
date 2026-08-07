@@ -4,9 +4,9 @@ from typing import Any, Literal, TypeVar
 from geojson_pydantic import Feature, FeatureCollection
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
-from .datetime_interval import BoundedDatetimeInterval, DatetimeInterval
-from .filter import CQL2Filter
+from .datetime_interval import BoundedDatetimeInterval
 from .geometry import Geometry
+from .search_parameters import SearchParameters
 from .shared import Link
 
 
@@ -17,18 +17,27 @@ class OpportunityProperties(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
-class OpportunityPayload(BaseModel):
-    datetime: DatetimeInterval
-    geometry: Geometry
-    filter: CQL2Filter | None = None  # type: ignore [type-arg]
+class OpportunityRequest(BaseModel):
+    """STAPI Opportunity Request Object.
+
+    Carries the same ``search_parameters`` as an Order Request, which
+    additionally supplies ``order_parameters``. ``next`` and ``limit`` page a
+    search and have no Order Request equivalent.
+    """
+
+    search_parameters: SearchParameters
 
     next: str | None = None
-    limit: int = 10
+    # No default page size: `None` means the request named none, leaving the
+    # server to supply its own, rather than a number this library picked. The
+    # lower bound is the spec's; it publishes no upper one, so a server clamps
+    # rather than rejects.
+    limit: int | None = Field(default=None, ge=1)
 
     model_config = ConfigDict(strict=True)
 
     def search_body(self) -> dict[str, Any]:
-        return self.model_dump(mode="json", include={"datetime", "geometry", "filter"})
+        return self.model_dump(mode="json", include={"search_parameters"})
 
     def body(self) -> dict[str, Any]:
         return self.model_dump(mode="json")
@@ -68,7 +77,7 @@ class OpportunitySearchStatus(BaseModel):
 class OpportunitySearchRecord(BaseModel):
     id: str
     product_id: str
-    opportunity_request: OpportunityPayload
+    opportunity_request: OpportunityRequest
     status: OpportunitySearchStatus
     links: list[Link] = Field(default_factory=list)
 

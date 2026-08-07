@@ -14,10 +14,10 @@ from stapi_pydantic import (
     Link,
     Opportunity,
     OpportunityCollection,
-    OpportunityPayload,
+    OpportunityRequest,
     Order,
     OrderCollection,
-    OrderPayload,
+    OrderRequest,
     Product,
     ProductCollection,
 )
@@ -316,14 +316,16 @@ class Client:
         """
         product_opportunities_endpoint = self._get_products_href(product_id, subpath="opportunities")
 
-        opportunity_parameters = OpportunityPayload.model_validate(
+        opportunity_parameters = OpportunityRequest.model_validate(
             {
-                "datetime": (
-                    datetime.fromisoformat(date_range[0]),
-                    datetime.fromisoformat(date_range[1]),
-                ),
-                "geometry": geometry,
-                "filter": cql2_filter,
+                "search_parameters": {
+                    "datetime": (
+                        datetime.fromisoformat(date_range[0]),
+                        datetime.fromisoformat(date_range[1]),
+                    ),
+                    "geometry": geometry,
+                    "filter": cql2_filter,
+                },
                 "limit": limit,
             }
         )
@@ -348,7 +350,7 @@ class Client:
         for opportunity_collection in product_opportunities_json:
             yield from OpportunityCollection.model_validate(opportunity_collection).features
 
-    def create_product_order(self, product_id: str, order_parameters: OrderPayload) -> Order:  # type: ignore[type-arg]
+    def create_product_order(self, product_id: str, order_parameters: OrderRequest) -> Order:  # type: ignore[type-arg]
         # TODO Update return type after the pydantic model generic type is fixed
         """Create an order for a product
 

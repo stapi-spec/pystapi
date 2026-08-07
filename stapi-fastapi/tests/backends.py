@@ -8,13 +8,13 @@ from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_pydantic import (
     Opportunity,
     OpportunityCollection,
-    OpportunityPayload,
+    OpportunityRequest,
     OpportunitySearchRecord,
     OpportunitySearchStatus,
     OpportunitySearchStatusCode,
     Order,
-    OrderPayload,
     OrderProperties,
+    OrderRequest,
     OrderSearchParameters,
     OrderStatus,
     OrderStatusCode,
@@ -80,7 +80,7 @@ async def mock_get_order_statuses(
         return Failure(e)
 
 
-async def mock_create_order(product_router: ProductRouter, payload: OrderPayload, request: Request) -> ResultE[Order]:
+async def mock_create_order(product_router: ProductRouter, payload: OrderRequest, request: Request) -> ResultE[Order]:
     """
     Create a new order.
     """
@@ -91,15 +91,15 @@ async def mock_create_order(product_router: ProductRouter, payload: OrderPayload
         )
         order = Order(
             id=str(uuid4()),
-            geometry=payload.geometry,
+            geometry=payload.search_parameters.geometry,
             properties=OrderProperties(
                 product_id=product_router.product.id,
                 created=datetime.now(UTC),
                 status=status,
                 search_parameters=OrderSearchParameters(
-                    geometry=payload.geometry,
-                    datetime=payload.datetime,
-                    filter=payload.filter,
+                    geometry=payload.search_parameters.geometry,
+                    datetime=payload.search_parameters.datetime,
+                    filter=payload.search_parameters.filter,
                 ),
                 order_parameters=payload.order_parameters.model_dump(),
                 opportunity_properties={
@@ -119,7 +119,7 @@ async def mock_create_order(product_router: ProductRouter, payload: OrderPayload
 
 async def mock_search_opportunities(
     product_router: ProductRouter,
-    search: OpportunityPayload,
+    search: OpportunityRequest,
     next: str | None,
     limit: int,
     request: Request,
@@ -130,7 +130,11 @@ async def mock_search_opportunities(
         if next:
             start = int(next)
         end = start + limit
-        opportunities = [o.model_copy(update=search.model_dump()) for o in request.state._opportunities[start:end]]
+        # Reflect the searched geometry into the returned opportunities.
+        opportunities = [
+            o.model_copy(update={"geometry": search.search_parameters.geometry})
+            for o in request.state._opportunities[start:end]
+        ]
         if end > 0 and end < len(request.state._opportunities):
             return Success((opportunities, Some(str(end))))
         return Success((opportunities, Nothing))
@@ -140,7 +144,7 @@ async def mock_search_opportunities(
 
 async def mock_search_opportunities_async(
     product_router: ProductRouter,
-    search: OpportunityPayload,
+    search: OpportunityRequest,
     request: Request,
 ) -> ResultE[OpportunitySearchRecord]:
     try:

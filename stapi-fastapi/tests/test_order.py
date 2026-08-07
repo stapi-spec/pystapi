@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from geojson_pydantic import Point
 from geojson_pydantic.types import Position2D
 from httpx import Response
-from stapi_pydantic import Order, OrderPayload, OrderStatus, OrderStatusCode
+from stapi_pydantic import Order, OrderRequest, OrderStatus, OrderStatusCode, SearchParameters
 
 from .shared import MyOrderParameters, find_link, pagination_tester
 
@@ -23,7 +23,7 @@ def test_empty_order(stapi_client: TestClient):
 
 
 @pytest.fixture
-def create_order_payloads() -> list[OrderPayload]:
+def create_order_payloads() -> list[OrderRequest]:
     datetimes = [
         ("2024-10-09T18:55:33Z", "2024-10-12T18:55:33Z"),
         ("2024-10-15T18:55:33Z", "2024-10-18T18:55:33Z"),
@@ -31,13 +31,15 @@ def create_order_payloads() -> list[OrderPayload]:
     ]
     payloads = []
     for start, end in datetimes:
-        payload = OrderPayload(
-            geometry=Point(type="Point", coordinates=Position2D(longitude=14.4, latitude=56.5)),
-            datetime=(
-                datetime.fromisoformat(start),
-                datetime.fromisoformat(end),
+        payload = OrderRequest(
+            search_parameters=SearchParameters(
+                geometry=Point(type="Point", coordinates=Position2D(longitude=14.4, latitude=56.5)),
+                datetime=(
+                    datetime.fromisoformat(start),
+                    datetime.fromisoformat(end),
+                ),
+                filter=None,
             ),
-            filter=None,
             order_parameters=MyOrderParameters(s3_path="s3://my-bucket"),
         )
         payloads.append(payload)
@@ -48,7 +50,7 @@ def create_order_payloads() -> list[OrderPayload]:
 def new_order_response(
     product_id: str,
     stapi_client: TestClient,
-    create_order_payloads: list[OrderPayload],
+    create_order_payloads: list[OrderRequest],
 ) -> Response:
     res = stapi_client.post(
         f"products/{product_id}/orders",
@@ -105,15 +107,18 @@ def test_get_order_properties(get_order_response: Response, create_order_payload
 
     assert order["geometry"] == {
         "type": "Point",
-        "coordinates": list(create_order_payloads[0].geometry.coordinates),
+        "coordinates": list(create_order_payloads[0].search_parameters.geometry.coordinates),
     }
 
     assert order["properties"]["search_parameters"]["geometry"] == {
         "type": "Point",
-        "coordinates": list(create_order_payloads[0].geometry.coordinates),
+        "coordinates": list(create_order_payloads[0].search_parameters.geometry.coordinates),
     }
 
-    assert order["properties"]["search_parameters"]["datetime"] == create_order_payloads[0].model_dump()["datetime"]
+    assert (
+        order["properties"]["search_parameters"]["datetime"]
+        == create_order_payloads[0].search_parameters.model_dump(mode="json")["datetime"]
+    )
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])

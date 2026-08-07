@@ -9,16 +9,16 @@ from returns.result import ResultE
 from stapi_pydantic import (
     Opportunity,
     OpportunityCollection,
-    OpportunityPayload,
+    OpportunityRequest,
     OpportunitySearchRecord,
     Order,
-    OrderPayload,
+    OrderRequest,
 )
 
 from stapi_fastapi.routers.product_router import ProductRouter
 
 SearchOpportunities = Callable[
-    [ProductRouter, OpportunityPayload, str | None, int, Request],
+    [ProductRouter, OpportunityRequest, str | None, int, Request],
     Coroutine[Any, Any, ResultE[tuple[list[Opportunity], Maybe[str]]]],  # type: ignore
 ]
 """
@@ -27,7 +27,7 @@ search parameters.
 
 Args:
     product_router (ProductRouter): The product router.
-    search (OpportunityPayload): The search parameters.
+    search (OpportunityRequest): The search parameters.
     next (str | None): A pagination token.
     limit (int): The maximum number of opportunities to return in a page.
     request (Request): FastAPI's Request object.
@@ -47,7 +47,7 @@ Note:
 """
 
 SearchOpportunitiesAsync = Callable[
-    [ProductRouter, OpportunityPayload, Request],
+    [ProductRouter, OpportunityRequest, Request],
     Coroutine[Any, Any, ResultE[OpportunitySearchRecord]],
 ]
 """
@@ -56,7 +56,7 @@ opportunities for the given search parameters.
 
 Args:
     product_router (ProductRouter): The product router.
-    search (OpportunityPayload): The search parameters.
+    search (OpportunityRequest): The search parameters.
     request (Request): FastAPI's Request object.
 
 Returns:
@@ -90,13 +90,13 @@ Returns:
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
 
-CreateOrder = Callable[[ProductRouter, OrderPayload, Request], Coroutine[Any, Any, ResultE[Order]]]  # type: ignore
+CreateOrder = Callable[[ProductRouter, OrderRequest, Request], Coroutine[Any, Any, ResultE[Order]]]  # type: ignore
 """
 Type alias for an async function that creates a new order.
 
 Args:
     product_router (ProductRouter): The product router.
-    payload (OrderPayload): The order payload.
+    payload (OrderRequest): The order payload.
     request (Request): FastAPI's Request object.
 
 Returns:

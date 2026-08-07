@@ -33,7 +33,7 @@ def test_search_opportunities_response(stapi_client: TestClient, assert_link, op
     )
 
 
-@pytest.mark.parametrize("limit", [0, 1, 2, 4])
+@pytest.mark.parametrize("limit", [1, 2, 4])
 def test_search_opportunities_pagination(
     limit: int,
     stapi_client: TestClient,

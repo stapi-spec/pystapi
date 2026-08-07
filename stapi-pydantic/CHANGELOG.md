@@ -26,7 +26,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `STAPI_VERSION` is `0.2.0`.
 - **BREAKING** `DatetimeInterval` now denotes the general interval, which may be open on one end via `..` or an empty string, and validates as a `tuple[AwareDatetime | None, AwareDatetime | None]`. The both-ends-bounded form is now `BoundedDatetimeInterval`. Code that relied on `DatetimeInterval` rejecting open ends, or on both tuple members being non-`None`, must switch to `BoundedDatetimeInterval`.
 - **BREAKING** `Geometry` is the six-member STAPI union and no longer includes `GeometryCollection`. The spec enumerates exactly six geometry conformance classes, so a `GeometryCollection` was a value no implementation could declare support for. Import `geojson_pydantic.geometries.Geometry` directly if you need the wider union.
-
 - `CQL2Filter` is typed as `dict[str, Any]` rather than a bare `dict`.
 - **BREAKING** `Link` omits its unset fields from `model_dump()` as well as from JSON output. The `None`-filtering serializer it previously carried applied only to JSON dumps.
 - **BREAKING** Models that declare aliases now serialize by alias. `model_dump()` emits `conformsTo` on `Conformance` and `type` on `Product`, where it previously emitted the Python field names `conforms_to` and `type_`. Callers already passing `by_alias=True` are unaffected; callers reading the Python names out of a dump must switch to the wire names.
@@ -35,6 +34,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Spec-REQUIRED fields that carry defaults (`type`, `stapi_type`, `stapi_version`, `links`, `conformsTo`, and so on) are now marked required in the serialization JSON Schema, since they are always present in a response.
 - **BREAKING** `ProductsCollection` is renamed to `ProductCollection`, matching its own `stapi_type` and the spec. The old name is gone rather than aliased; update imports. The model also replaces its aliased `type` field with `stapi_type`, so responses carry `"stapi_type": "ProductCollection"` rather than `"type": "ProductCollection"`, and gains `stapi_version`.
 - **BREAKING** `Product.description` is required, per the spec. It previously defaulted to the empty string.
+- **BREAKING** `OpportunityRequest` (was `OpportunityPayload`) and `OrderRequest` (was `OrderPayload`) now compose `SearchParameters` instead of declaring `datetime`, `geometry`, and `filter` themselves. A request body that was `{"datetime": ..., "geometry": ..., "filter": ...}` becomes `{"search_parameters": {"datetime": ..., "geometry": ..., "filter": ...}}`.
+- **BREAKING** `OrderRequest.order_parameters` is optional and defaults to an empty object. It was previously required. Products whose `OrderParameters` model has required fields still make it effectively required, via validation.
+- **BREAKING** `OpportunityRequest.limit` is `int | None` with a lower bound of 1, and defaults to `None`. It defaulted to 10, which asserted a page size the client never asked for; the default is the server's to choose.
 
 ### Fixed
 
@@ -42,7 +44,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Removed
 
-- **BREAKING** The pre-0.2.0 compatibility alias `ProductsCollection` is gone. Use `ProductCollection`.
+- **BREAKING** The pre-0.2.0 compatibility aliases `ProductsCollection`, `OrderPayload` and `OpportunityPayload` are gone. Use `ProductCollection`, `OrderRequest` and `OpportunityRequest`.
 - The unused `Props`, `Geom`, and `OPP` type variables in `stapi_pydantic.order`.
 - **BREAKING** `JsonSchemaModel` is gone. It annotated a `type[BaseModel]` with a `PlainValidator`/`PlainSerializer` pair so a model class could stand in for its own schema, which meant the published document carried an orphan `BaseModel` component and the value could not be read back. Build a `JsonSchema` with `JsonSchema.from_model(YourModel)` instead.
 
