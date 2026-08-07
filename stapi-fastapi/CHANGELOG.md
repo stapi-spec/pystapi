@@ -4,7 +4,86 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.0] - 2026-08-07
+
+The routers implement STAPI v0.2.0. This is a breaking release for anyone implementing a backend, generating a client, or calling the API: the backend protocols, the request bodies, and the published OpenAPI document all changed. Every item that will break existing code is marked **BREAKING** and says what to do about it.
+
+The request and response models come from stapi-pydantic 0.2.0. The model-level changes you have to make are repeated below so that everything a stapi-fastapi upgrade requires is in one place; [the stapi-pydantic changelog](../stapi-pydantic/CHANGELOG.md) has the full detail and the rationale for each.
+
+### Migrating
+
+If you implement a backend:
+
+1. Return a `Page` from every list backend. The token and total move out of the tuple and into fields.
+
+   | Backend | Before | After |
+   | --- | --- | --- |
+   | `GetOrders` | `tuple[list[Order], Maybe[str], Maybe[int]]` | `Page[Order]` |
+   | `GetOrderStatuses` | `Maybe[tuple[list[OrderStatus], Maybe[str]]]` | `Maybe[Page[OrderStatus]]` |
+   | `SearchOpportunities` | `tuple[list[Opportunity], Maybe[str]]` | `Page[Opportunity]` |
+   | `GetOpportunitySearchRecords` | `tuple[list[OpportunitySearchRecord], Maybe[str]]` | `Page[OpportunitySearchRecord]` |
+   | `GetOpportunitySearchRecordStatuses` | `Maybe[list[OpportunitySearchStatus]]` | `Maybe[Page[OpportunitySearchStatus]]` |
+   | `GetOpportunityCollection` | `Maybe[OpportunityCollection]` | `Maybe[Page[Opportunity]]` |
+
+   ```python
+   # before
+   return Success((orders, Some(token), Some(total)))
+   # after
+   return Success(Page(items=orders, next_token=Some(token), number_matched=Some(total)))
+   ```
+
+   `GetOpportunityCollection` no longer builds the collection: return the opportunities and any collection-level links, and the handler sets the collection's `id` and its `self`/`next` links.
+
+2. Accept `next` and `limit` in `GetOpportunitySearchRecordStatuses` and `GetOpportunityCollection`, which are now paginated.
+
+3. Return `PaginationTokenError` inside a `Failure` when a pagination token identifies no page. A bare `ValueError` is no longer read as a missing page, so an incidental one is now correctly a 500 rather than a 404.
+
+4. Pass camelCase keywords to `url_for`: `orderId=`, `searchRecordId=`, `opportunityCollectionId=`. Request URLs are unchanged; only the parameter names are.
+
+5. Rename `GET_OPPORTUNITY_SEARCH_RECORD_STATUSES` to `LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES`, and `ProductRouter.pagination_link` to `search_pagination_link`.
+
+6. Declare `summary`, `tag` and `errors` on any `Route` you register yourself. `errors` is the set of error responses that route can actually produce, e.g. `errors=NOT_FOUND | SERVER_ERROR`, or `{}` for a route that produces none.
+
+7. Register each product id once. `RootRouter.add_product` now raises on a duplicate rather than silently leaving the first product's routes serving.
+
+8. Depend directly on `httpx`, `pygeofilter`, `nox`, `pydantic-settings` or `uvicorn` if your application imports them. They are no longer runtime dependencies of this library.
+
+If you use the models directly (from stapi-pydantic 0.2.0):
+
+1. Rename the classes that moved. The pre-0.2.0 compatibility aliases are gone, so these are import errors rather than deprecation warnings.
+
+   | Before | After |
+   | --- | --- |
+   | `OrderPayload` | `OrderRequest` |
+   | `OpportunityPayload` | `OpportunityRequest` |
+   | `OrderSearchParameters` | `SearchParameters` |
+   | `OrderStatuses` | `OrderStatusCollection` |
+   | `OpportunitySearchRecords` | `OpportunitySearchRecordCollection` |
+   | `ProductsCollection` | `ProductCollection` |
+
+2. Nest search parameters inside requests: `OpportunityRequest(search_parameters=SearchParameters(...))` in place of top-level `datetime`, `geometry` and `filter`.
+
+3. Follow the fields that moved on response entities.
+
+   | Before | After |
+   | --- | --- |
+   | `OrderProperties.search_parameters`, `.opportunity_properties`, `.order_parameters` | `OrderProperties.order_request` (a `StoredOrderRequest`) |
+   | `OpportunitySearchRecord.opportunity_request` | `OpportunitySearchRecord.search_parameters` |
+   | `OpportunitySearchRecordCollection.search_records` | `.records` |
+
+4. Rename `conformsTo` to `conforms_to` where you construct or read `Product` and `RootResponse` in Python, and replace `JsonSchemaModel` with `JsonSchema.from_model(YourModel)`.
+
+5. Iterate collections with `collection.iter()` and `collection.length`; supply `Product.description`, which is now required; and handle a plain `str` from `status_code`, or parameterize with your own `StrEnum` (`OrderStatus[MyCodes]`).
+
+6. Switch to `BoundedDatetimeInterval` anywhere you relied on both ends of an interval being present, and import `geojson_pydantic.geometries.Geometry` directly if you need `GeometryCollection`.
+
+If you call the API or generate a client:
+
+1. Nest request bodies. `POST /products/{productId}/opportunities` and `POST /products/{productId}/orders` take a `search_parameters` object in place of top-level `datetime`, `geometry` and `filter`; `order_parameters` is optional.
+
+2. Regenerate clients. Path parameters are camelCase, every `operationId` changed, and parameterized component names are now readable rather than 200-character reprs, so a client generated against 0.8.x binds to names that no longer exist.
+
+3. Expect a 422 for a `limit` below 1 (an over-large one is clamped, not rejected), a 400 (was 422) when a required queryable has no filter predicate, and the `search-records` rel on the landing page in place of `opportunity-search-records`.
 
 ### Added
 

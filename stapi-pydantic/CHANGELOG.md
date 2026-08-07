@@ -6,7 +6,57 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2026-08-07
+
+Models are aligned with STAPI v0.2.0. This is a breaking release: request and response shapes, several class names, and serialization behaviour all changed. Every item that will break existing code is marked **BREAKING** and says what to do about it.
+
+### Migrating
+
+1. Rename the classes that moved. The pre-0.2.0 compatibility aliases are gone, so these are import errors rather than deprecation warnings.
+
+   | Before | After |
+   | --- | --- |
+   | `OrderPayload` | `OrderRequest` |
+   | `OpportunityPayload` | `OpportunityRequest` |
+   | `OrderSearchParameters` | `SearchParameters` |
+   | `OrderStatuses` | `OrderStatusCollection` |
+   | `OpportunitySearchRecords` | `OpportunitySearchRecordCollection` |
+   | `ProductsCollection` | `ProductCollection` |
+
+2. Nest search parameters inside requests.
+
+   ```python
+   # before
+   OpportunityRequest(datetime=interval, geometry=point, filter=cql2)
+   # after
+   OpportunityRequest(search_parameters=SearchParameters(datetime=interval, geometry=point, filter=cql2))
+   ```
+
+3. Follow the fields that moved on response entities.
+
+   | Before | After |
+   | --- | --- |
+   | `OrderProperties.search_parameters`, `.opportunity_properties`, `.order_parameters` | `OrderProperties.order_request` (a `StoredOrderRequest`) |
+   | `OpportunitySearchRecord.opportunity_request` | `OpportunitySearchRecord.search_parameters` |
+   | `OpportunitySearchRecordCollection.search_records` | `.records` |
+
+4. Rename `conformsTo` to `conforms_to` where you construct or read `Product` and `RootResponse` in Python. The wire name is unchanged: both still validate from either spelling and serialize as `conformsTo`.
+
+5. Replace `JsonSchemaModel` with `JsonSchema`. A model class no longer stands in for its own schema; build one with `JsonSchema.from_model(YourModel)`.
+
+6. Iterate collections with `collection.iter()` and `collection.length`. `iter(collection)`, `len(collection)` and `collection[i]` no longer work on `OrderCollection`.
+
+7. Read wire names out of dumps. `model_dump()` now emits `conformsTo`, `type` and `stapi_type` rather than the Python field names, so anything reading `dump["conforms_to"]` or `dump["type_"]` must change.
+
+8. Switch to `BoundedDatetimeInterval` anywhere you relied on both ends of an interval being present. `DatetimeInterval` now permits an open end and validates as `tuple[AwareDatetime | None, AwareDatetime | None]`.
+
+9. Handle a plain `str` from `status_code` on `OrderStatus` and `OpportunitySearchStatus`, or parameterize the model with your own `StrEnum` (`OrderStatus[MyCodes]`) to constrain it.
+
+10. Supply `Product.description`. It is required and no longer defaults to the empty string.
+
+11. Import `geojson_pydantic.geometries.Geometry` directly if you need `GeometryCollection`; the STAPI `Geometry` union is the six types the spec enumerates.
+
+12. Regenerate anything derived from the JSON Schema. Parameterized generics are published under readable component names (`OpportunityCollection[Geometry, MyProperties]`) in place of the previous 200-character reprs.
 
 ### Added
 
@@ -108,6 +158,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Initial release.
 
 [unreleased]: https://github.com/stapi-spec/pystapi/compare/stac-pydantic/stapi-pydantic%2Fv0.0.4...main
+[0.2.0]: https://github.com/stapi-spec/pystapi/compare/stac-pydantic/stapi-pydantic%2Fv0.1.0...stapi-pydantic%2Fv0.2.0
 [0.1.0]: https://github.com/stapi-spec/pystapi/compare/stac-pydantic/stapi-pydantic%2Fv0.0.4...stapi-pydantic%2Fv0.1.0
 [0.0.4]: https://github.com/stapi-spec/pystapi/compare/stac-pydantic/stapi-pydantic%2Fv0.0.3...stapi-pydantic%2Fv0.0.4
 [0.0.3]: https://github.com/stapi-spec/pystapi/compare/stac-pydantic/stapi-pydantic%2Fv0.0.2...stapi-pydantic%2Fv0.0.3
