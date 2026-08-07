@@ -19,18 +19,24 @@ from .constants import STAPI_VERSION
 from .datetime_interval import DatetimeInterval
 from .filter import CQL2Filter
 from .geometry import Geometry
-from .opportunity import OpportunityProperties
 from .shared import Link
 
-Props = TypeVar("Props", bound=dict[str, Any] | BaseModel)
-Geom = TypeVar("Geom", bound=Geometry)
+
+class BaseOrderParameters(BaseModel):
+    """Minimum-expectations type for order parameters at rest.
+
+    Permissive so stored parameters from any product round-trip.
+    """
+
+    model_config = ConfigDict(extra="allow")
 
 
-class OrderParameters(BaseModel):
+class OrderParameters(BaseOrderParameters):
+    """Boundary base for product-specific order parameters (strict)."""
+
     model_config = ConfigDict(extra="forbid")
 
 
-OPP = TypeVar("OPP", bound=OpportunityProperties)
 ORP = TypeVar("ORP", bound=OrderParameters)
 
 

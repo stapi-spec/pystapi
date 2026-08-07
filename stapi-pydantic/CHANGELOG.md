@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `cql2_property_names`, which collects the property names referenced by a CQL2 JSON filter.
 - `SearchParameters`, the Search Parameters Object (`datetime`, `geometry`, `filter`) shared by the Opportunity Request and the Order Request. It permits extra fields, so provider extension parameters round-trip instead of being dropped.
 - `ProductCollection`, the new name for `ProductsCollection` (see Changed).
+- `BaseOrderParameters`, a permissive base for order parameters at rest. `OrderParameters` is now a strict (`extra="forbid"`) subclass of it.
 - `STAPI_VERSION` is now exported from the package root.
 
 ### Changed
@@ -42,6 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Removed
 
 - **BREAKING** The pre-0.2.0 compatibility alias `ProductsCollection` is gone. Use `ProductCollection`.
+- The unused `Props`, `Geom`, and `OPP` type variables in `stapi_pydantic.order`.
 - **BREAKING** `JsonSchemaModel` is gone. It annotated a `type[BaseModel]` with a `PlainValidator`/`PlainSerializer` pair so a model class could stand in for its own schema, which meant the published document carried an orphan `BaseModel` component and the value could not be read back. Build a `JsonSchema` with `JsonSchema.from_model(YourModel)` instead.
 
 ## [0.1.0] - 2025-12-18

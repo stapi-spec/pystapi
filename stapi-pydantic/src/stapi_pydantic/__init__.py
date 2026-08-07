@@ -16,6 +16,7 @@ from .opportunity import (
     Prefer,
 )
 from .order import (
+    BaseOrderParameters,
     Order,
     OrderCollection,
     OrderParameters,
@@ -34,6 +35,7 @@ from .shared import Link
 
 __all__ = [
     "Geometry",
+    "BaseOrderParameters",
     "BoundedDatetimeInterval",
     "Conformance",
     "CQL2Filter",
