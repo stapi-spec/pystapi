@@ -9,12 +9,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Added
 
 - `Route`, a declarative route descriptor, with `Route.to_api_route()` returning the keyword arguments for FastAPI's own `add_api_route`, and `StapiFastapiBaseRouter.register_route()` handing them over. `Route` requires a `summary`, a `tag` (the new `Tag` enum) and an `errors` set, so an operation cannot be published without a title, a heading, or an accurate statement of how it can fail.
+- `stapi_fastapi.path_params` provides the camelCase path parameter annotations.
 - `Responses` type alias for the response-declaration mapping, and `BAD_REQUEST` / `NOT_FOUND` / `SERVER_ERROR` to compose an `errors` set from, e.g. `errors=NOT_FOUND | SERVER_ERROR`.
 - Every route declares its 400 and 404 responses. 404 was raised from nine places and declared nowhere; 400 likewise.
 - Operation summaries on the six routes that had none, where FastAPI was deriving titles like `Root:List-Orders` from route names.
 
 ### Changed
 
+- **BREAKING** Path parameters are camelCase in the routes and in the exported OpenAPI document: `{orderId}`, `{searchRecordId}`, and `{opportunityCollectionId}`, joining the existing `{productId}`. Request URLs are unchanged, since path parameter names never appear in them, but generated clients that bind by parameter name need regenerating, and `url_for` calls must pass the camelCase keyword (`url_for(request, name, orderId=...)`, not `order_id=...`).
 - **BREAKING** A route is declared as a `Route` and registered with `StapiFastapiBaseRouter.register_route`, which hands it to FastAPI's own `add_api_route`. `summary`, `tag` and `errors` are required, so a route cannot be registered without saying what it is called, where it is filed, or which errors it can produce. `errors` is deliberately not defaulted: a shared set merged into every route cannot be narrowed, and so published a 404 for the landing page, an endpoint that takes no input and calls no backend.
 - OpenAPI tags come from the route family rather than the owning router: creating an order for a product is filed under Orders, and the opportunity routes under Opportunities, rather than all of them under Products.
 - **BREAKING** The `GET_OPPORTUNITY_SEARCH_RECORD_STATUSES` route name constant is renamed `LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES`, matching its sibling list routes, and the registered route name changes with it.

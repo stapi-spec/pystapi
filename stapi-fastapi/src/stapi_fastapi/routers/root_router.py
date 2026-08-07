@@ -32,6 +32,7 @@ from stapi_fastapi.conformance import API as API_CONFORMANCE
 from stapi_fastapi.constants import TYPE_GEOJSON
 from stapi_fastapi.errors import NotFoundError
 from stapi_fastapi.models.product import Product
+from stapi_fastapi.path_params import OrderIdPath, SearchRecordIdPath
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_fastapi.routers.base import NOT_FOUND, SERVER_ERROR, Route, StapiFastapiBaseRouter
 from stapi_fastapi.routers.product_router import ProductRouter
@@ -135,7 +136,7 @@ class RootRouter(StapiFastapiBaseRouter):
             Route(
                 name=GET_ORDER,
                 tag=Tag.ORDERS,
-                path="/orders/{order_id}",
+                path="/orders/{orderId}",
                 endpoint=self.get_order,
                 errors=NOT_FOUND | SERVER_ERROR,
                 summary="Get an Order by ID",
@@ -149,7 +150,7 @@ class RootRouter(StapiFastapiBaseRouter):
                 Route(
                     name=LIST_ORDER_STATUSES,
                     tag=Tag.ORDERS,
-                    path="/orders/{order_id}/statuses",
+                    path="/orders/{orderId}/statuses",
                     endpoint=self.get_order_statuses,
                     errors=NOT_FOUND | SERVER_ERROR,
                     summary="List statuses for an Order",
@@ -172,7 +173,7 @@ class RootRouter(StapiFastapiBaseRouter):
                 Route(
                     name=GET_OPPORTUNITY_SEARCH_RECORD,
                     tag=Tag.OPPORTUNITIES,
-                    path="/searches/opportunities/{search_record_id}",
+                    path="/searches/opportunities/{searchRecordId}",
                     endpoint=self.get_opportunity_search_record,
                     errors=NOT_FOUND | SERVER_ERROR,
                     summary="Get an Opportunity Search Record by ID",
@@ -185,7 +186,7 @@ class RootRouter(StapiFastapiBaseRouter):
                 Route(
                     name=LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES,
                     tag=Tag.OPPORTUNITIES,
-                    path="/searches/opportunities/{search_record_id}/statuses",
+                    path="/searches/opportunities/{searchRecordId}/statuses",
                     endpoint=self.get_opportunity_search_record_statuses,
                     errors=NOT_FOUND | SERVER_ERROR,
                     summary="List statuses for an Opportunity Search Record",
@@ -298,7 +299,7 @@ class RootRouter(StapiFastapiBaseRouter):
             number_matched=orders_count,
         )
 
-    async def get_order(self, order_id: str, request: Request) -> Order[OrderStatus]:
+    async def get_order(self, order_id: OrderIdPath, request: Request) -> Order[OrderStatus]:
         """
         Get details for order with `order_id`.
         """
@@ -323,7 +324,7 @@ class RootRouter(StapiFastapiBaseRouter):
 
     async def get_order_statuses(
         self,
-        order_id: str,
+        order_id: OrderIdPath,
         request: Request,
         next: str | None = None,
         limit: int = 10,
@@ -336,7 +337,7 @@ class RootRouter(StapiFastapiBaseRouter):
                     case Some(next_):
                         links.append(
                             self.pagination_link(
-                                request, self.route_name(LIST_ORDER_STATUSES), next_, limit, order_id=order_id
+                                request, self.route_name(LIST_ORDER_STATUSES), next_, limit, orderId=order_id
                             )
                         )
                     case Maybe.empty:
@@ -366,10 +367,10 @@ class RootRouter(StapiFastapiBaseRouter):
         self.product_ids = [*self.product_routers.keys()]
 
     def generate_order_href(self, request: Request, order_id: str) -> URL:
-        return self.url_for(request, self.route_name(GET_ORDER), order_id=order_id)
+        return self.url_for(request, self.route_name(GET_ORDER), orderId=order_id)
 
     def generate_order_statuses_href(self, request: Request, order_id: str) -> URL:
-        return self.url_for(request, self.route_name(LIST_ORDER_STATUSES), order_id=order_id)
+        return self.url_for(request, self.route_name(LIST_ORDER_STATUSES), orderId=order_id)
 
     def order_links(self, order: Order[OrderStatus], request: Request) -> list[Link]:
         return [
@@ -385,7 +386,7 @@ class RootRouter(StapiFastapiBaseRouter):
         ]
 
     def order_statuses_link(self, request: Request, order_id: str) -> Link:
-        return json_link("self", self.url_for(request, self.route_name(LIST_ORDER_STATUSES), order_id=order_id))
+        return json_link("self", self.url_for(request, self.route_name(LIST_ORDER_STATUSES), orderId=order_id))
 
     def pagination_link(self, request: Request, name: str, pagination_token: str, limit: int, **kwargs: Any) -> Link:
         return json_link(
@@ -425,7 +426,9 @@ class RootRouter(StapiFastapiBaseRouter):
                 raise AssertionError("Expected code to be unreachable")
         return OpportunitySearchRecordCollection(records=records, links=links)
 
-    async def get_opportunity_search_record(self, search_record_id: str, request: Request) -> OpportunitySearchRecord:
+    async def get_opportunity_search_record(
+        self, search_record_id: SearchRecordIdPath, request: Request
+    ) -> OpportunitySearchRecord:
         """
         Get the Opportunity Search Record with `search_record_id`.
         """
@@ -449,7 +452,7 @@ class RootRouter(StapiFastapiBaseRouter):
                 raise AssertionError("Expected code to be unreachable")
 
     async def get_opportunity_search_record_statuses(
-        self, search_record_id: str, request: Request
+        self, search_record_id: SearchRecordIdPath, request: Request
     ) -> list[OpportunitySearchStatus]:
         """
         Get the Opportunity Search Record statuses with `search_record_id`.
@@ -476,7 +479,7 @@ class RootRouter(StapiFastapiBaseRouter):
         return self.url_for(
             request,
             self.route_name(GET_OPPORTUNITY_SEARCH_RECORD),
-            search_record_id=search_record_id,
+            searchRecordId=search_record_id,
         )
 
     def opportunity_search_record_self_link(
