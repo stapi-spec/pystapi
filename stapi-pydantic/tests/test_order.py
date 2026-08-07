@@ -277,3 +277,9 @@ def test_order_collection_bbox_degrades_to_2d_when_members_are_mixed() -> None:
 def test_order_empty_geometry_bbox_error_is_clear() -> None:
     with pytest.raises(pydantic.ValidationError, match="bbox"):
         Order[OrderStatus].model_validate({**ORDER_DICT, "geometry": {"type": "MultiPoint", "coordinates": []}})
+
+
+def test_order_collection_number_matched_not_serialization_required() -> None:
+    schema = OrderCollection[OrderStatus].model_json_schema(mode="serialization")
+    assert {"type", "stapi_type", "stapi_version", "links", "features"} <= set(schema["required"])
+    assert "numberMatched" not in schema["required"]

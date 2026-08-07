@@ -5,7 +5,7 @@ from pydantic import AnyHttpUrl, BaseModel, Field
 
 from .conformance import ConformsTo
 from .constants import STAPI_VERSION
-from .shared import STAPI_RESPONSE_CONFIG, Link, omitted_when_empty, omitted_when_none
+from .shared import STAPI_RESPONSE_CONFIG, Link, NumberMatched, omitted_when_empty, omitted_when_none
 
 
 class ProviderRole(StrEnum):
@@ -58,3 +58,4 @@ class ProductCollection(BaseModel):
     stapi_version: str = STAPI_VERSION
     links: list[Link] = Field(default_factory=list)
     products: list[Product]
+    number_matched: NumberMatched = None

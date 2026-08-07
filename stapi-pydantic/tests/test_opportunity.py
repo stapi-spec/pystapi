@@ -206,3 +206,14 @@ def test_opportunity_collection_bbox_unions_features() -> None:
         features=[model.model_validate(OPPORTUNITY_DICT), model.model_validate(other)]
     )
     assert collection.bbox == (13.4, 52.5, 14.4, 53.5)
+
+
+def test_opportunity_collection_number_matched() -> None:
+    collection: OpportunityCollection[Any, Any] = OpportunityCollection(features=[], number_matched=3)
+    assert collection.model_dump(mode="json")["numberMatched"] == 3
+    assert "numberMatched" not in OpportunityCollection(features=[]).model_dump(mode="json")
+
+
+def test_search_record_collection_number_matched() -> None:
+    collection = OpportunitySearchRecordCollection(records=[], number_matched=0)
+    assert collection.model_dump(mode="json")["numberMatched"] == 0

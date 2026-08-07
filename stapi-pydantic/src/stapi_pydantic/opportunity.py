@@ -18,6 +18,7 @@ from .shared import (
     DerivedCollectionBBox,
     DerivedItemBBox,
     Link,
+    NumberMatched,
     OptionalBBox,
     omitted_when_none,
 )
@@ -82,6 +83,7 @@ class OpportunityCollection(FeatureCollection[Opportunity[G, P]], DerivedCollect
     bbox: OptionalBBox = None
     links: list[Link] = Field(default_factory=list)
     id: str | None = omitted_when_none()
+    number_matched: NumberMatched = None
 
 
 class OpportunitySearchStatusCode(StrEnum):
@@ -130,6 +132,7 @@ class OpportunitySearchRecordCollection(BaseModel):
     stapi_version: str = STAPI_VERSION
     records: list[OpportunitySearchRecord]
     links: list[Link] = Field(default_factory=list)
+    number_matched: NumberMatched = None
 
 
 class OpportunitySearchStatusCollection(BaseModel):
@@ -139,6 +142,7 @@ class OpportunitySearchStatusCollection(BaseModel):
     stapi_version: str = STAPI_VERSION
     statuses: list[OpportunitySearchStatus]
     links: list[Link] = Field(default_factory=list)
+    number_matched: NumberMatched = None
 
 
 class Prefer(StrEnum):

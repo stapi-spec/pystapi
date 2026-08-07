@@ -25,6 +25,7 @@ from .shared import (
     DerivedCollectionBBox,
     DerivedItemBBox,
     Link,
+    NumberMatched,
     OptionalBBox,
     omitted_when_none,
 )
@@ -109,6 +110,7 @@ class OrderStatusCollection(BaseModel, Generic[T]):
     stapi_version: str = STAPI_VERSION
     statuses: list[T]
     links: list[Link] = Field(default_factory=list)
+    number_matched: NumberMatched = None
 
 
 class StoredOrderRequest(BaseModel):
@@ -158,9 +160,7 @@ class OrderCollection(FeatureCollection[Order[T]], DerivedCollectionBBox, Generi
     stapi_version: str = STAPI_VERSION
     bbox: OptionalBBox = None
     links: list[Link] = Field(default_factory=list)
-    number_matched: int | None = Field(
-        serialization_alias="numberMatched", default=None, exclude_if=lambda x: x is None
-    )
+    number_matched: NumberMatched = None
 
 
 class OrderRequest(BaseModel, Generic[ORP]):

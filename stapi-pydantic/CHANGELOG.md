@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `SearchParameters`, the Search Parameters Object (`datetime`, `geometry`, `filter`) shared by the Opportunity Request and the Order Request. It permits extra fields, so provider extension parameters round-trip instead of being dropped.
 - `ProductCollection`, the new name for `ProductsCollection` (see Changed).
 - `OpportunitySearchStatusCollection`, the collection wrapper for the statuses of an Opportunity Search Record.
+- `number_matched` (serialized as `numberMatched`) on every collection, rather than only on `OrderCollection`.
 - `stapi_type` and `stapi_version` on `Opportunity`, `OpportunityCollection`, `OpportunitySearchRecord`, `OpportunitySearchRecordCollection`, `OrderCollection`, and `OrderStatusCollection`.
 - `BaseOrderParameters`, a permissive base for order parameters at rest, and `StoredOrderRequest`, the form an Order Request takes once it is persisted inside `OrderProperties`. `OrderParameters` is now a strict (`extra="forbid"`) subclass of `BaseOrderParameters`.
 - `OrderStatus` and `OpportunitySearchStatus` are generic over their status code set, so an implementation can constrain it with its own `StrEnum`, e.g. `OrderStatus[MyCodes]`.
@@ -53,6 +54,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- `number_matched` round-trips under its wire name. It declared a serialization alias but no validation alias, so a `numberMatched` in incoming JSON parsed to `None` and was then dropped on the way back out. Both `numberMatched` and `number_matched` are now accepted on input.
 - Collection `bbox` computation no longer recurses without bound on a collection with no features.
 - Computing a bbox for a geometry with no coordinates raises a clear error.
 - `OrderStatus.new` respects the class it is called on. It constructed a bare `OrderStatus` regardless, so a parameterized `OrderStatus[MyCodes]` returned the wrong type and accepted codes outside its enum.

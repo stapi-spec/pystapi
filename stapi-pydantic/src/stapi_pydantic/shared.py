@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Annotated, Any, Self, TypeAlias, cast
 
 from geojson_pydantic.types import BBox
 from pydantic import (
+    AliasChoices,
     AnyUrl,
     BaseModel,
     ConfigDict,
@@ -97,6 +98,19 @@ class DerivedCollectionBBox(BaseModel):
         if self.bbox is None and self.features:
             self.bbox = union_bboxes([feature.bbox for feature in self.features])
         return self
+
+
+# The numberMatched collection field, under its spec alias (the field name is
+# also accepted, so keyword construction still works) and omitted when unset.
+NumberMatched = Annotated[
+    int | None,
+    Field(
+        default=None,
+        validation_alias=AliasChoices("numberMatched", "number_matched"),
+        serialization_alias="numberMatched",
+        exclude_if=lambda v: v is None,
+    ),
+]
 
 
 class Link(BaseModel):
