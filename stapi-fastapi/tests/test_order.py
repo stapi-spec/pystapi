@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from geojson_pydantic import Point
 from geojson_pydantic.types import Position2D
 from httpx import Response
-from stapi_pydantic import Order, OrderRequest, OrderStatus, OrderStatusCode, SearchParameters
+from stapi_pydantic import STAPI_VERSION, Order, OrderRequest, OrderStatus, OrderStatusCode, SearchParameters
 
 from .shared import MyOrderParameters, find_link, pagination_tester
 
@@ -19,7 +19,14 @@ def test_empty_order(stapi_client: TestClient):
     res = stapi_client.get("/orders")
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/geo+json"
-    assert res.json() == {"type": "FeatureCollection", "features": [], "links": [], "numberMatched": 314}
+    assert res.json() == {
+        "type": "FeatureCollection",
+        "stapi_type": "OrderCollection",
+        "stapi_version": STAPI_VERSION,
+        "features": [],
+        "links": [],
+        "numberMatched": 314,
+    }
 
 
 @pytest.fixture

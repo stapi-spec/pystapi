@@ -1,3 +1,5 @@
+from typing import Any
+
 import pydantic
 import pytest
 from geojson_pydantic.geometries import Point
@@ -138,3 +140,10 @@ def test_opportunity_geometry_required_non_null() -> None:
 def test_opportunity_properties_required() -> None:
     with pytest.raises(pydantic.ValidationError):
         Opportunity[Point, OpportunityProperties].model_validate({**OPPORTUNITY_DICT, "properties": None})
+
+
+def test_opportunity_collection_stapi_fields() -> None:
+    collection: OpportunityCollection[Any, Any] = OpportunityCollection(features=[])
+    dumped = collection.model_dump(mode="json")
+    assert dumped["stapi_type"] == "OpportunityCollection"
+    assert dumped["stapi_version"] == "0.2.0"

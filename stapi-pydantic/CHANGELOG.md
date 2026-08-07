@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `SearchParameters`, the Search Parameters Object (`datetime`, `geometry`, `filter`) shared by the Opportunity Request and the Order Request. It permits extra fields, so provider extension parameters round-trip instead of being dropped.
 - `ProductCollection`, the new name for `ProductsCollection` (see Changed).
 - `OpportunitySearchStatusCollection`, the collection wrapper for the statuses of an Opportunity Search Record.
-- `stapi_type` and `stapi_version` on `OpportunitySearchRecord`, `OpportunitySearchRecordCollection` and `OrderStatusCollection`.
+- `stapi_type` and `stapi_version` on `Opportunity`, `OpportunityCollection`, `OpportunitySearchRecord`, `OpportunitySearchRecordCollection`, `OrderCollection`, and `OrderStatusCollection`.
 - `BaseOrderParameters`, a permissive base for order parameters at rest, and `StoredOrderRequest`, the form an Order Request takes once it is persisted inside `OrderProperties`. `OrderParameters` is now a strict (`extra="forbid"`) subclass of `BaseOrderParameters`.
 - `OrderStatus` and `OpportunitySearchStatus` are generic over their status code set, so an implementation can constrain it with its own `StrEnum`, e.g. `OrderStatus[MyCodes]`.
 - `STAPI_VERSION` is now exported from the package root.

@@ -7,6 +7,7 @@ import pytest
 from stapi_pydantic import (
     BaseOrderParameters,
     Order,
+    OrderCollection,
     OrderParameters,
     OrderRequest,
     OrderStatus,
@@ -168,3 +169,10 @@ def test_search_parameters_preserve_unknown_fields() -> None:
     )
     dumped = order.model_dump(mode="json")
     assert dumped["properties"]["order_request"]["search_parameters"]["vendor:priority"] == "high"
+
+
+def test_order_collection_stapi_fields() -> None:
+    collection = OrderCollection[OrderStatus](features=[Order[OrderStatus].model_validate(ORDER_DICT)])
+    dumped = collection.model_dump(mode="json")
+    assert dumped["stapi_type"] == "OrderCollection"
+    assert dumped["stapi_version"] == "0.2.0"

@@ -56,6 +56,8 @@ class Opportunity(Feature[G, P]):
 
     id: str | None = omitted_when_none()
     type: Literal["Feature"] = "Feature"
+    stapi_type: Literal["Opportunity"] = "Opportunity"
+    stapi_version: str = STAPI_VERSION
     geometry: G = Field(...)
     properties: P = Field(...)
     links: list[Link] = Field(default_factory=list)
@@ -65,6 +67,8 @@ class OpportunityCollection(FeatureCollection[Opportunity[G, P]]):
     model_config = STAPI_RESPONSE_CONFIG
 
     type: Literal["FeatureCollection"] = "FeatureCollection"
+    stapi_type: Literal["OpportunityCollection"] = "OpportunityCollection"
+    stapi_version: str = STAPI_VERSION
     links: list[Link] = Field(default_factory=list)
     id: str | None = omitted_when_none()
 

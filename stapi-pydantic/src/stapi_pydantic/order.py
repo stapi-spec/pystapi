@@ -143,6 +143,8 @@ class OrderCollection(FeatureCollection[Order[T]], Generic[T]):
     model_config = STAPI_RESPONSE_CONFIG
 
     type: Literal["FeatureCollection"] = "FeatureCollection"
+    stapi_type: Literal["OrderCollection"] = "OrderCollection"
+    stapi_version: str = STAPI_VERSION
     links: list[Link] = Field(default_factory=list)
     number_matched: int | None = Field(
         serialization_alias="numberMatched", default=None, exclude_if=lambda x: x is None
