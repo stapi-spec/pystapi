@@ -33,7 +33,7 @@ from stapi_fastapi.constants import TYPE_GEOJSON
 from stapi_fastapi.errors import NotFoundError
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.responses import GeoJSONResponse
-from stapi_fastapi.routers.base import StapiFastapiBaseRouter
+from stapi_fastapi.routers.base import NOT_FOUND, SERVER_ERROR, Route, StapiFastapiBaseRouter
 from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_fastapi.routers.route_names import (
     CONFORMANCE,
@@ -45,6 +45,7 @@ from stapi_fastapi.routers.route_names import (
     LIST_ORDERS,
     LIST_PRODUCTS,
     ROOT,
+    Tag,
 )
 from stapi_fastapi.routers.utils import json_link
 
@@ -89,87 +90,106 @@ class RootRouter(StapiFastapiBaseRouter):
         # added.
         self.product_routers: dict[str, ProductRouter] = {}
 
-        self.add_api_route(
-            "/",
-            self.get_root,
-            methods=["GET"],
-            name=self.route_name(ROOT),
-            tags=["Root"],
+        self.register_route(
+            Route(
+                name=ROOT,
+                tag=Tag.ROOT,
+                path="/",
+                endpoint=self.get_root,
+                errors={},
+                summary="Get the API landing page",
+            )
         )
-
-        self.add_api_route(
-            "/conformance",
-            self.get_conformance,
-            methods=["GET"],
-            name=self.route_name(CONFORMANCE),
-            tags=["Conformance"],
+        self.register_route(
+            Route(
+                name=CONFORMANCE,
+                tag=Tag.CONFORMANCE,
+                path="/conformance",
+                endpoint=self.get_conformance,
+                errors={},
+                summary="Get conformance urls for the API",
+            )
         )
-
-        self.add_api_route(
-            "/products",
-            self.get_products,
-            methods=["GET"],
-            name=self.route_name(LIST_PRODUCTS),
-            tags=["Products"],
+        self.register_route(
+            Route(
+                name=LIST_PRODUCTS,
+                tag=Tag.PRODUCTS,
+                path="/products",
+                endpoint=self.get_products,
+                errors=NOT_FOUND,
+                summary="List all Products",
+            )
         )
-
-        self.add_api_route(
-            "/orders",
-            self.get_orders,
-            methods=["GET"],
-            name=self.route_name(LIST_ORDERS),
-            response_class=GeoJSONResponse,
-            tags=["Orders"],
+        self.register_route(
+            Route(
+                name=LIST_ORDERS,
+                tag=Tag.ORDERS,
+                path="/orders",
+                endpoint=self.get_orders,
+                errors=NOT_FOUND | SERVER_ERROR,
+                summary="List all Orders",
+                response_class=GeoJSONResponse,
+            )
         )
-
-        self.add_api_route(
-            "/orders/{order_id}",
-            self.get_order,
-            methods=["GET"],
-            name=self.route_name(GET_ORDER),
-            response_class=GeoJSONResponse,
-            tags=["Orders"],
+        self.register_route(
+            Route(
+                name=GET_ORDER,
+                tag=Tag.ORDERS,
+                path="/orders/{order_id}",
+                endpoint=self.get_order,
+                errors=NOT_FOUND | SERVER_ERROR,
+                summary="Get an Order by ID",
+                response_class=GeoJSONResponse,
+            )
         )
 
         if self.get_order_statuses is not None:
             _conformances.add(API_CONFORMANCE.order_statuses)
-            self.add_api_route(
-                "/orders/{order_id}/statuses",
-                self.get_order_statuses,
-                methods=["GET"],
-                name=self.route_name(LIST_ORDER_STATUSES),
-                tags=["Orders"],
+            self.register_route(
+                Route(
+                    name=LIST_ORDER_STATUSES,
+                    tag=Tag.ORDERS,
+                    path="/orders/{order_id}/statuses",
+                    endpoint=self.get_order_statuses,
+                    errors=NOT_FOUND | SERVER_ERROR,
+                    summary="List statuses for an Order",
+                )
             )
 
         if self.supports_async_opportunity_search:
             _conformances.add(API_CONFORMANCE.searches_opportunity)
-            self.add_api_route(
-                "/searches/opportunities",
-                self.get_opportunity_search_records,
-                methods=["GET"],
-                name=self.route_name(LIST_OPPORTUNITY_SEARCH_RECORDS),
-                summary="List all Opportunity Search Records",
-                tags=["Opportunities"],
+            self.register_route(
+                Route(
+                    name=LIST_OPPORTUNITY_SEARCH_RECORDS,
+                    tag=Tag.OPPORTUNITIES,
+                    path="/searches/opportunities",
+                    endpoint=self.get_opportunity_search_records,
+                    errors=NOT_FOUND | SERVER_ERROR,
+                    summary="List all Opportunity Search Records",
+                )
             )
-
-            self.add_api_route(
-                "/searches/opportunities/{search_record_id}",
-                self.get_opportunity_search_record,
-                methods=["GET"],
-                name=self.route_name(GET_OPPORTUNITY_SEARCH_RECORD),
-                summary="Get an Opportunity Search Record by ID",
-                tags=["Opportunities"],
+            self.register_route(
+                Route(
+                    name=GET_OPPORTUNITY_SEARCH_RECORD,
+                    tag=Tag.OPPORTUNITIES,
+                    path="/searches/opportunities/{search_record_id}",
+                    endpoint=self.get_opportunity_search_record,
+                    errors=NOT_FOUND | SERVER_ERROR,
+                    summary="Get an Opportunity Search Record by ID",
+                )
             )
 
         if self.__get_opportunity_search_record_statuses is not None:
             _conformances.add(API_CONFORMANCE.searches_opportunity_statuses)
-            self.add_api_route(
-                "/searches/opportunities/{search_record_id}/statuses",
-                self.get_opportunity_search_record_statuses,
-                methods=["GET"],
-                name=self.route_name(LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES),
-                summary="Get an Opportunity Search Record statuses by ID",
-                tags=["Opportunities"],
+            self.register_route(
+                Route(
+                    name=LIST_OPPORTUNITY_SEARCH_RECORD_STATUSES,
+                    tag=Tag.OPPORTUNITIES,
+                    path="/searches/opportunities/{search_record_id}/statuses",
+                    endpoint=self.get_opportunity_search_record_statuses,
+                    errors=NOT_FOUND | SERVER_ERROR,
+                    summary="List statuses for an Opportunity Search Record",
+                )
             )
 
         self.conformances = list(_conformances)

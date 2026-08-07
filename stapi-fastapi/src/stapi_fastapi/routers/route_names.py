@@ -1,3 +1,5 @@
+from enum import StrEnum
+
 # Root
 ROOT = "root"
 CONFORMANCE = "conformance"
@@ -20,3 +22,11 @@ LIST_ORDERS = "list-orders"
 GET_ORDER = "get-order"
 LIST_ORDER_STATUSES = "list-order-statuses"
 CREATE_ORDER = "create-order"
+
+
+class Tag(StrEnum):
+    ROOT = "Root"
+    CONFORMANCE = "Conformance"
+    PRODUCTS = "Products"
+    ORDERS = "Orders"
+    OPPORTUNITIES = "Opportunities"

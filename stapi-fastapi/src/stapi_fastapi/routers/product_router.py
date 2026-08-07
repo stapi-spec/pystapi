@@ -37,7 +37,7 @@ from stapi_fastapi.constants import TYPE_JSON
 from stapi_fastapi.errors import NotFoundError, QueryablesError
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.responses import GeoJSONResponse
-from stapi_fastapi.routers.base import StapiFastapiBaseRouter
+from stapi_fastapi.routers.base import BAD_REQUEST, NOT_FOUND, SERVER_ERROR, Route, StapiFastapiBaseRouter
 from stapi_fastapi.routers.route_names import (
     CONFORMANCE,
     CREATE_ORDER,
@@ -46,6 +46,7 @@ from stapi_fastapi.routers.route_names import (
     GET_PRODUCT,
     GET_QUERYABLES,
     SEARCH_OPPORTUNITIES,
+    Tag,
 )
 from stapi_fastapi.routers.utils import json_link
 
@@ -86,8 +87,7 @@ def build_conformances(product: Product, root_router: RootRouter) -> list[str]:
 
 
 class ProductRouter(StapiFastapiBaseRouter):
-    # FIXME ruff is complaining that the init is too complex
-    def __init__(  # noqa
+    def __init__(
         self,
         product: Product,
         root_router: RootRouter,
@@ -101,40 +101,45 @@ class ProductRouter(StapiFastapiBaseRouter):
         self.route_name_prefix = (root_router.name, product.id)
         self.conformances = build_conformances(product, root_router)
 
-        self.add_api_route(
-            path="",
-            endpoint=self.get_product,
-            name=self.route_name(GET_PRODUCT),
-            methods=["GET"],
-            summary="Retrieve this product",
-            tags=["Products"],
+        self.register_route(
+            Route(
+                name=GET_PRODUCT,
+                tag=Tag.PRODUCTS,
+                path="",
+                endpoint=self.get_product,
+                errors={},
+                summary="Retrieve this product",
+            )
         )
-
-        self.add_api_route(
-            path="/conformance",
-            endpoint=self.get_product_conformance,
-            name=self.route_name(CONFORMANCE),
-            methods=["GET"],
-            summary="Get conformance urls for the product",
-            tags=["Products"],
+        self.register_route(
+            Route(
+                name=CONFORMANCE,
+                tag=Tag.CONFORMANCE,
+                path="/conformance",
+                endpoint=self.get_product_conformance,
+                errors={},
+                summary="Get conformance urls for the product",
+            )
         )
-
-        self.add_api_route(
-            path="/queryables",
-            endpoint=self.get_product_queryables,
-            name=self.route_name(GET_QUERYABLES),
-            methods=["GET"],
-            summary="Get queryables for the product",
-            tags=["Products"],
+        self.register_route(
+            Route(
+                name=GET_QUERYABLES,
+                tag=Tag.PRODUCTS,
+                path="/queryables",
+                endpoint=self.get_product_queryables,
+                errors={},
+                summary="Get queryables for the product",
+            )
         )
-
-        self.add_api_route(
-            path="/order-parameters",
-            endpoint=self.get_product_order_parameters,
-            name=self.route_name(GET_ORDER_PARAMETERS),
-            methods=["GET"],
-            summary="Get order parameters for the product",
-            tags=["Products"],
+        self.register_route(
+            Route(
+                name=GET_ORDER_PARAMETERS,
+                tag=Tag.PRODUCTS,
+                path="/order-parameters",
+                endpoint=self.get_product_order_parameters,
+                errors={},
+                summary="Get order parameters for the product",
+            )
         )
 
         # This wraps `self.create_order` to explicitly parameterize `OrderRequest`
@@ -155,50 +160,58 @@ class ProductRouter(StapiFastapiBaseRouter):
             self.product.order_parameters  # type: ignore
         ]
 
-        self.add_api_route(
-            path="/orders",
-            endpoint=_create_order,
-            name=self.route_name(CREATE_ORDER),
-            methods=["POST"],
-            response_class=GeoJSONResponse,
-            status_code=status.HTTP_201_CREATED,
-            summary="Create an order for the product",
-            tags=["Products"],
+        self.register_route(
+            Route(
+                name=CREATE_ORDER,
+                tag=Tag.ORDERS,
+                path="/orders",
+                endpoint=_create_order,
+                methods=("POST",),
+                errors=BAD_REQUEST | SERVER_ERROR,
+                summary="Create an order for the product",
+                response_class=GeoJSONResponse,
+                status_code=status.HTTP_201_CREATED,
+            )
         )
 
         if product.supports_opportunity_search or (
             self.product.supports_async_opportunity_search and self.root_router.supports_async_opportunity_search
         ):
-            self.add_api_route(
-                path="/opportunities",
-                endpoint=self.search_opportunities,
-                name=self.route_name(SEARCH_OPPORTUNITIES),
-                methods=["POST"],
-                response_class=GeoJSONResponse,
-                # unknown why mypy can't see the queryables property on Product, ignoring
-                response_model=OpportunityCollection[
-                    Geometry,
-                    self.product.opportunity_properties,  # type: ignore
-                ],
-                responses={
-                    201: {
-                        "model": OpportunitySearchRecord,
-                        "content": {TYPE_JSON: {}},
-                    }
-                },
-                summary="Search Opportunities for the product",
-                tags=["Products"],
+            self.register_route(
+                Route(
+                    name=SEARCH_OPPORTUNITIES,
+                    tag=Tag.OPPORTUNITIES,
+                    path="/opportunities",
+                    endpoint=self.search_opportunities,
+                    methods=("POST",),
+                    errors=BAD_REQUEST | NOT_FOUND | SERVER_ERROR,
+                    summary="Search Opportunities for the product",
+                    response_class=GeoJSONResponse,
+                    # unknown why mypy can't see the queryables property on Product, ignoring
+                    response_model=OpportunityCollection[
+                        Geometry,
+                        self.product.opportunity_properties,  # type: ignore
+                    ],
+                    responses={
+                        201: {
+                            "model": OpportunitySearchRecord,
+                            "content": {TYPE_JSON: {}},
+                        }
+                    },
+                )
             )
 
         if product.supports_async_opportunity_search and root_router.supports_async_opportunity_search:
-            self.add_api_route(
-                path="/opportunities/{opportunity_collection_id}",
-                endpoint=self.get_opportunity_collection,
-                name=self.route_name(GET_OPPORTUNITY_COLLECTION),
-                methods=["GET"],
-                response_class=GeoJSONResponse,
-                summary="Get an Opportunity Collection by ID",
-                tags=["Products"],
+            self.register_route(
+                Route(
+                    name=GET_OPPORTUNITY_COLLECTION,
+                    tag=Tag.OPPORTUNITIES,
+                    path="/opportunities/{opportunity_collection_id}",
+                    endpoint=self.get_opportunity_collection,
+                    errors=NOT_FOUND | SERVER_ERROR,
+                    summary="Get an Opportunity Collection by ID",
+                    response_class=GeoJSONResponse,
+                )
             )
 
     def get_product(self, request: Request) -> ProductPydantic:
