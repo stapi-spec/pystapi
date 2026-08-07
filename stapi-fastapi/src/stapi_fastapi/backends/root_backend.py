@@ -29,6 +29,8 @@ Returns:
     - Should return returns.result.Success[stapi_fastapi.pagination.Page[Order]].
       The page's `next_token` becomes the collection's `next` link and its
       `number_matched` becomes the collection's `numberMatched`.
+    - Returning returns.result.Failure[stapi_fastapi.errors.PaginationTokenError]
+      will result in a 404, which is how an unusable pagination token is reported.
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
 
@@ -68,6 +70,8 @@ Returns:
     - Should return returns.result.Success[returns.maybe.Some[stapi_fastapi.pagination.Page[OrderStatus]]]
       if the order is found.
     - Should return returns.result.Success[returns.maybe.Nothing] if the order is not found or if access is denied.
+    - Returning returns.result.Failure[stapi_fastapi.errors.PaginationTokenError]
+      will result in a 404, which is how an unusable pagination token is reported.
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
 
@@ -86,6 +90,8 @@ Args:
 
 Returns:
     - Should return returns.result.Success[stapi_fastapi.pagination.Page[OpportunitySearchRecord]].
+    - Returning returns.result.Failure[stapi_fastapi.errors.PaginationTokenError]
+      will result in a 404, which is how an unusable pagination token is reported.
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
 

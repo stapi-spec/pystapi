@@ -33,12 +33,11 @@ Args:
     request (Request): FastAPI's Request object.
 
 Returns:
-    A tuple containing a list of opportunities and a pagination token.
-
-    - Should return returns.result.Success[tuple[list[Opportunity], returns.maybe.Some[str]]]
-      if including a pagination token
-    - Should return returns.result.Success[tuple[list[Opportunity], returns.maybe.Nothing]]
-      if not including a pagination token
+    - Should return returns.result.Success[stapi_fastapi.pagination.Page[Opportunity]].
+      The page's `next_token` becomes the collection's `next` link and its
+      `number_matched` becomes the collection's `numberMatched`.
+    - Returning returns.result.Failure[stapi_fastapi.errors.PaginationTokenError]
+      will result in a 404, which is how an unusable pagination token is reported.
     - Returning returns.result.Failure[Exception] will result in a 500.
 
 Note:

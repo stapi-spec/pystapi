@@ -131,6 +131,10 @@ class StapiFastapiBaseRouter(APIRouter):
         """The registered name of the route this router serves under `name`."""
         return ":".join((*self.route_name_prefix, name))
 
+    def register_route(self, route: Route) -> None:
+        """Register `route` on this router."""
+        self.add_api_route(**route.to_api_route(self.route_name(route.name)))
+
     def self_link(self, request: Request, name: str, media_type: str = TYPE_JSON, **path_params: Any) -> Link:
         """A `self` link for the current request, query params and all, so a
         paged response points at the page actually returned.
@@ -176,7 +180,3 @@ class StapiFastapiBaseRouter(APIRouter):
         if next_token is not None:
             links.append(self.pagination_link(request, name, next_token, limit, media_type=media_type, **path_params))
         return links
-
-    def register_route(self, route: Route) -> None:
-        """Register `route` on this router."""
-        self.add_api_route(**route.to_api_route(self.route_name(route.name)))

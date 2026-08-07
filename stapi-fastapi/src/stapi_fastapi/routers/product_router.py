@@ -179,9 +179,9 @@ class ProductRouter(StapiFastapiBaseRouter):
                 tag=Tag.ORDERS,
                 path="/orders",
                 endpoint=_create_order,
-                methods=("POST",),
                 errors=BAD_REQUEST | SERVER_ERROR,
                 summary="Create an order for the product",
+                methods=("POST",),
                 response_class=GeoJSONResponse,
                 status_code=status.HTTP_201_CREATED,
                 responses={
@@ -474,16 +474,18 @@ class ProductRouter(StapiFastapiBaseRouter):
         )
 
     def search_pagination_link(self, request: Request, opp_req: OpportunityRequest, pagination_token: str) -> Link:
-        """A `next` link for an opportunity search, whose parameters are a POST body.
+        """The `next` link of a paged synchronous opportunity search.
 
-        Distinct from the base router's query-parameter one: paging a search
-        means re-POSTing the search body with a new token, not following a URL.
+        Spelled differently from the shared `pagination_link` because search is a
+        POST: the next page is identified by a body, not by query params.
         """
         body = opp_req.body()
         body["next"] = pagination_token
         return Link(
             href=request.url,
             rel="next",
+            # a next link only appears on the synchronous result, which is an
+            # Opportunity Collection
             type=TYPE_GEOJSON,
             method="POST",
             body=body,

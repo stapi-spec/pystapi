@@ -153,7 +153,7 @@ class RootRouter(StapiFastapiBaseRouter):
             )
         )
 
-        if self.supports_order_statuses:
+        if self.__get_order_statuses is not None:
             _conformances.add(API_CONFORMANCE.order_statuses)
             self.register_route(
                 Route(
@@ -293,7 +293,7 @@ class RootRouter(StapiFastapiBaseRouter):
 
     async def get_order(self, order_id: OrderIdPath, request: Request) -> Order[OrderStatus]:
         """
-        Get details for order with `order_id`.
+        Get details for order with `orderId`.
         """
         match await self._get_order(order_id, request):
             case Success(Some(order)):
@@ -411,7 +411,7 @@ class RootRouter(StapiFastapiBaseRouter):
         self, search_record_id: SearchRecordIdPath, request: Request
     ) -> OpportunitySearchRecord:
         """
-        Get the Opportunity Search Record with `search_record_id`.
+        Get the Opportunity Search Record with `searchRecordId`.
         """
         match await self._get_opportunity_search_record(search_record_id, request):
             case Success(Some(search_record)):
@@ -479,6 +479,11 @@ class RootRouter(StapiFastapiBaseRouter):
             searchRecordId=search_record_id,
         )
 
+    def opportunity_search_record_self_link(
+        self, opportunity_search_record: OpportunitySearchRecord, request: Request
+    ) -> Link:
+        return json_link("self", self.generate_opportunity_search_record_href(request, opportunity_search_record.id))
+
     def generate_opportunity_search_record_statuses_href(self, request: Request, search_record_id: str) -> URL:
         return self.url_for(
             request,
@@ -499,11 +504,6 @@ class RootRouter(StapiFastapiBaseRouter):
                 )
             )
         return links
-
-    def opportunity_search_record_self_link(
-        self, opportunity_search_record: OpportunitySearchRecord, request: Request
-    ) -> Link:
-        return json_link("self", self.generate_opportunity_search_record_href(request, opportunity_search_record.id))
 
     @property
     def _get_order_statuses(self) -> GetOrderStatuses:  # type: ignore
@@ -530,11 +530,6 @@ class RootRouter(StapiFastapiBaseRouter):
         return self.__get_opportunity_search_record_statuses
 
     @property
-    def supports_opportunity_search_record_statuses(self) -> bool:
-        """Whether the search-record-statuses endpoint is registered."""
-        return self.supports_async_opportunity_search and self.__get_opportunity_search_record_statuses is not None
-
-    @property
     def supports_order_statuses(self) -> bool:
         """Whether the order-statuses endpoint is registered."""
         return self.__get_order_statuses is not None
@@ -542,3 +537,8 @@ class RootRouter(StapiFastapiBaseRouter):
     @property
     def supports_async_opportunity_search(self) -> bool:
         return self.__get_opportunity_search_records is not None and self.__get_opportunity_search_record is not None
+
+    @property
+    def supports_opportunity_search_record_statuses(self) -> bool:
+        """Whether the search-record-statuses endpoint is registered."""
+        return self.supports_async_opportunity_search and self.__get_opportunity_search_record_statuses is not None
