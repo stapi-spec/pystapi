@@ -2622,6 +2622,7 @@ dependencies = [
     { name = "cql2" },
     { name = "geojson-pydantic" },
     { name = "pydantic" },
+    { name = "typing-extensions" },
 ]
 
 [package.dev-dependencies]
@@ -2634,6 +2635,7 @@ requires-dist = [
     { name = "cql2", specifier = ">=0.3.6" },
     { name = "geojson-pydantic", specifier = ">=1.2.0" },
     { name = "pydantic", specifier = ">=2.12" },
+    { name = "typing-extensions", specifier = ">=4.12" },
 ]
 
 [package.metadata.requires-dev]

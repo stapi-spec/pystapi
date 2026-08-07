@@ -1,7 +1,10 @@
+import pydantic
+import pytest
 from stapi_pydantic import (
     OpportunityRequest,
     OpportunitySearchRecord,
     OpportunitySearchRecordCollection,
+    OpportunitySearchStatus,
     OrderParameters,
     OrderRequest,
 )
@@ -66,3 +69,21 @@ def test_opportunity_search_record_collection() -> None:
     dumped = collection.model_dump(mode="json")
     assert dumped["stapi_type"] == "OpportunitySearchRecordCollection"
     assert len(dumped["records"]) == 1
+
+
+def test_opportunity_search_status_accepts_extension_status_code() -> None:
+    status = OpportunitySearchStatus.model_validate({"timestamp": "2024-04-10T09:15:00Z", "status_code": "queued"})
+    assert status.status_code == "queued"
+    assert status.model_dump(mode="json")["status_code"] == "queued"
+
+
+def test_opportunity_search_status_code_constrainable_with_custom_enum() -> None:
+    from enum import StrEnum
+
+    class NarrowCodes(StrEnum):
+        special = "special"
+
+    with pytest.raises(pydantic.ValidationError):
+        OpportunitySearchStatus[NarrowCodes].model_validate(
+            {"timestamp": "2024-04-10T09:15:00Z", "status_code": "received"}
+        )

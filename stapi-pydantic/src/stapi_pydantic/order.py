@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 from collections.abc import Iterator
 from enum import StrEnum
-from typing import Any, Generic, Literal, TypeVar
+from typing import Annotated, Any, Generic, Literal, Self, TypeVar, cast
 
 from geojson_pydantic.base import _GeoJsonBase
 from pydantic import (
@@ -14,11 +14,12 @@ from pydantic import (
     StrictStr,
     field_validator,
 )
+from typing_extensions import TypeVar as DefaultTypeVar
 
 from .constants import STAPI_VERSION
 from .geometry import Geometry
 from .search_parameters import SearchParameters
-from .shared import STAPI_RESPONSE_CONFIG_ALLOW_EXTRA, Link
+from .shared import STAPI_RESPONSE_CONFIG_ALLOW_EXTRA, Link, omitted_when_none
 
 
 class BaseOrderParameters(BaseModel):
@@ -55,29 +56,42 @@ class OrderStatusCode(StrEnum):
     failed = "failed"
 
 
-class OrderStatus(BaseModel):
+AnyOrderStatusCode = Annotated[OrderStatusCode | str, Field(union_mode="left_to_right")]
+
+StatusCode = DefaultTypeVar("StatusCode", bound=str, default=AnyOrderStatusCode)
+
+
+class OrderStatus(BaseModel, Generic[StatusCode]):
+    """An order status; parameterize with a StrEnum (``OrderStatus[MyCodes]``)
+    to constrain status_code to an implementation-defined set."""
+
     timestamp: AwareDatetime
-    status_code: OrderStatusCode
-    reason_code: str | None = None
-    reason_text: str | None = None
+    status_code: StatusCode
+    reason_code: str | None = omitted_when_none()
+    reason_text: str | None = omitted_when_none()
     links: list[Link] = Field(default_factory=list)
 
-    model_config = ConfigDict(extra="allow")
+    model_config = STAPI_RESPONSE_CONFIG_ALLOW_EXTRA
 
     @classmethod
     def new(
-        cls, status_code: OrderStatusCode, reason_code: str | None = None, reason_text: str | None = None
-    ) -> OrderStatus:
+        cls, status_code: OrderStatusCode | str, reason_code: str | None = None, reason_text: str | None = None
+    ) -> Self:
         """Creates a new order status with timestamp set to now in UTC."""
-        return OrderStatus(
+        return cls(
             timestamp=datetime.datetime.now(tz=datetime.UTC),
-            status_code=status_code,
+            # the accepted codes are whatever cls was parameterized with, which
+            # the signature can't name; validation enforces it.
+            status_code=cast(StatusCode, status_code),
             reason_code=reason_code,
             reason_text=reason_text,
         )
 
 
-T = TypeVar("T", bound=OrderStatus)
+# Defaulted so an unparameterized Order resolves to OrderStatus itself rather
+# than the bound OrderStatus[Any], which would emit a second, unconstrained
+# OrderStatus schema.
+T = DefaultTypeVar("T", bound=OrderStatus[Any], default=OrderStatus)
 
 
 class OrderStatuses(BaseModel, Generic[T]):

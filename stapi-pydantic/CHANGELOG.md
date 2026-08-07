@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `ProductCollection`, the new name for `ProductsCollection` (see Changed).
 - `stapi_type` and `stapi_version` on `OpportunitySearchRecord` and `OpportunitySearchRecordCollection`.
 - `BaseOrderParameters`, a permissive base for order parameters at rest, and `StoredOrderRequest`, the form an Order Request takes once it is persisted inside `OrderProperties`. `OrderParameters` is now a strict (`extra="forbid"`) subclass of `BaseOrderParameters`.
+- `OrderStatus` and `OpportunitySearchStatus` are generic over their status code set, so an implementation can constrain it with its own `StrEnum`, e.g. `OrderStatus[MyCodes]`.
 - `STAPI_VERSION` is now exported from the package root.
 
 ### Changed
@@ -32,6 +33,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **BREAKING** Models that declare aliases now serialize by alias. `model_dump()` emits `conformsTo` on `Conformance` and `type` on `Product`, where it previously emitted the Python field names `conforms_to` and `type_`. Callers already passing `by_alias=True` are unaffected; callers reading the Python names out of a dump must switch to the wire names.
 - **BREAKING** `Product.conformsTo` and `RootResponse.conformsTo` are spelled `conforms_to` in Python, matching `Conformance`. The wire name is unchanged: all three validate from either `conformsTo` or `conforms_to` and serialize as `conformsTo`. Keyword construction and attribute access must use the new name.
 - **BREAKING** `Provider.roles` and `Provider.url` are optional. Both were required, which made a provider that publishes neither unrepresentable; they are now omitted from output rather than published empty or null.
+- **BREAKING** `status_code` on `OrderStatus` and `OpportunitySearchStatus` accepts any string by default, since the spec lets providers add statuses through extensions. Known codes still validate to the enum. Code that assumed an `OrderStatusCode` instance must handle a plain `str`, or parameterize the model with its own code set.
+- Optional status fields (`reason_code`, `reason_text`) are omitted rather than serialized as null, and so are correspondingly not marked required.
+- `typing-extensions >= 4.12` is now required, for `TypeVar` defaults.
 - Spec-REQUIRED fields that carry defaults (`type`, `stapi_type`, `stapi_version`, `links`, `conformsTo`, and so on) are now marked required in the serialization JSON Schema, since they are always present in a response.
 - **BREAKING** `ProductsCollection` is renamed to `ProductCollection`, matching its own `stapi_type` and the spec. The old name is gone rather than aliased; update imports. The model also replaces its aliased `type` field with `stapi_type`, so responses carry `"stapi_type": "ProductCollection"` rather than `"type": "ProductCollection"`, and gains `stapi_version`.
 - **BREAKING** `Product.description` is required, per the spec. It previously defaulted to the empty string.
@@ -43,6 +47,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- `OrderStatus.new` respects the class it is called on. It constructed a bare `OrderStatus` regardless, so a parameterized `OrderStatus[MyCodes]` returned the wrong type and accepted codes outside its enum.
+- `OrderStatusCollection` no longer emits a second, unconstrained `OrderStatus-2` schema whose `status_code` had no schema at all.
 - Stored order requests and search parameters round-trip unknown fields rather than dropping them.
 - A malformed CQL2 filter is reported as a validation error. `cql2` raises its own exception types, which pydantic does not convert, so an invalid filter escaped validation and surfaced as a server error rather than a rejected request.
 

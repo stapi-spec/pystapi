@@ -1,14 +1,17 @@
+from __future__ import annotations
+
 from enum import StrEnum
-from typing import Any, Literal, TypeVar
+from typing import Annotated, Any, Generic, Literal, TypeVar
 
 from geojson_pydantic import Feature, FeatureCollection
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
+from typing_extensions import TypeVar as DefaultTypeVar
 
 from .constants import STAPI_VERSION
 from .datetime_interval import BoundedDatetimeInterval
 from .geometry import Geometry
 from .search_parameters import SearchParameters
-from .shared import STAPI_RESPONSE_CONFIG, Link
+from .shared import STAPI_RESPONSE_CONFIG, Link, omitted_when_none
 
 
 # Copied and modified from https://github.com/stac-utils/stac-pydantic/blob/main/stac_pydantic/item.py#L11
@@ -67,11 +70,22 @@ class OpportunitySearchStatusCode(StrEnum):
     completed = "completed"
 
 
-class OpportunitySearchStatus(BaseModel):
+AnySearchStatusCode = Annotated[OpportunitySearchStatusCode | str, Field(union_mode="left_to_right")]
+
+SearchStatusCode = DefaultTypeVar("SearchStatusCode", bound=str, default=AnySearchStatusCode)
+
+
+class OpportunitySearchStatus(BaseModel, Generic[SearchStatusCode]):
+    """A search record status; parameterize with a StrEnum
+    (``OpportunitySearchStatus[MyCodes]``) to constrain status_code to an
+    implementation-defined set."""
+
+    model_config = STAPI_RESPONSE_CONFIG
+
     timestamp: AwareDatetime
-    status_code: OpportunitySearchStatusCode
-    reason_code: str | None = None
-    reason_text: str | None = None
+    status_code: SearchStatusCode
+    reason_code: str | None = omitted_when_none()
+    reason_text: str | None = omitted_when_none()
     links: list[Link] = Field(default_factory=list)
 
 

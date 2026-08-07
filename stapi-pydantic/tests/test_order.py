@@ -1,4 +1,5 @@
 import datetime
+from enum import StrEnum
 from typing import Any
 
 import pydantic
@@ -12,6 +13,50 @@ from stapi_pydantic import (
     OrderStatusCode,
     StoredOrderRequest,
 )
+
+
+def test_order_status_new_uses_cls() -> None:
+    class NarrowCodes(StrEnum):
+        special = "special"
+
+    narrowed = OrderStatus[NarrowCodes]
+    status = narrowed.new("special")
+    assert type(status) is narrowed
+    assert status.status_code is NarrowCodes.special
+
+    # the parameterization is enforced rather than silently falling back to the
+    # unparameterized OrderStatus
+    with pytest.raises(pydantic.ValidationError):
+        narrowed.new("received")
+
+
+def test_order_status_accepts_extension_status_code() -> None:
+    status = OrderStatus.model_validate({"timestamp": "2024-04-10T09:15:00Z", "status_code": "tasking_window_open"})
+    assert status.status_code == "tasking_window_open"
+    assert status.model_dump(mode="json")["status_code"] == "tasking_window_open"
+
+
+def test_order_status_known_code_validates_to_enum() -> None:
+    status = OrderStatus.model_validate({"timestamp": "2024-04-10T09:15:00Z", "status_code": "received"})
+    assert status.status_code is OrderStatusCode.received
+
+
+def test_order_status_code_constrainable_with_custom_enum() -> None:
+    class NarrowCodes(StrEnum):
+        special = "special"
+
+    narrowed = OrderStatus[NarrowCodes]
+    assert narrowed.model_validate({"timestamp": "2024-04-10T09:15:00Z", "status_code": "special"}).status_code is (
+        NarrowCodes.special
+    )
+    with pytest.raises(pydantic.ValidationError):
+        narrowed.model_validate({"timestamp": "2024-04-10T09:15:00Z", "status_code": "received"})
+
+
+def test_order_status_code_schema_allows_extension_strings() -> None:
+    status_code_schema = OrderStatus.model_json_schema()["properties"]["status_code"]
+    assert {"type": "string"} in status_code_schema["anyOf"]
+    assert any("$ref" in member for member in status_code_schema["anyOf"])
 
 
 def test_order_status_new() -> None:
