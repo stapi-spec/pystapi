@@ -1,18 +1,16 @@
 from __future__ import annotations
 
 import datetime
-from collections.abc import Iterator
 from enum import StrEnum
 from typing import Annotated, Any, Generic, Literal, Self, TypeVar, cast
 
-from geojson_pydantic.base import _GeoJsonBase
+from geojson_pydantic import Feature, FeatureCollection
 from pydantic import (
     AwareDatetime,
     BaseModel,
     ConfigDict,
     Field,
     StrictStr,
-    field_validator,
 )
 from typing_extensions import TypeVar as DefaultTypeVar
 
@@ -125,8 +123,9 @@ class OrderProperties(BaseModel, Generic[T]):
     order_request: StoredOrderRequest
 
 
-# derived from geojson_pydantic.Feature
-class Order(_GeoJsonBase, Generic[T]):
+class Order(Feature[Geometry, OrderProperties[T]], Generic[T]):
+    model_config = STAPI_RESPONSE_CONFIG
+
     # We need to enforce that orders have an id defined, as that is required to
     # retrieve them via the API
     id: StrictStr
@@ -139,37 +138,15 @@ class Order(_GeoJsonBase, Generic[T]):
 
     links: list[Link] = Field(default_factory=list)
 
-    __geojson_exclude_if_none__ = {"bbox", "id"}
 
-    @field_validator("geometry", mode="before")
-    def set_geometry(cls, geometry: Any) -> Any:
-        """set geometry from geo interface or input"""
-        if hasattr(geometry, "__geo_interface__"):
-            return geometry.__geo_interface__
+class OrderCollection(FeatureCollection[Order[T]], Generic[T]):
+    model_config = STAPI_RESPONSE_CONFIG
 
-        return geometry
-
-
-# derived from geojson_pydantic.FeatureCollection
-class OrderCollection(_GeoJsonBase, Generic[T]):
     type: Literal["FeatureCollection"] = "FeatureCollection"
-    features: list[Order[T]]
     links: list[Link] = Field(default_factory=list)
     number_matched: int | None = Field(
         serialization_alias="numberMatched", default=None, exclude_if=lambda x: x is None
     )
-
-    def __iter__(self) -> Iterator[Order[T]]:  # type: ignore [override]
-        """iterate over features"""
-        return iter(self.features)
-
-    def __len__(self) -> int:
-        """return features length"""
-        return len(self.features)
-
-    def __getitem__(self, index: int) -> Order[T]:
-        """get feature at a given index"""
-        return self.features[index]
 
 
 class OrderRequest(BaseModel, Generic[ORP]):

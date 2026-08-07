@@ -1,6 +1,10 @@
 import pydantic
 import pytest
+from geojson_pydantic.geometries import Point
 from stapi_pydantic import (
+    Opportunity,
+    OpportunityCollection,
+    OpportunityProperties,
     OpportunityRequest,
     OpportunitySearchRecord,
     OpportunitySearchRecordCollection,
@@ -97,3 +101,40 @@ def test_opportunity_search_status_collection() -> None:
     dumped = collection.model_dump(mode="json")
     assert dumped["stapi_type"] == "OpportunitySearchStatusCollection"
     assert len(dumped["statuses"]) == 1
+
+
+OPPORTUNITY_DICT = {
+    "type": "Feature",
+    "geometry": {"type": "Point", "coordinates": [13.4, 52.5]},
+    "properties": {
+        "datetime": "2024-04-18T10:56:00Z/2024-04-25T10:56:00Z",
+        "product_id": "umbra_spotlight",
+    },
+}
+
+
+def test_opportunity_id_is_string_only() -> None:
+    opportunity = Opportunity[Point, OpportunityProperties].model_validate({**OPPORTUNITY_DICT, "id": "opp-1"})
+    assert opportunity.id == "opp-1"
+    with pytest.raises(pydantic.ValidationError):
+        Opportunity[Point, OpportunityProperties].model_validate({**OPPORTUNITY_DICT, "id": 1})
+
+
+def test_opportunity_collection_omits_null_id() -> None:
+    collection = OpportunityCollection[Point, OpportunityProperties].model_validate(
+        {"type": "FeatureCollection", "features": []}
+    )
+    assert "id" not in collection.model_dump(mode="json")
+
+
+def test_opportunity_geometry_required_non_null() -> None:
+    """Feature types geometry as nullable, which would let a spec-violating
+    response validate and dump.
+    """
+    with pytest.raises(pydantic.ValidationError):
+        Opportunity[Point, OpportunityProperties].model_validate({**OPPORTUNITY_DICT, "geometry": None})
+
+
+def test_opportunity_properties_required() -> None:
+    with pytest.raises(pydantic.ValidationError):
+        Opportunity[Point, OpportunityProperties].model_validate({**OPPORTUNITY_DICT, "properties": None})

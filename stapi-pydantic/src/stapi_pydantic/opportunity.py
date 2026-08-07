@@ -52,14 +52,21 @@ P = TypeVar("P", bound=OpportunityProperties)
 
 
 class Opportunity(Feature[G, P]):
+    model_config = STAPI_RESPONSE_CONFIG
+
+    id: str | None = omitted_when_none()
     type: Literal["Feature"] = "Feature"
+    geometry: G = Field(...)
+    properties: P = Field(...)
     links: list[Link] = Field(default_factory=list)
 
 
 class OpportunityCollection(FeatureCollection[Opportunity[G, P]]):
+    model_config = STAPI_RESPONSE_CONFIG
+
     type: Literal["FeatureCollection"] = "FeatureCollection"
     links: list[Link] = Field(default_factory=list)
-    id: str | None = None
+    id: str | None = omitted_when_none()
 
 
 class OpportunitySearchStatusCode(StrEnum):
