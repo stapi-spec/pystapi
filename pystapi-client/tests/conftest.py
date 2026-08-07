@@ -37,7 +37,8 @@ def api() -> Iterator[MockRouter]:
                 start_index = (page - 1) * int(limit)
                 end_index = start_index + int(limit)
                 products_limited["products"] = products_limited["products"][start_index:end_index]
-                # against the full fixture, not the page just sliced out of it
+                # `products` is the whole fixture; `products_limited` has already
+                # been sliced down to this page
                 has_next_page = end_index < len(products["products"])
                 if has_next_page:
                     products_limited["links"].append(

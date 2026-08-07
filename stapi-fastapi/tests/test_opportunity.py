@@ -72,7 +72,7 @@ def test_search_opportunities_rejects_limit_below_the_minimum(
         json={**opportunity_search, "limit": limit},
     )
     # 422 is spelled out: starlette renamed its constant for this status code,
-    # and the old name now raises a DeprecationWarning.
+    # so referencing either name warns on one version or breaks on the other.
     assert response.status_code == 422
 
 

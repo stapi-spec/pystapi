@@ -165,7 +165,10 @@ def test_self_link_of_second_page_points_at_second_page(stapi_client: TestClient
 
 
 def test_self_link_survives_a_query_param_named_self(stapi_client: TestClient) -> None:
-    """Query param names are data, not Python keywords: `?self=` used to 500."""
+    """A query param named `self` is a name like any other.
+
+    It must not collide with the `self` of the method building the link.
+    """
     res = stapi_client.get("/products", params={"self": "x"})
     assert res.status_code == status.HTTP_200_OK, res.text
 
@@ -175,7 +178,7 @@ def test_self_link_survives_a_query_param_named_self(stapi_client: TestClient) -
 
 
 def test_self_link_preserves_repeated_query_params(stapi_client: TestClient) -> None:
-    """A repeated query param keeps every value; it used to collapse to the last."""
+    """A repeated query param keeps every value in the `self` link."""
     res = stapi_client.get("/products", params=[("limit", "2"), ("a", "1"), ("a", "2")])
     assert res.status_code == status.HTTP_200_OK, res.text
 

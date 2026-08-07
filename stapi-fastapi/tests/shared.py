@@ -197,8 +197,8 @@ product_test_spotlight_async_opportunity = Product(
 )
 
 # Declares the opportunity conformance classes itself, the way a provider
-# publishing an async-search product would. What is actually advertised must
-# still depend on which routes the router ends up registering.
+# publishing an async-search product would. What is actually advertised depends
+# on which routes the router ends up registering, not on this declaration.
 product_test_spotlight_async_opportunity_declared_conformances = Product(
     id="test-spotlight",
     title="Test Spotlight Product",
