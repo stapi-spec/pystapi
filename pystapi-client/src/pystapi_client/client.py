@@ -260,13 +260,52 @@ class Client:
 
         return any(re.match(conformance_class.pattern, uri) for uri in self.get_conforms_to())
 
-    def _supports_opportunities(self) -> bool:
-        """Check if the API supports opportunities"""
-        return self.has_conformance(ConformanceClasses.OPPORTUNITIES)
+    def _product_has_conformance(
+        self,
+        product: str | Product,
+        conformance_class: ConformanceClasses,
+    ) -> bool:
+        """Check whether a Product advertises the given conformance class.
 
-    def _supports_async_opportunities(self) -> bool:
-        """Check if the API supports asynchronous opportunities"""
-        return self.has_conformance(ConformanceClasses.ASYNC_OPPORTUNITIES)
+        Opportunity capability classes are advertised per-Product, not in the
+        root landing page.
+
+        Args:
+            product: A Product ID or an already-fetched
+                :class:`~stapi_pydantic.Product`. If an ID is given the Product
+                is fetched from the API.
+            conformance_class: The conformance class to check for.
+
+        Return:
+            Whether the Product conforms to the given class.
+        """
+        if isinstance(product, str):
+            product = self.get_product(product)
+        return any(re.match(conformance_class.pattern, uri) for uri in product.conforms_to)
+
+    def product_supports_opportunities(self, product: str | Product) -> bool:
+        """Check if a Product supports synchronous opportunity search.
+
+        Args:
+            product: A Product ID or an already-fetched
+                :class:`~stapi_pydantic.Product`.
+
+        Return:
+            Whether the Product supports synchronous opportunity search.
+        """
+        return self._product_has_conformance(product, ConformanceClasses.OPPORTUNITIES)
+
+    def product_supports_async_opportunities(self, product: str | Product) -> bool:
+        """Check if a Product supports asynchronous opportunity search.
+
+        Args:
+            product: A Product ID or an already-fetched
+                :class:`~stapi_pydantic.Product`.
+
+        Return:
+            Whether the Product supports asynchronous opportunity search.
+        """
+        return self._product_has_conformance(product, ConformanceClasses.ASYNC_OPPORTUNITIES)
 
     def get_products(self, limit: int | None = None) -> Iterator[Product]:
         """Get all products from this STAPI API
