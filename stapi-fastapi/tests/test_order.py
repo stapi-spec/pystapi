@@ -110,13 +110,13 @@ def test_get_order_properties(get_order_response: Response, create_order_payload
         "coordinates": list(create_order_payloads[0].search_parameters.geometry.coordinates),
     }
 
-    assert order["properties"]["search_parameters"]["geometry"] == {
+    assert order["properties"]["order_request"]["search_parameters"]["geometry"] == {
         "type": "Point",
         "coordinates": list(create_order_payloads[0].search_parameters.geometry.coordinates),
     }
 
     assert (
-        order["properties"]["search_parameters"]["datetime"]
+        order["properties"]["order_request"]["search_parameters"]["datetime"]
         == create_order_payloads[0].search_parameters.model_dump(mode="json")["datetime"]
     )
 

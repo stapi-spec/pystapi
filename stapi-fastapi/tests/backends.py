@@ -15,9 +15,9 @@ from stapi_pydantic import (
     Order,
     OrderProperties,
     OrderRequest,
-    OrderSearchParameters,
     OrderStatus,
     OrderStatusCode,
+    StoredOrderRequest,
 )
 
 
@@ -96,16 +96,12 @@ async def mock_create_order(product_router: ProductRouter, payload: OrderRequest
                 product_id=product_router.product.id,
                 created=datetime.now(UTC),
                 status=status,
-                search_parameters=OrderSearchParameters(
-                    geometry=payload.search_parameters.geometry,
-                    datetime=payload.search_parameters.datetime,
-                    filter=payload.search_parameters.filter,
+                order_request=StoredOrderRequest(
+                    search_parameters=payload.search_parameters,
+                    # declared as BaseOrderParameters; pydantic validates the
+                    # dumped dict into one at runtime
+                    order_parameters=payload.order_parameters.model_dump(),  # type: ignore[arg-type]
                 ),
-                order_parameters=payload.order_parameters.model_dump(),
-                opportunity_properties={
-                    "datetime": "2024-01-29T12:00:00Z/2024-01-30T12:00:00Z",
-                    "off_nadir": 10,
-                },
             ),
             links=[],
         )

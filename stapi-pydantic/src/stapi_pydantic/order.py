@@ -16,11 +16,9 @@ from pydantic import (
 )
 
 from .constants import STAPI_VERSION
-from .datetime_interval import DatetimeInterval
-from .filter import CQL2Filter
 from .geometry import Geometry
 from .search_parameters import SearchParameters
-from .shared import Link
+from .shared import STAPI_RESPONSE_CONFIG_ALLOW_EXTRA, Link
 
 
 class BaseOrderParameters(BaseModel):
@@ -87,23 +85,26 @@ class OrderStatuses(BaseModel, Generic[T]):
     links: list[Link] = Field(default_factory=list)
 
 
-class OrderSearchParameters(BaseModel):
-    datetime: DatetimeInterval
-    geometry: Geometry
-    # TODO: validate the CQL2 filter?
-    filter: CQL2Filter | None = None  # type: ignore [type-arg]
+class StoredOrderRequest(BaseModel):
+    """Stored form of an Order Request within Order properties.
+
+    order_parameters is typed as BaseOrderParameters because a persisted order
+    can no longer be validated against a product's strict OrderParameters model.
+    """
+
+    model_config = STAPI_RESPONSE_CONFIG_ALLOW_EXTRA
+
+    search_parameters: SearchParameters
+    order_parameters: BaseOrderParameters = Field(default_factory=BaseOrderParameters)
 
 
 class OrderProperties(BaseModel, Generic[T]):
+    model_config = STAPI_RESPONSE_CONFIG_ALLOW_EXTRA
+
     product_id: str
     created: AwareDatetime
     status: T
-
-    search_parameters: OrderSearchParameters
-    opportunity_properties: dict[str, Any]
-    order_parameters: dict[str, Any]
-
-    model_config = ConfigDict(extra="allow")
+    order_request: StoredOrderRequest
 
 
 # derived from geojson_pydantic.Feature

@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `cql2_property_names`, which collects the property names referenced by a CQL2 JSON filter.
 - `SearchParameters`, the Search Parameters Object (`datetime`, `geometry`, `filter`) shared by the Opportunity Request and the Order Request. It permits extra fields, so provider extension parameters round-trip instead of being dropped.
 - `ProductCollection`, the new name for `ProductsCollection` (see Changed).
-- `BaseOrderParameters`, a permissive base for order parameters at rest. `OrderParameters` is now a strict (`extra="forbid"`) subclass of it.
+- `BaseOrderParameters`, a permissive base for order parameters at rest, and `StoredOrderRequest`, the form an Order Request takes once it is persisted inside `OrderProperties`. `OrderParameters` is now a strict (`extra="forbid"`) subclass of `BaseOrderParameters`.
 - `STAPI_VERSION` is now exported from the package root.
 
 ### Changed
@@ -36,15 +36,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **BREAKING** `Product.description` is required, per the spec. It previously defaulted to the empty string.
 - **BREAKING** `OpportunityRequest` (was `OpportunityPayload`) and `OrderRequest` (was `OrderPayload`) now compose `SearchParameters` instead of declaring `datetime`, `geometry`, and `filter` themselves. A request body that was `{"datetime": ..., "geometry": ..., "filter": ...}` becomes `{"search_parameters": {"datetime": ..., "geometry": ..., "filter": ...}}`.
 - **BREAKING** `OrderRequest.order_parameters` is optional and defaults to an empty object. It was previously required. Products whose `OrderParameters` model has required fields still make it effectively required, via validation.
+- **BREAKING** `OrderProperties` carries a single `order_request` (a `StoredOrderRequest`) in place of the former `search_parameters`, `opportunity_properties`, and `order_parameters` fields.
 - **BREAKING** `OpportunityRequest.limit` is `int | None` with a lower bound of 1, and defaults to `None`. It defaulted to 10, which asserted a page size the client never asked for; the default is the server's to choose.
 
 ### Fixed
 
+- Stored order requests and search parameters round-trip unknown fields rather than dropping them.
 - A malformed CQL2 filter is reported as a validation error. `cql2` raises its own exception types, which pydantic does not convert, so an invalid filter escaped validation and surfaced as a server error rather than a rejected request.
 
 ### Removed
 
-- **BREAKING** The pre-0.2.0 compatibility aliases `ProductsCollection`, `OrderPayload` and `OpportunityPayload` are gone. Use `ProductCollection`, `OrderRequest` and `OpportunityRequest`.
+- **BREAKING** The pre-0.2.0 compatibility aliases `ProductsCollection`, `OrderPayload`, `OpportunityPayload` and `OrderSearchParameters` are gone. Use `ProductCollection`, `OrderRequest`, `OpportunityRequest` and `SearchParameters`.
 - The unused `Props`, `Geom`, and `OPP` type variables in `stapi_pydantic.order`.
 - **BREAKING** `JsonSchemaModel` is gone. It annotated a `type[BaseModel]` with a `PlainValidator`/`PlainSerializer` pair so a model class could stand in for its own schema, which meant the published document carried an orphan `BaseModel` component and the value could not be read back. Build a `JsonSchema` with `JsonSchema.from_model(YourModel)` instead.
 

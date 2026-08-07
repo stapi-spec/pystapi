@@ -22,10 +22,10 @@ from .order import (
     OrderParameters,
     OrderProperties,
     OrderRequest,
-    OrderSearchParameters,
     OrderStatus,
     OrderStatusCode,
     OrderStatuses,
+    StoredOrderRequest,
 )
 from .product import Product, ProductCollection, Provider, ProviderRole
 from .queryables import Queryables
@@ -55,7 +55,6 @@ __all__ = [
     "OrderParameters",
     "OrderRequest",
     "OrderProperties",
-    "OrderSearchParameters",
     "OrderStatus",
     "OrderStatusCode",
     "OrderStatuses",
@@ -67,6 +66,7 @@ __all__ = [
     "Queryables",
     "RootResponse",
     "SearchParameters",
+    "StoredOrderRequest",
     "STAPI_VERSION",
     "cql2_property_names",
 ]
