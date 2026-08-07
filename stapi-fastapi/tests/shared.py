@@ -161,7 +161,7 @@ product_test_spotlight_sync_opportunity = Product(
     queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
-    conforms_to=[PRODUCT.geojson_point, PRODUCT.opportunities],
+    conforms_to=[PRODUCT.geojson_point],
 )
 
 
@@ -180,7 +180,29 @@ product_test_spotlight_async_opportunity = Product(
     queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
-    conforms_to=[PRODUCT.geojson_point, PRODUCT.opportunities_async],
+    conforms_to=[PRODUCT.geojson_point],
+)
+
+
+# Declares the opportunity conformance classes itself, the way a provider
+# publishing an async-search product would. What is actually advertised must
+# still depend on which routes the router ends up registering.
+product_test_spotlight_async_opportunity_declared_conformances = Product(
+    id="test-spotlight",
+    title="Test Spotlight Product",
+    description="Test product for test spotlight",
+    license="CC-BY-4.0",
+    keywords=["test", "satellite"],
+    providers=[provider],
+    links=[],
+    create_order=mock_create_order,
+    search_opportunities=None,
+    search_opportunities_async=mock_search_opportunities_async,
+    get_opportunity_collection=mock_get_opportunity_collection,
+    queryables=MyProductQueryables,
+    opportunity_properties=MyOpportunityProperties,
+    order_parameters=MyOrderParameters,
+    conforms_to=[PRODUCT.geojson_point, PRODUCT.opportunities, PRODUCT.opportunities_async],
 )
 
 product_test_spotlight_sync_async_opportunity = Product(
@@ -198,7 +220,7 @@ product_test_spotlight_sync_async_opportunity = Product(
     queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
-    conforms_to=[PRODUCT.geojson_point, PRODUCT.opportunities, PRODUCT.opportunities_async],
+    conforms_to=[PRODUCT.geojson_point],
 )
 
 product_test_satellite_provider_sync_opportunity = Product(
@@ -216,7 +238,7 @@ product_test_satellite_provider_sync_opportunity = Product(
     queryables=MyProductQueryables,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
-    conforms_to=[PRODUCT.geojson_point, PRODUCT.opportunities],
+    conforms_to=[PRODUCT.geojson_point],
 )
 
 

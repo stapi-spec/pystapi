@@ -7,7 +7,6 @@ from urllib.parse import urljoin
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from stapi_fastapi.conformance import API, PRODUCT
 from stapi_fastapi.models.product import (
     Product,
 )
@@ -56,10 +55,28 @@ def mock_opportunities() -> list[Opportunity]:
 
 
 @pytest.fixture
+def root_router_kwargs(request: pytest.FixtureRequest) -> dict[str, Any]:
+    """Per-test overrides for the RootRouter the client fixtures build.
+
+    Mark a test with `@pytest.mark.root_router_kwargs({...})` to add or replace
+    router arguments; pass None for a backend to withhold it, which is how a
+    capability is turned off.
+    """
+    marker = request.node.get_closest_marker("root_router_kwargs")
+    return dict(marker.args[0]) if marker is not None else {}
+
+
+def _root_router(overrides: dict[str, Any], **defaults: Any) -> RootRouter:
+    kwargs = {**defaults, **overrides}
+    return RootRouter(**{k: v for k, v in kwargs.items() if v is not None})
+
+
+@pytest.fixture
 def stapi_client(
     mock_products: list[Product],
     base_url: str,
     mock_opportunities: list[Opportunity],
+    root_router_kwargs: dict[str, Any],
 ) -> Generator[TestClient, None, None]:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, Any]]:
@@ -71,15 +88,14 @@ def stapi_client(
         finally:
             pass
 
-    root_router = RootRouter(
+    root_router = _root_router(
+        root_router_kwargs,
         get_orders=mock_get_orders,
         get_order=mock_get_order,
         get_order_statuses=mock_get_order_statuses,
-        conformances=[API.core],
     )
 
     for mock_product in mock_products:
-        mock_product.conforms_to = [PRODUCT.opportunities, PRODUCT.opportunities_async, PRODUCT.geojson_point]
         root_router.add_product(mock_product)
 
     app = FastAPI(lifespan=lifespan)
@@ -94,6 +110,7 @@ def stapi_client_async_opportunity(
     mock_products: list[Product],
     base_url: str,
     mock_opportunities: list[Opportunity],
+    root_router_kwargs: dict[str, Any],
 ) -> Generator[TestClient, None, None]:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, Any]]:
@@ -106,22 +123,17 @@ def stapi_client_async_opportunity(
         finally:
             pass
 
-    root_router = RootRouter(
+    root_router = _root_router(
+        root_router_kwargs,
         get_orders=mock_get_orders,
         get_order=mock_get_order,
         get_order_statuses=mock_get_order_statuses,
         get_opportunity_search_records=mock_get_opportunity_search_records,
         get_opportunity_search_record=mock_get_opportunity_search_record,
         get_opportunity_search_record_statuses=mock_get_opportunity_search_record_statuses,
-        conformances=[
-            API.core,
-            API.searches_opportunity,
-            API.searches_opportunity_statuses,
-        ],
     )
 
     for mock_product in mock_products:
-        mock_product.conforms_to = [PRODUCT.opportunities, PRODUCT.opportunities_async, PRODUCT.geojson_point]
         root_router.add_product(mock_product)
 
     app = FastAPI(lifespan=lifespan)

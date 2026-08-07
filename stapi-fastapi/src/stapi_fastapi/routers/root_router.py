@@ -64,7 +64,7 @@ class RootRouter(StapiFastapiBaseRouter):
         get_opportunity_search_records: GetOpportunitySearchRecords | None = None,
         get_opportunity_search_record: GetOpportunitySearchRecord | None = None,
         get_opportunity_search_record_statuses: GetOpportunitySearchRecordStatuses | None = None,
-        conformances: list[str] = [API_CONFORMANCE.core],
+        conformances: list[str] | None = None,
         name: str = "root",
         openapi_endpoint_name: str = "openapi",
         docs_endpoint_name: str = "swagger_ui_html",
@@ -73,7 +73,14 @@ class RootRouter(StapiFastapiBaseRouter):
     ) -> None:
         super().__init__(*args, **kwargs)
 
-        _conformances = set(conformances)
+        # The optional conformance classes are derived from the backends actually
+        # supplied and re-added below alongside their routes: advertising a class
+        # whose routes were never registered would send clients to a 404.
+        _conformances = set(conformances or [API_CONFORMANCE.core]) - {
+            API_CONFORMANCE.order_statuses,
+            API_CONFORMANCE.searches_opportunity,
+            API_CONFORMANCE.searches_opportunity_statuses,
+        }
 
         self._get_orders = get_orders
         self._get_order = get_order
@@ -195,7 +202,7 @@ class RootRouter(StapiFastapiBaseRouter):
                 )
             )
 
-        self.conformances = list(_conformances)
+        self.conformances = sorted(_conformances)
 
     def get_root(self, request: Request) -> RootResponse:
         links = [

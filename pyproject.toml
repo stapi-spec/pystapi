@@ -84,4 +84,5 @@ filterwarnings = [
 ]
 markers = [
     "mock_products",
+    "root_router_kwargs",
 ]

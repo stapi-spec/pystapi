@@ -6,6 +6,7 @@ from uuid import uuid4
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
+from stapi_fastapi.conformance import PRODUCT
 from stapi_pydantic import (
     Link,
     OpportunityCollection,
@@ -334,3 +335,34 @@ def test_async_search_rejects_missing_required_queryable_predicate(
         },
     )
     assert response.status_code == 400
+
+
+@pytest.mark.mock_products([product_test_spotlight_sync_opportunity])
+def test_sync_only_product_conformance(stapi_client: TestClient) -> None:
+    product_id = "test-spotlight"
+    res = stapi_client.get(f"/products/{product_id}/conformance")
+    assert res.status_code == status.HTTP_200_OK
+    conforms_to = res.json()["conformsTo"]
+    assert PRODUCT.opportunities in conforms_to
+    assert PRODUCT.opportunities_async not in conforms_to
+
+
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
+def test_async_only_product_conformance(stapi_client_async_opportunity: TestClient) -> None:
+    product_id = "test-spotlight"
+    res = stapi_client_async_opportunity.get(f"/products/{product_id}/conformance")
+    assert res.status_code == status.HTTP_200_OK
+    conforms_to = res.json()["conformsTo"]
+    # async capability does not imply sync class
+    assert PRODUCT.opportunities_async in conforms_to
+    assert PRODUCT.opportunities not in conforms_to
+
+
+@pytest.mark.mock_products([product_test_spotlight_sync_async_opportunity])
+def test_sync_async_product_conformance(stapi_client_async_opportunity: TestClient) -> None:
+    product_id = "test-spotlight"
+    res = stapi_client_async_opportunity.get(f"/products/{product_id}/conformance")
+    assert res.status_code == status.HTTP_200_OK
+    conforms_to = res.json()["conformsTo"]
+    assert PRODUCT.opportunities in conforms_to
+    assert PRODUCT.opportunities_async in conforms_to

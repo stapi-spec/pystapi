@@ -76,16 +76,21 @@ def build_conformances(product: Product, root_router: RootRouter) -> list[str]:
     if not any(conformance.startswith("https://geojson.org/schema/") for conformance in product.conforms_to):
         raise ValueError("product conformance does not contain at least one geojson conformance")
 
-    conformances = set(product.conforms_to)
+    # The opportunity conformance classes are derived from what this router
+    # actually serves: an async-only product mounted on a root router without
+    # async support gets no opportunity routes, so declaring them is not enough.
+    conformances = set(product.conforms_to) - {
+        PRODUCT_CONFORMACES.opportunities,
+        PRODUCT_CONFORMACES.opportunities_async,
+    }
 
     if product.supports_opportunity_search:
         conformances.add(PRODUCT_CONFORMACES.opportunities)
 
     if product.supports_async_opportunity_search and root_router.supports_async_opportunity_search:
-        conformances.add(PRODUCT_CONFORMACES.opportunities)
         conformances.add(PRODUCT_CONFORMACES.opportunities_async)
 
-    return list(conformances)
+    return sorted(conformances)
 
 
 class ProductRouter(StapiFastapiBaseRouter):
