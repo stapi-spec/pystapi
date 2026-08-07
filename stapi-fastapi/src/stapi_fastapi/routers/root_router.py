@@ -345,6 +345,12 @@ class RootRouter(StapiFastapiBaseRouter):
                 raise AssertionError("Expected code to be unreachable")
 
     def add_product(self, product: Product, *args: Any, **kwargs: Any) -> None:
+        # Rejected rather than replaced: `include_router` only appends, so the
+        # first router's routes would keep serving (they match first) while
+        # `product_routers` pointed at the new one.
+        if product.id in self.product_routers:
+            raise ValueError(f"product {product.id!r} is already registered")
+
         # Give the include a prefix from the product router
         product_router = ProductRouter(product, self, *args, **kwargs)
         self.include_router(product_router, prefix=f"/products/{product.id}")

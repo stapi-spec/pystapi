@@ -2,9 +2,11 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 from stapi_fastapi.models.product import Product
+from stapi_fastapi.routers.root_router import RootRouter
 from stapi_pydantic import Conformance
 
-from .shared import pagination_tester
+from .backends import mock_get_order, mock_get_orders
+from .shared import pagination_tester, product_test_spotlight_sync_opportunity
 
 
 def test_products_response(stapi_client: TestClient):
@@ -151,3 +153,11 @@ def test_no_products(stapi_client: TestClient):
     print("hold")
     assert res.status_code == status.HTTP_200_OK
     assert len(body["products"]) == 0
+
+
+def test_add_product_rejects_a_duplicate_id() -> None:
+    root_router = RootRouter(get_orders=mock_get_orders, get_order=mock_get_order)
+    root_router.add_product(product_test_spotlight_sync_opportunity)
+
+    with pytest.raises(ValueError, match="already registered"):
+        root_router.add_product(product_test_spotlight_sync_opportunity)
