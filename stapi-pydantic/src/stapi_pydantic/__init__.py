@@ -1,6 +1,6 @@
 from .conformance import Conformance
 from .constants import STAPI_VERSION
-from .datetime_interval import DatetimeInterval
+from .datetime_interval import BoundedDatetimeInterval, DatetimeInterval
 from .filter import CQL2Filter
 from .geometry import Geometry
 from .json_schema import JsonSchema
@@ -33,6 +33,7 @@ from .shared import Link
 
 __all__ = [
     "Geometry",
+    "BoundedDatetimeInterval",
     "Conformance",
     "CQL2Filter",
     "DatetimeInterval",

@@ -4,13 +4,13 @@ from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ValidationError
 from pytest import mark, raises
-from stapi_pydantic import DatetimeInterval
+from stapi_pydantic import BoundedDatetimeInterval
 
 EUROPE_BERLIN = ZoneInfo("Europe/Berlin")
 
 
 class Model(BaseModel):
-    datetime: DatetimeInterval
+    datetime: BoundedDatetimeInterval
 
 
 # format_timezone was removed from pyrfc3339 (MIT) in v2.1, so included here now

@@ -4,7 +4,7 @@ from typing import Any, Literal, TypeVar
 from geojson_pydantic import Feature, FeatureCollection
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
-from .datetime_interval import DatetimeInterval
+from .datetime_interval import BoundedDatetimeInterval, DatetimeInterval
 from .filter import CQL2Filter
 from .geometry import Geometry
 from .shared import Link
@@ -12,7 +12,7 @@ from .shared import Link
 
 # Copied and modified from https://github.com/stac-utils/stac-pydantic/blob/main/stac_pydantic/item.py#L11
 class OpportunityProperties(BaseModel):
-    datetime: DatetimeInterval
+    datetime: BoundedDatetimeInterval
     product_id: str
     model_config = ConfigDict(extra="allow")
 
