@@ -153,7 +153,7 @@ class RootRouter(StapiFastapiBaseRouter):
             )
         )
 
-        if self.get_order_statuses is not None:
+        if self.supports_order_statuses:
             _conformances.add(API_CONFORMANCE.order_statuses)
             self.register_route(
                 Route(
@@ -358,17 +358,22 @@ class RootRouter(StapiFastapiBaseRouter):
         return self.url_for(request, self.route_name(LIST_ORDER_STATUSES), orderId=order_id)
 
     def order_links(self, order: Order[OrderStatus], request: Request) -> list[Link]:
-        return [
+        """Links added to every order response."""
+        links = [
             Link(
                 href=self.generate_order_href(request, order.id),
                 rel="self",
                 type=TYPE_GEOJSON,
             ),
-            json_link(
-                "monitor",
-                self.generate_order_statuses_href(request, order.id),
-            ),
         ]
+        if self.supports_order_statuses:
+            links.append(
+                json_link(
+                    "monitor",
+                    self.generate_order_statuses_href(request, order.id),
+                )
+            )
+        return links
 
     async def get_opportunity_search_records(
         self, request: Request, next: NextToken = None, limit: Limit = DEFAULT_LIMIT
@@ -496,6 +501,11 @@ class RootRouter(StapiFastapiBaseRouter):
         if not self.__get_opportunity_search_record_statuses:
             raise AttributeError("Root router does not support async opportunity search status history")
         return self.__get_opportunity_search_record_statuses
+
+    @property
+    def supports_order_statuses(self) -> bool:
+        """Whether the order-statuses endpoint is registered."""
+        return self.__get_order_statuses is not None
 
     @property
     def supports_async_opportunity_search(self) -> bool:

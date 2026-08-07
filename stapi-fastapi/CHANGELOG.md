@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - `Route`, a declarative route descriptor, with `Route.to_api_route()` returning the keyword arguments for FastAPI's own `add_api_route`, and `StapiFastapiBaseRouter.register_route()` handing them over. `Route` requires a `summary`, a `tag` (the new `Tag` enum) and an `errors` set, so an operation cannot be published without a title, a heading, or an accurate statement of how it can fail.
 - `Page`, exported from `stapi_fastapi`, is the one shape every list backend returns. It carries `items`, a `next_token`, an optional `number_matched`, and any collection-level `links` only the backend can know (e.g. `create-order` on a stored Opportunity Collection).
 - Pagination on `GET /searches/opportunities/{searchRecordId}/statuses` and `GET /products/{productId}/opportunities/{opportunityCollectionId}`, which previously published neither `next` nor `limit` because their backends had nothing to paginate.
+- `RootRouter.supports_order_statuses`, reporting whether the order-statuses endpoint is registered.
 - `Product.validate_required_queryables()`, which rejects a search or order whose filter omits a predicate for a queryable the product requires.
 - `PaginationTokenError`, which a backend returns inside a `Failure` when a pagination token identifies no page. The handler answers it with a 404.
 - `numberMatched` is populated on every collection response the backend can count, including `GET /products`.
@@ -38,6 +39,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Fixed
 
+- A withheld `get_order_statuses` backend is now actually withheld. The gate tested the router's own handler method instead of the backend, so it was always truthy: a server that supplied no backend still advertised the order-statuses conformance class, published `GET /orders/{orderId}/statuses`, and emitted a `monitor` link on every order, then returned a 500 when a client followed it. Every sibling gate was audited and this was the only one wrong.
 - An unusable pagination token is distinguished from an incidental failure. The handlers matched a bare `Failure(ValueError())` and answered 404, so any `ValueError` a backend raised in passing -- an `int()` on unparseable input, an unrelated `list.index` miss -- was reported to the client as a page that does not exist rather than as the server error it was. Backends now return `PaginationTokenError` for a bad token; everything else stays a 500.
 - A collection's `self` and `next` links carry the media type their target serves. `next` was hard-coded to `application/json`, so every geo+json collection published a next link contradicting its own response.
 - A query parameter named `self` no longer fails the request. The raw query params were splatted into `URL.include_query_params` as Python keywords, colliding with that method's own `self`; repeated parameters were also collapsed to the last value.

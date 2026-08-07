@@ -92,3 +92,29 @@ def test_async_product_on_async_root_advertises_async_opportunities(
 
     body = client.get("/products/test-spotlight").json()
     assert find_link(body["links"], "opportunities") is not None
+
+
+@pytest.mark.root_router_kwargs({"get_order_statuses": None})
+def test_order_statuses_not_advertised_without_backend(stapi_client: TestClient) -> None:
+    assert ORDER_STATUSES_PATH not in route_paths(stapi_client)
+
+    assert API.order_statuses not in stapi_client.get("/conformance").json()["conformsTo"]
+    assert API.order_statuses not in stapi_client.get("/").json()["conformsTo"]
+
+
+@pytest.mark.root_router_kwargs({"get_order_statuses": None})
+def test_no_monitor_link_on_orders_without_statuses_backend(stapi_client: TestClient) -> None:
+    create_res = stapi_client.post("/products/test-spotlight/orders", json=CREATE_ORDER_PAYLOAD)
+    assert create_res.status_code == status.HTTP_201_CREATED
+    create_body = create_res.json()
+    assert find_link(create_body["links"], "self") is not None
+    assert find_link(create_body["links"], "monitor") is None
+
+    get_res = stapi_client.get(f"/orders/{create_body['id']}")
+    assert get_res.status_code == status.HTTP_200_OK
+    assert find_link(get_res.json()["links"], "monitor") is None
+
+    list_res = stapi_client.get("/orders")
+    assert list_res.status_code == status.HTTP_200_OK
+    order = next(o for o in list_res.json()["features"] if o["id"] == create_body["id"])
+    assert find_link(order["links"], "monitor") is None
