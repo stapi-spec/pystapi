@@ -324,7 +324,7 @@ class ProductRouter(StapiFastapiBaseRouter):
             case x:
                 raise AssertionError(f"Expected code to be unreachable {x}")
 
-        if prefer is Prefer.wait and self.root_router.supports_async_opportunity_search:
+        if prefer is not None:
             response.headers["Preference-Applied"] = "wait"
 
         return OpportunityCollection(

@@ -453,3 +453,81 @@ def test_statuses_endpoint_gated_on_async_support(stapi_client_async_opportunity
 
     conformance = stapi_client_async_opportunity.get("/conformance").json()["conformsTo"]
     assert API.searches_opportunity_statuses not in conformance
+
+
+@pytest.mark.parametrize("prefer", ["respond-sync", "wait, respond-async", "WAIT", ""])
+@pytest.mark.mock_products([product_test_spotlight_sync_async_opportunity])
+def test_unsupported_prefer_header_is_rejected(
+    prefer: str,
+    stapi_client_async_opportunity: TestClient,
+    opportunity_search: dict[str, Any],
+) -> None:
+    """A `Prefer` value outside the enum is a 400, as the published document promises."""
+    res = stapi_client_async_opportunity.post(
+        "/products/test-spotlight/opportunities",
+        json=opportunity_search,
+        headers={"Prefer": prefer},
+    )
+    assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.mock_products([product_test_spotlight_sync_opportunity])
+def test_unsupported_prefer_header_is_rejected_on_sync_only_product(
+    stapi_client: TestClient,
+    opportunity_search: dict[str, Any],
+) -> None:
+    """The check guards every opportunity search route, not just the async one."""
+    res = stapi_client.post(
+        "/products/test-spotlight/opportunities",
+        json=opportunity_search,
+        headers={"Prefer": "respond-sync"},
+    )
+    assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.mock_products([product_test_spotlight_sync_async_opportunity])
+def test_preference_applied_match_wait(
+    stapi_client_async_opportunity: TestClient,
+    opportunity_search: dict[str, Any],
+) -> None:
+    # prefer=wait honored by a sync+async product -> wait applied
+    url = "/products/test-spotlight/opportunities"
+    res = stapi_client_async_opportunity.post(url, json=opportunity_search, headers={"Prefer": "wait"})
+    assert res.status_code == 200
+    assert res.headers["Preference-Applied"] == "wait"
+
+
+@pytest.mark.mock_products([product_test_spotlight_sync_async_opportunity])
+def test_preference_applied_match_respond_async(
+    stapi_client_async_opportunity: TestClient,
+    opportunity_search: dict[str, Any],
+) -> None:
+    # prefer=respond-async honored by a sync+async product -> respond-async applied
+    url = "/products/test-spotlight/opportunities"
+    res = stapi_client_async_opportunity.post(url, json=opportunity_search, headers={"Prefer": "respond-async"})
+    assert res.status_code == 201
+    assert res.headers["Preference-Applied"] == "respond-async"
+
+
+@pytest.mark.mock_products([product_test_spotlight_sync_opportunity])
+def test_preference_applied_mismatch_respond_async_on_sync_only(
+    stapi_client: TestClient,
+    opportunity_search: dict[str, Any],
+) -> None:
+    # respond-async requested but product only supports sync -> wait applied
+    url = "/products/test-spotlight/opportunities"
+    res = stapi_client.post(url, json=opportunity_search, headers={"Prefer": "respond-async"})
+    assert res.status_code == 200
+    assert res.headers["Preference-Applied"] == "wait"
+
+
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
+def test_preference_applied_mismatch_wait_on_async_only(
+    stapi_client_async_opportunity: TestClient,
+    opportunity_search: dict[str, Any],
+) -> None:
+    # wait requested but product only supports async -> respond-async applied
+    url = "/products/test-spotlight/opportunities"
+    res = stapi_client_async_opportunity.post(url, json=opportunity_search, headers={"Prefer": "wait"})
+    assert res.status_code == 201
+    assert res.headers["Preference-Applied"] == "respond-async"
