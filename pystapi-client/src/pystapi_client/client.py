@@ -11,12 +11,15 @@ from httpx._types import TimeoutTypes
 from pydantic import AnyUrl
 from stapi_pydantic import (
     CQL2Filter,
+    Geometry,
     Link,
     Opportunity,
     OpportunityCollection,
+    OpportunityProperties,
     OpportunityRequest,
     Order,
     OrderCollection,
+    OrderParameters,
     OrderRequest,
     Product,
     ProductCollection,
@@ -302,10 +305,9 @@ class Client:
         product_id: str,
         date_range: tuple[str, str],
         geometry: dict[str, Any],
-        cql2_filter: CQL2Filter | None = None,  # type: ignore[type-arg]
+        cql2_filter: CQL2Filter | None = None,
         limit: int = 10,
-    ) -> Iterator[Opportunity]:  # type: ignore[type-arg]
-        # TODO Update return type after the pydantic model generic type is fixed
+    ) -> Iterator[Opportunity[Geometry, OpportunityProperties]]:
         """Get all opportunities for a product from this STAPI API
         Args:
             product_id: The Product ID to get opportunities for
@@ -350,8 +352,7 @@ class Client:
         for opportunity_collection in product_opportunities_json:
             yield from OpportunityCollection.model_validate(opportunity_collection).features
 
-    def create_product_order(self, product_id: str, order_parameters: OrderRequest) -> Order:  # type: ignore[type-arg]
-        # TODO Update return type after the pydantic model generic type is fixed
+    def create_product_order(self, product_id: str, order_parameters: OrderRequest[OrderParameters]) -> Order:
         """Create an order for a product
 
         Args:
@@ -395,8 +396,7 @@ class Client:
 
         return str(product_url)
 
-    def get_orders(self, limit: int | None = None) -> Iterator[Order]:  # type: ignore[type-arg]
-        # TODO Update return type after the pydantic model generic type is fixed
+    def get_orders(self, limit: int | None = None) -> Iterator[Order]:
         """Get orders from this STAPI API
 
         Args:
@@ -418,8 +418,7 @@ class Client:
         for orders_collection in orders_collection_iterator:
             yield from OrderCollection.model_validate(orders_collection).features
 
-    def get_order(self, order_id: str) -> Order:  # type: ignore[type-arg]
-        # TODO Update return type after the pydantic model generic type is fixed
+    def get_order(self, order_id: str) -> Order:
         """Get a single order from this STAPI API
 
         Args:

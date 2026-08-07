@@ -1680,7 +1680,7 @@ docs = [
 
 [[package]]
 name = "pystapi-client"
-version = "0.0.1"
+version = "0.0.2"
 source = { editable = "pystapi-client" }
 dependencies = [
     { name = "click" },
