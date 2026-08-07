@@ -26,7 +26,7 @@ from .order import (
     OrderStatusCode,
     OrderStatuses,
 )
-from .product import Product, ProductsCollection, Provider, ProviderRole
+from .product import Product, ProductCollection, Provider, ProviderRole
 from .queryables import Queryables
 from .root import RootResponse
 from .search_parameters import SearchParameters
@@ -59,7 +59,7 @@ __all__ = [
     "OrderStatuses",
     "Prefer",
     "Product",
-    "ProductsCollection",
+    "ProductCollection",
     "Provider",
     "ProviderRole",
     "Queryables",

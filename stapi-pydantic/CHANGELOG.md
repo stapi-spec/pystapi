@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `BoundedDatetimeInterval`, for intervals that are bounded at both ends.
 - `cql2_property_names`, which collects the property names referenced by a CQL2 JSON filter.
 - `SearchParameters`, the Search Parameters Object (`datetime`, `geometry`, `filter`) shared by the Opportunity Request and the Order Request. It permits extra fields, so provider extension parameters round-trip instead of being dropped.
+- `ProductCollection`, the new name for `ProductsCollection` (see Changed).
 - `STAPI_VERSION` is now exported from the package root.
 
 ### Changed
@@ -31,6 +32,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **BREAKING** `Product.conformsTo` and `RootResponse.conformsTo` are spelled `conforms_to` in Python, matching `Conformance`. The wire name is unchanged: all three validate from either `conformsTo` or `conforms_to` and serialize as `conformsTo`. Keyword construction and attribute access must use the new name.
 - **BREAKING** `Provider.roles` and `Provider.url` are optional. Both were required, which made a provider that publishes neither unrepresentable; they are now omitted from output rather than published empty or null.
 - Spec-REQUIRED fields that carry defaults (`type`, `stapi_type`, `stapi_version`, `links`, `conformsTo`, and so on) are now marked required in the serialization JSON Schema, since they are always present in a response.
+- **BREAKING** `ProductsCollection` is renamed to `ProductCollection`, matching its own `stapi_type` and the spec. The old name is gone rather than aliased; update imports. The model also replaces its aliased `type` field with `stapi_type`, so responses carry `"stapi_type": "ProductCollection"` rather than `"type": "ProductCollection"`, and gains `stapi_version`.
+- **BREAKING** `Product.description` is required, per the spec. It previously defaulted to the empty string.
 
 ### Fixed
 
@@ -38,6 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Removed
 
+- **BREAKING** The pre-0.2.0 compatibility alias `ProductsCollection` is gone. Use `ProductCollection`.
 - **BREAKING** `JsonSchemaModel` is gone. It annotated a `type[BaseModel]` with a `PlainValidator`/`PlainSerializer` pair so a model class could stand in for its own schema, which meant the published document carried an orphan `BaseModel` component and the value could not be read back. Build a `JsonSchema` with `JsonSchema.from_model(YourModel)` instead.
 
 ## [0.1.0] - 2025-12-18

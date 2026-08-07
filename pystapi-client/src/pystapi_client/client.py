@@ -19,7 +19,7 @@ from stapi_pydantic import (
     OrderCollection,
     OrderPayload,
     Product,
-    ProductsCollection,
+    ProductCollection,
 )
 
 from pystapi_client.conformance import ConformanceClasses
@@ -282,7 +282,7 @@ class Client:
 
         products_collection_iterator = self.stapi_io.get_pages(link=products_link, lookup_key="products")
         for products_collection in products_collection_iterator:
-            yield from ProductsCollection.model_validate(products_collection).products
+            yield from ProductCollection.model_validate(products_collection).products
 
     def get_product(self, product_id: str) -> Product:
         """Get a single product from this STAPI API

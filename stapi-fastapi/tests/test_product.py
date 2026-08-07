@@ -15,7 +15,7 @@ def test_products_response(stapi_client: TestClient):
 
     data = res.json()
 
-    assert data["type"] == "ProductCollection"
+    assert data["stapi_type"] == "ProductCollection"
     assert isinstance(data["products"], list)
 
 

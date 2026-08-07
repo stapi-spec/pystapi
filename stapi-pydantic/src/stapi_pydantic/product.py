@@ -36,7 +36,7 @@ class Product(BaseModel):
     conforms_to: ConformsTo = []
     id: str
     title: str = omitted_when_empty(default="")
-    description: str = ""
+    description: str
     keywords: list[str] = omitted_when_empty(default_factory=list)
     license: str
     providers: list[Provider] = omitted_when_empty(default_factory=list)
@@ -51,7 +51,10 @@ class Product(BaseModel):
         return new
 
 
-class ProductsCollection(BaseModel):
-    type_: Literal["ProductCollection"] = Field(default="ProductCollection", alias="type")
+class ProductCollection(BaseModel):
+    model_config = STAPI_RESPONSE_CONFIG
+
+    stapi_type: Literal["ProductCollection"] = "ProductCollection"
+    stapi_version: str = STAPI_VERSION
     links: list[Link] = Field(default_factory=list)
     products: list[Product]

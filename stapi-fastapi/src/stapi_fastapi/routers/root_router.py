@@ -16,7 +16,7 @@ from stapi_pydantic import (
     OrderCollection,
     OrderStatus,
     OrderStatuses,
-    ProductsCollection,
+    ProductCollection,
     RootResponse,
 )
 
@@ -214,7 +214,7 @@ class RootRouter(StapiFastapiBaseRouter):
     def get_conformance(self) -> Conformance:
         return Conformance(conforms_to=self.conformances)
 
-    def get_products(self, request: Request, next: str | None = None, limit: int = 10) -> ProductsCollection:
+    def get_products(self, request: Request, next: str | None = None, limit: int = 10) -> ProductCollection:
         start = 0
         limit = min(limit, 100)
         try:
@@ -233,7 +233,7 @@ class RootRouter(StapiFastapiBaseRouter):
         ]
         if end > 0 and end < len(self.product_ids):
             links.append(self.pagination_link(request, f"{self.name}:{LIST_PRODUCTS}", self.product_ids[end], limit))
-        return ProductsCollection(
+        return ProductCollection(
             products=[self.product_routers[product_id].get_product(request) for product_id in ids],
             links=links,
         )
