@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Added
 
 - `Route`, a declarative route descriptor, with `Route.to_api_route()` returning the keyword arguments for FastAPI's own `add_api_route`, and `StapiFastapiBaseRouter.register_route()` handing them over. `Route` requires a `summary`, a `tag` (the new `Tag` enum) and an `errors` set, so an operation cannot be published without a title, a heading, or an accurate statement of how it can fail.
+- `Page`, exported from `stapi_fastapi`, is the one shape every list backend returns. It carries `items`, a `next_token`, an optional `number_matched`, and any collection-level `links` only the backend can know (e.g. `create-order` on a stored Opportunity Collection).
+- `numberMatched` is populated on every collection response the backend can count, including `GET /products`.
 - `stapi_fastapi.query_params` provides the shared `Limit` and `NextToken` annotations and `DEFAULT_LIMIT`, so every paginated endpoint validates identically and publishes its bounds.
 - `stapi_fastapi.path_params` provides the camelCase path parameter annotations.
 - `Responses` type alias for the response-declaration mapping, and `BAD_REQUEST` / `NOT_FOUND` / `SERVER_ERROR` to compose an `errors` set from, e.g. `errors=NOT_FOUND | SERVER_ERROR`.
@@ -17,6 +19,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Changed
 
+- **BREAKING** Every list backend must now return a `Page`. `GetOrders` returned `tuple[list[Order], Maybe[str], Maybe[int]]`, `SearchOpportunities` and `GetOpportunitySearchRecords` returned `tuple[list[...], Maybe[str]]`, and `GetOrderStatuses` returned `Maybe[tuple[list[...], Maybe[str]]]`. All now return `Page` (wrapped in `Maybe` where they were before): put the items in `Page.items`, the pagination token in `Page.next_token`, and the total in `Page.number_matched`.
 - **BREAKING** A `limit` below 1 is rejected with a 422 instead of being silently accepted, on every paginated endpoint and in the opportunity search body. Previously the 100-item cap was applied only to `GET /products`, `limit=0` dead-ended paging, and a negative limit silently truncated the result set with no `next` link. An over-large `limit` is clamped rather than rejected: the spec makes it what the client asks for, not what the server owes, and publishes no maximum -- so neither does the document.
 - **BREAKING** Path parameters are camelCase in the routes and in the exported OpenAPI document: `{orderId}`, `{searchRecordId}`, and `{opportunityCollectionId}`, joining the existing `{productId}`. Request URLs are unchanged, since path parameter names never appear in them, but generated clients that bind by parameter name need regenerating, and `url_for` calls must pass the camelCase keyword (`url_for(request, name, orderId=...)`, not `order_id=...`).
 - **BREAKING** A route is declared as a `Route` and registered with `StapiFastapiBaseRouter.register_route`, which hands it to FastAPI's own `add_api_route`. `summary`, `tag` and `errors` are required, so a route cannot be registered without saying what it is called, where it is filed, or which errors it can produce. `errors` is deliberately not defaulted: a shared set merged into every route cannot be narrowed, and so published a 404 for the landing page, an endpoint that takes no input and calls no backend.
@@ -32,6 +35,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Removed
 
+- `RootRouter.order_statuses_link`. The order statuses response builds its `self` link through the shared `page_links` helper.
 - A duplicate definition of the `LIST_PRODUCTS` route name constant.
 - **BREAKING** The runtime dependencies the library never imported: `httpx`, `pygeofilter`, `nox`, `pydantic-settings`, and `uvicorn`. If your application imports any of these, depend on it directly. `httpx` remains a development dependency, for the test client.
 

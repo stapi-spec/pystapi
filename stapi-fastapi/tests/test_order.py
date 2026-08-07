@@ -24,7 +24,13 @@ def test_empty_order(stapi_client: TestClient):
         "stapi_type": "OrderCollection",
         "stapi_version": STAPI_VERSION,
         "features": [],
-        "links": [],
+        "links": [
+            {
+                "href": "http://stapiserver/orders",
+                "rel": "self",
+                "type": "application/json",
+            },
+        ],
         "numberMatched": 314,
     }
 

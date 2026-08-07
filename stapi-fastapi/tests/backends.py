@@ -4,6 +4,7 @@ from uuid import uuid4
 from fastapi import Request
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, ResultE, Success
+from stapi_fastapi import Page
 from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_pydantic import (
     Opportunity,
@@ -25,10 +26,12 @@ async def mock_get_orders(
     next: str | None,
     limit: int,
     request: Request,
-) -> ResultE[tuple[list[Order], Maybe[str], Maybe[int]]]:
+) -> ResultE[Page[Order]]:
     """
     Return orders from backend.  Handle pagination/limit if applicable
     """
+    # Deliberately not len(order_ids): the tests assert that whatever the
+    # backend reports as the total is what reaches `numberMatched`.
     count = 314
     try:
         start = 0
@@ -41,9 +44,8 @@ async def mock_get_orders(
         ids = order_ids[start:end]
         orders = [request.state._orders_db.get_order(order_id) for order_id in ids]
 
-        if end > 0 and end < len(order_ids):
-            return Success((orders, Some(request.state._orders_db._orders[order_ids[end]].id), Some(count)))
-        return Success((orders, Nothing, Some(count)))
+        next_token = Some(request.state._orders_db._orders[order_ids[end]].id) if end < len(order_ids) else Nothing
+        return Success(Page(items=orders, next_token=next_token, number_matched=Some(count)))
     except Exception as e:
         return Failure(e)
 
@@ -60,7 +62,7 @@ async def mock_get_order(order_id: str, request: Request) -> ResultE[Maybe[Order
 
 async def mock_get_order_statuses(
     order_id: str, next: str | None, limit: int, request: Request
-) -> ResultE[Maybe[tuple[list[OrderStatus], Maybe[str]]]]:
+) -> ResultE[Maybe[Page[OrderStatus]]]:
     try:
         start = 0
         limit = min(limit, 100)
@@ -71,11 +73,16 @@ async def mock_get_order_statuses(
         if next:
             start = int(next)
         end = start + limit
-        stati = statuses[start:end]
 
-        if end > 0 and end < len(statuses):
-            return Success(Some((stati, Some(str(end)))))
-        return Success(Some((stati, Nothing)))
+        return Success(
+            Some(
+                Page(
+                    items=statuses[start:end],
+                    next_token=Some(str(end)) if end < len(statuses) else Nothing,
+                    number_matched=Some(len(statuses)),
+                )
+            )
+        )
     except Exception as e:
         return Failure(e)
 
@@ -119,7 +126,7 @@ async def mock_search_opportunities(
     next: str | None,
     limit: int,
     request: Request,
-) -> ResultE[tuple[list[Opportunity], Maybe[str]]]:
+) -> ResultE[Page[Opportunity]]:
     try:
         start = 0
         limit = min(limit, 100)
@@ -131,9 +138,16 @@ async def mock_search_opportunities(
             o.model_copy(update={"geometry": search.search_parameters.geometry})
             for o in request.state._opportunities[start:end]
         ]
-        if end > 0 and end < len(request.state._opportunities):
-            return Success((opportunities, Some(str(end))))
-        return Success((opportunities, Nothing))
+        total = len(request.state._opportunities)
+        # `end > 0` because the search body may ask for a limit of 0, and a
+        # token pointing back at offset 0 would page forever.
+        return Success(
+            Page(
+                items=opportunities,
+                next_token=Some(str(end)) if 0 < end < total else Nothing,
+                number_matched=Some(total),
+            )
+        )
     except Exception as e:
         return Failure(e)
 
@@ -176,7 +190,7 @@ async def mock_get_opportunity_search_records(
     next: str | None,
     limit: int,
     request: Request,
-) -> ResultE[tuple[list[OpportunitySearchRecord], Maybe[str]]]:
+) -> ResultE[Page[OpportunitySearchRecord]]:
     try:
         start = 0
         limit = min(limit, 100)
@@ -185,11 +199,14 @@ async def mock_get_opportunity_search_records(
         if next:
             start = int(next)
         end = start + limit
-        page = search_records[start:end]
 
-        if end > 0 and end < len(search_records):
-            return Success((page, Some(str(end))))
-        return Success((page, Nothing))
+        return Success(
+            Page(
+                items=search_records[start:end],
+                next_token=Some(str(end)) if end < len(search_records) else Nothing,
+                number_matched=Some(len(search_records)),
+            )
+        )
     except Exception as e:
         return Failure(e)
 

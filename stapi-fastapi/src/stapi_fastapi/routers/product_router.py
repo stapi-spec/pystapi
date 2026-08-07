@@ -296,13 +296,12 @@ class ProductRouter(StapiFastapiBaseRouter):
             limit,
             request,
         ):
-            case Success((features, maybe_pagination_token)):
+            case Success(page):
+                links.extend(page.links)
                 links.append(self.order_link(request, search))
-                match maybe_pagination_token:
-                    case Some(x):
-                        links.append(self.search_pagination_link(request, search, x))
-                    case Maybe.empty:
-                        pass
+                next_token = page.next_token.value_or(None)
+                if next_token is not None:
+                    links.append(self.search_pagination_link(request, search, next_token))
             case Failure(e) if isinstance(e, QueryablesError):
                 raise e
             case Failure(e):
@@ -320,7 +319,11 @@ class ProductRouter(StapiFastapiBaseRouter):
         if prefer is Prefer.wait and self.root_router.supports_async_opportunity_search:
             response.headers["Preference-Applied"] = "wait"
 
-        return OpportunityCollection(features=features, links=links)
+        return OpportunityCollection(
+            features=page.items,
+            links=links,
+            number_matched=page.number_matched.value_or(None),
+        )
 
     async def search_opportunities_async(
         self,

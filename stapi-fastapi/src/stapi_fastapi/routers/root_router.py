@@ -4,7 +4,7 @@ from typing import Any
 
 from fastapi import HTTPException, Request, status
 from fastapi.datastructures import URL
-from returns.maybe import Maybe, Some
+from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Success
 from stapi_pydantic import (
     Conformance,
@@ -32,6 +32,7 @@ from stapi_fastapi.conformance import API as API_CONFORMANCE
 from stapi_fastapi.constants import TYPE_GEOJSON
 from stapi_fastapi.errors import NotFoundError
 from stapi_fastapi.models.product import Product
+from stapi_fastapi.pagination import Page
 from stapi_fastapi.path_params import OrderIdPath, SearchRecordIdPath
 from stapi_fastapi.query_params import DEFAULT_LIMIT, Limit, NextToken
 from stapi_fastapi.responses import GeoJSONResponse
@@ -239,46 +240,36 @@ class RootRouter(StapiFastapiBaseRouter):
 
     def get_products(self, request: Request, next: NextToken = None, limit: Limit = DEFAULT_LIMIT) -> ProductCollection:
         start = 0
-        try:
-            if next:
+        if next:
+            try:
                 start = self.product_ids.index(next)
-        except ValueError:
-            logger.exception("An error occurred while retrieving products")
-            raise NotFoundError(detail="Error finding pagination token for products") from None
+            except ValueError:
+                raise NotFoundError(detail="Error finding pagination token for products") from None
+
         end = start + limit
-        ids = self.product_ids[start:end]
-        links = [
-            json_link(
-                "self",
-                self.url_for(request, self.route_name(LIST_PRODUCTS)),
-            ),
-        ]
-        if end > 0 and end < len(self.product_ids):
-            links.append(self.pagination_link(request, self.route_name(LIST_PRODUCTS), self.product_ids[end], limit))
+        page = Page(
+            items=[self.product_routers[product_id].get_product(request) for product_id in self.product_ids[start:end]],
+            next_token=Some(self.product_ids[end]) if end < len(self.product_ids) else Nothing,
+            number_matched=Some(len(self.product_ids)),
+        )
         return ProductCollection(
-            products=[self.product_routers[product_id].get_product(request) for product_id in ids],
-            links=links,
+            products=page.items,
+            links=self.page_links(request, page, self.route_name(LIST_PRODUCTS), limit),
+            number_matched=page.number_matched.value_or(None),
         )
 
-    async def get_orders(  # noqa: C901
+    async def get_orders(
         self, request: Request, next: NextToken = None, limit: Limit = DEFAULT_LIMIT
     ) -> OrderCollection[OrderStatus]:
-        links: list[Link] = []
-        orders_count: int | None = None
         match await self._get_orders(next, limit, request):
-            case Success((orders, maybe_pagination_token, maybe_orders_count)):
-                for order in orders:
+            case Success(page):
+                for order in page.items:
                     order.links.extend(self.order_links(order, request))
-                match maybe_pagination_token:
-                    case Some(next_):
-                        links.append(self.pagination_link(request, self.route_name(LIST_ORDERS), next_, limit))
-                    case Maybe.empty:
-                        pass
-                match maybe_orders_count:
-                    case Some(x):
-                        orders_count = x
-                    case Maybe.empty:
-                        pass
+                return OrderCollection(
+                    features=page.items,
+                    links=self.page_links(request, page, self.route_name(LIST_ORDERS), limit),
+                    number_matched=page.number_matched.value_or(None),
+                )
             case Failure(ValueError()):
                 raise NotFoundError(detail="Error finding pagination token")
             case Failure(e):
@@ -292,12 +283,6 @@ class RootRouter(StapiFastapiBaseRouter):
                 )
             case _:
                 raise AssertionError("Expected code to be unreachable")
-
-        return OrderCollection(
-            features=orders,
-            links=links,
-            number_matched=orders_count,
-        )
 
     async def get_order(self, order_id: OrderIdPath, request: Request) -> Order[OrderStatus]:
         """
@@ -328,20 +313,14 @@ class RootRouter(StapiFastapiBaseRouter):
         request: Request,
         next: NextToken = None,
         limit: Limit = DEFAULT_LIMIT,
-    ) -> OrderStatusCollection:  # type: ignore
-        links: list[Link] = []
+    ) -> OrderStatusCollection:
         match await self._get_order_statuses(order_id, next, limit, request):
-            case Success(Some((statuses, maybe_pagination_token))):
-                links.append(self.order_statuses_link(request, order_id))
-                match maybe_pagination_token:
-                    case Some(next_):
-                        links.append(
-                            self.pagination_link(
-                                request, self.route_name(LIST_ORDER_STATUSES), next_, limit, orderId=order_id
-                            )
-                        )
-                    case Maybe.empty:
-                        pass
+            case Success(Some(page)):
+                return OrderStatusCollection(
+                    statuses=page.items,
+                    links=self.page_links(request, page, self.route_name(LIST_ORDER_STATUSES), limit, orderId=order_id),
+                    number_matched=page.number_matched.value_or(None),
+                )
             case Success(Maybe.empty):
                 raise NotFoundError("Order not found")
             case Failure(ValueError()):
@@ -357,7 +336,6 @@ class RootRouter(StapiFastapiBaseRouter):
                 )
             case _:
                 raise AssertionError("Expected code to be unreachable")
-        return OrderStatusCollection(statuses=statuses, links=links)
 
     def add_product(self, product: Product, *args: Any, **kwargs: Any) -> None:
         # Give the include a prefix from the product router
@@ -385,26 +363,18 @@ class RootRouter(StapiFastapiBaseRouter):
             ),
         ]
 
-    def order_statuses_link(self, request: Request, order_id: str) -> Link:
-        return json_link("self", self.url_for(request, self.route_name(LIST_ORDER_STATUSES), orderId=order_id))
-
     async def get_opportunity_search_records(
         self, request: Request, next: NextToken = None, limit: Limit = DEFAULT_LIMIT
     ) -> OpportunitySearchRecordCollection:
-        links: list[Link] = []
         match await self._get_opportunity_search_records(next, limit, request):
-            case Success((records, maybe_pagination_token)):
-                for record in records:
+            case Success(page):
+                for record in page.items:
                     record.links.append(self.opportunity_search_record_self_link(record, request))
-                match maybe_pagination_token:
-                    case Some(next_):
-                        links.append(
-                            self.pagination_link(
-                                request, self.route_name(LIST_OPPORTUNITY_SEARCH_RECORDS), next_, limit
-                            )
-                        )
-                    case Maybe.empty:
-                        pass
+                return OpportunitySearchRecordCollection(
+                    records=page.items,
+                    links=self.page_links(request, page, self.route_name(LIST_OPPORTUNITY_SEARCH_RECORDS), limit),
+                    number_matched=page.number_matched.value_or(None),
+                )
             case Failure(ValueError()):
                 raise NotFoundError(detail="Error finding pagination token")
             case Failure(e):
@@ -418,7 +388,6 @@ class RootRouter(StapiFastapiBaseRouter):
                 )
             case _:
                 raise AssertionError("Expected code to be unreachable")
-        return OpportunitySearchRecordCollection(records=records, links=links)
 
     async def get_opportunity_search_record(
         self, search_record_id: SearchRecordIdPath, request: Request

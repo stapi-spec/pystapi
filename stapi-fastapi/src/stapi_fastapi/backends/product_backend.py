@@ -15,11 +15,12 @@ from stapi_pydantic import (
     OrderRequest,
 )
 
+from stapi_fastapi.pagination import Page
 from stapi_fastapi.routers.product_router import ProductRouter
 
 SearchOpportunities = Callable[
     [ProductRouter, OpportunityRequest, str | None, int, Request],
-    Coroutine[Any, Any, ResultE[tuple[list[Opportunity], Maybe[str]]]],  # type: ignore
+    Coroutine[Any, Any, ResultE[Page[Opportunity]]],  # type: ignore
 ]
 """
 Type alias for an async function that searches for ordering opportunities for the given

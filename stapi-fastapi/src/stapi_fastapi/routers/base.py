@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from stapi_pydantic import Link
 
 from stapi_fastapi.constants import TYPE_JSON
+from stapi_fastapi.pagination import Page
 from stapi_fastapi.routers.route_names import Tag
 
 #: OpenAPI response declarations, keyed by status code.
@@ -130,10 +131,33 @@ class StapiFastapiBaseRouter(APIRouter):
         """The registered name of the route this router serves under `name`."""
         return ":".join((*self.route_name_prefix, name))
 
+    def self_link(self, request: Request, name: str, **path_params: Any) -> Link:
+        """A `self` link for the current request."""
+        return Link(href=self.url_for(request, name, **path_params), rel="self", type=TYPE_JSON)
+
     def pagination_link(self, request: Request, name: str, pagination_token: str, limit: int, **kwargs: Any) -> Link:
         """A `next` link for the page after the one being returned."""
         url = self.url_for(request, name, **kwargs).include_query_params(next=pagination_token, limit=limit)
         return Link(href=url, rel="next", type=TYPE_JSON)
+
+    def page_links(
+        self,
+        request: Request,
+        page: Page[Any],
+        name: str,
+        limit: int,
+        **path_params: Any,
+    ) -> list[Link]:
+        """The links published on a collection response for `page`.
+
+        Backend-supplied links come first: they describe the collection rather
+        than this page of it.
+        """
+        links = [*page.links, self.self_link(request, name, **path_params)]
+        next_token = page.next_token.value_or(None)
+        if next_token is not None:
+            links.append(self.pagination_link(request, name, next_token, limit, **path_params))
+        return links
 
     def register_route(self, route: Route) -> None:
         """Register `route` on this router."""
