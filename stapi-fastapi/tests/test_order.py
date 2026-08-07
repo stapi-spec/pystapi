@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from typing import Any, cast
 
 import pytest
 from fastapi import status
@@ -6,16 +7,24 @@ from fastapi.testclient import TestClient
 from geojson_pydantic import Point
 from geojson_pydantic.types import Position2D
 from httpx import Response
-from stapi_pydantic import STAPI_VERSION, Order, OrderRequest, OrderStatus, OrderStatusCode, SearchParameters
+from stapi_pydantic import STAPI_VERSION, OrderRequest, OrderStatus, OrderStatusCode, SearchParameters
 
-from .shared import MyOrderParameters, find_link, pagination_tester
+from .shared import AssertLink, MyOrderParameters, find_link, pagination_tester
+
+REQUIRED_QUERYABLE_FILTER = {
+    "op": "and",
+    "args": [
+        {"op": ">", "args": [{"property": "off_nadir"}, 0]},
+        {"op": "<", "args": [{"property": "off_nadir"}, 45]},
+    ],
+}
 
 NOW = datetime.now(UTC)
 START = NOW
 END = START + timedelta(days=5)
 
 
-def test_empty_order(stapi_client: TestClient):
+def test_empty_order(stapi_client: TestClient) -> None:
     res = stapi_client.get("/orders")
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/geo+json"
@@ -35,23 +44,14 @@ def test_empty_order(stapi_client: TestClient):
     }
 
 
-REQUIRED_QUERYABLE_FILTER = {
-    "op": "and",
-    "args": [
-        {"op": ">", "args": [{"property": "off_nadir"}, 0]},
-        {"op": "<", "args": [{"property": "off_nadir"}, 45]},
-    ],
-}
-
-
 @pytest.fixture
-def create_order_payloads() -> list[OrderRequest]:
+def create_order_payloads() -> list[OrderRequest[MyOrderParameters]]:
     datetimes = [
         ("2024-10-09T18:55:33Z", "2024-10-12T18:55:33Z"),
         ("2024-10-15T18:55:33Z", "2024-10-18T18:55:33Z"),
         ("2024-10-20T18:55:33Z", "2024-10-23T18:55:33Z"),
     ]
-    payloads = []
+    payloads: list[OrderRequest[MyOrderParameters]] = []
     for start, end in datetimes:
         payload = OrderRequest(
             search_parameters=SearchParameters(
@@ -72,7 +72,7 @@ def create_order_payloads() -> list[OrderRequest]:
 def new_order_response(
     product_id: str,
     stapi_client: TestClient,
-    create_order_payloads: list[OrderRequest],
+    create_order_payloads: list[OrderRequest[MyOrderParameters]],
 ) -> Response:
     res = stapi_client.post(
         f"products/{product_id}/orders",
@@ -95,7 +95,7 @@ def test_new_order_location_header_matches_self_link(
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
-def test_new_order_links(new_order_response: Response, assert_link) -> None:
+def test_new_order_links(new_order_response: Response, assert_link: AssertLink) -> None:
     order = new_order_response.json()
     assert_link(
         f"GET /orders/{order['id']}",
@@ -124,27 +124,35 @@ def get_order_response(stapi_client: TestClient, new_order_response: Response) -
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
-def test_get_order_properties(get_order_response: Response, create_order_payloads) -> None:
+def test_get_order_properties(
+    get_order_response: Response, create_order_payloads: list[OrderRequest[MyOrderParameters]]
+) -> None:
     order = get_order_response.json()
+    payload_search_parameters = create_order_payloads[0].search_parameters
+    # SearchParameters.geometry is the full GeoJSON Geometry union; the payloads
+    # this fixture builds always use a Point.
+    payload_geometry = cast(Point, payload_search_parameters.geometry)
 
     assert order["geometry"] == {
         "type": "Point",
-        "coordinates": list(create_order_payloads[0].search_parameters.geometry.coordinates),
+        "coordinates": list(payload_geometry.coordinates),
     }
 
     assert order["properties"]["order_request"]["search_parameters"]["geometry"] == {
         "type": "Point",
-        "coordinates": list(create_order_payloads[0].search_parameters.geometry.coordinates),
+        "coordinates": list(payload_geometry.coordinates),
     }
 
     assert (
         order["properties"]["order_request"]["search_parameters"]["datetime"]
-        == create_order_payloads[0].search_parameters.model_dump(mode="json")["datetime"]
+        == payload_search_parameters.model_dump(mode="json")["datetime"]
     )
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
-def test_order_status_after_create(get_order_response: Response, stapi_client: TestClient, assert_link) -> None:
+def test_order_status_after_create(
+    get_order_response: Response, stapi_client: TestClient, assert_link: AssertLink
+) -> None:
     body = get_order_response.json()
     assert_link(f"GET /orders/{body['id']}", body, "monitor", f"/orders/{body['id']}/statuses")
     link = find_link(body["links"], "monitor")
@@ -157,9 +165,11 @@ def test_order_status_after_create(get_order_response: Response, stapi_client: T
 
 
 @pytest.fixture
-def setup_orders_pagination(stapi_client: TestClient, create_order_payloads) -> list[Order]:
+def setup_orders_pagination(
+    stapi_client: TestClient, create_order_payloads: list[OrderRequest[MyOrderParameters]]
+) -> list[dict[str, Any]]:
     product_id = "test-spotlight"
-    orders = []
+    orders: list[dict[str, Any]] = []
     for order in create_order_payloads:
         res = stapi_client.post(
             f"products/{product_id}/orders",
@@ -175,10 +185,13 @@ def setup_orders_pagination(stapi_client: TestClient, create_order_payloads) -> 
 
 
 @pytest.mark.parametrize("limit", [1, 2, 4])
-def test_get_orders_pagination(limit, setup_orders_pagination, create_order_payloads, stapi_client: TestClient) -> None:
-    expected_returns = []
-    if limit > 0:
-        expected_returns = setup_orders_pagination
+def test_get_orders_pagination(
+    limit: int,
+    setup_orders_pagination: list[dict[str, Any]],
+    create_order_payloads: list[OrderRequest[MyOrderParameters]],
+    stapi_client: TestClient,
+) -> None:
+    expected_returns: list[dict[str, Any]] = setup_orders_pagination
 
     pagination_tester(
         stapi_client=stapi_client,
@@ -197,7 +210,7 @@ def test_token_not_found(stapi_client: TestClient) -> None:
 
 @pytest.fixture
 def order_statuses() -> dict[str, list[OrderStatus]]:
-    statuses = {
+    statuses: dict[str, list[OrderStatus]] = {
         "test_order_id": [
             OrderStatus(
                 timestamp=datetime(2025, 1, 14, 2, 21, 48, 466726, tzinfo=UTC),
@@ -230,9 +243,7 @@ def test_get_order_status_pagination(
             stapi_client.app_state["_orders_db"].put_order_status(id, s)
 
     order_id = "test_order_id"
-    expected_returns = []
-    if limit != 0:
-        expected_returns = [x.model_dump(mode="json") for x in order_statuses[order_id]]
+    expected_returns: list[dict[str, Any]] = [x.model_dump(mode="json") for x in order_statuses[order_id]]
 
     pagination_tester(
         stapi_client=stapi_client,
@@ -271,3 +282,17 @@ def test_create_order_rejects_missing_required_queryable_predicate(stapi_client:
         },
     )
     assert response.status_code == 400
+
+
+@pytest.mark.parametrize("product_id", ["test-spotlight"])
+def test_get_order_statuses_is_collection(get_order_response: Response, stapi_client: TestClient) -> None:
+    body = get_order_response.json()
+    link = find_link(body["links"], "monitor")
+    assert link is not None
+
+    res = stapi_client.get(link["href"])
+    assert res.status_code == status.HTTP_200_OK
+
+    statuses_body = res.json()
+    assert statuses_body["stapi_type"] == "OrderStatusCollection"
+    assert "statuses" in statuses_body

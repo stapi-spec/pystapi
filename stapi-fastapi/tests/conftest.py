@@ -7,15 +7,14 @@ from urllib.parse import urljoin
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from stapi_fastapi.conformance import API
 from stapi_fastapi.models.product import (
     Product,
 )
 from stapi_fastapi.routers.root_router import RootRouter
-from stapi_pydantic import (
-    Opportunity,
-)
 
 from .backends import (
+    AnyOpportunity,
     mock_get_opportunity_search_record,
     mock_get_opportunity_search_record_statuses,
     mock_get_opportunity_search_records,
@@ -24,6 +23,7 @@ from .backends import (
     mock_get_orders,
 )
 from .shared import (
+    AssertLink,
     InMemoryOpportunityDB,
     InMemoryOrderDB,
     create_mock_opportunity,
@@ -40,9 +40,11 @@ def base_url() -> Iterator[str]:
 
 
 @pytest.fixture
-def mock_products(request) -> list[Product]:
-    if request.node.get_closest_marker("mock_products") is not None:
-        return request.node.get_closest_marker("mock_products").args[0]
+def mock_products(request: pytest.FixtureRequest) -> list[Product]:
+    marker = request.node.get_closest_marker("mock_products")
+    if marker is not None:
+        marked_products: list[Product] = marker.args[0]
+        return marked_products
     return [
         product_test_spotlight_sync_opportunity,
         product_test_satellite_provider_sync_opportunity,
@@ -50,7 +52,7 @@ def mock_products(request) -> list[Product]:
 
 
 @pytest.fixture
-def mock_opportunities() -> list[Opportunity]:
+def mock_opportunities() -> list[AnyOpportunity]:
     return [create_mock_opportunity()]
 
 
@@ -75,7 +77,7 @@ def _root_router(overrides: dict[str, Any], **defaults: Any) -> RootRouter:
 def stapi_client(
     mock_products: list[Product],
     base_url: str,
-    mock_opportunities: list[Opportunity],
+    mock_opportunities: list[AnyOpportunity],
     root_router_kwargs: dict[str, Any],
 ) -> Generator[TestClient, None, None]:
     @asynccontextmanager
@@ -93,6 +95,7 @@ def stapi_client(
         get_orders=mock_get_orders,
         get_order=mock_get_order,
         get_order_statuses=mock_get_order_statuses,
+        conformances=[API.core],
     )
 
     for mock_product in mock_products:
@@ -109,7 +112,7 @@ def stapi_client(
 def stapi_client_async_opportunity(
     mock_products: list[Product],
     base_url: str,
-    mock_opportunities: list[Opportunity],
+    mock_opportunities: list[AnyOpportunity],
     root_router_kwargs: dict[str, Any],
 ) -> Generator[TestClient, None, None]:
     @asynccontextmanager
@@ -131,6 +134,11 @@ def stapi_client_async_opportunity(
         get_opportunity_search_records=mock_get_opportunity_search_records,
         get_opportunity_search_record=mock_get_opportunity_search_record,
         get_opportunity_search_record_statuses=mock_get_opportunity_search_record_statuses,
+        conformances=[
+            API.core,
+            API.searches_opportunity,
+            API.searches_opportunity_statuses,
+        ],
     )
 
     for mock_product in mock_products:
@@ -155,7 +163,7 @@ def url_for(base_url: str) -> Iterator[Callable[[str], str]]:
 
 
 @pytest.fixture
-def assert_link(url_for) -> Callable:
+def assert_link(url_for: Callable[[str], str]) -> AssertLink:
     def _assert_link(
         req: str,
         body: dict[str, Any],
@@ -163,7 +171,7 @@ def assert_link(url_for) -> Callable:
         path: str,
         media_type: str = "application/json",
         method: str | None = None,
-    ):
+    ) -> None:
         link = find_link(body["links"], rel)
         assert link, f"{req} Link[rel={rel}] should exist"
         assert link["type"] == media_type
@@ -180,7 +188,7 @@ def limit() -> int:
 
 
 @pytest.fixture
-def opportunity_search(limit) -> dict[str, Any]:
+def opportunity_search(limit: int) -> dict[str, Any]:
     now = datetime.now(UTC)
     end = now + timedelta(days=5)
     format = "%Y-%m-%dT%H:%M:%S.%f%z"

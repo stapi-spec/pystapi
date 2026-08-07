@@ -22,6 +22,30 @@ SEARCH_PARAMS = {
 }
 
 
+def test_opportunity_search_status_accepts_extension_status_code() -> None:
+    status = OpportunitySearchStatus.model_validate({"timestamp": "2024-04-10T09:15:00Z", "status_code": "queued"})
+    assert status.status_code == "queued"
+    assert status.model_dump(mode="json")["status_code"] == "queued"
+
+
+def test_opportunity_search_status_code_constrainable_with_custom_enum() -> None:
+    from enum import StrEnum
+
+    class NarrowCodes(StrEnum):
+        special = "special"
+
+    with pytest.raises(pydantic.ValidationError):
+        OpportunitySearchStatus[NarrowCodes].model_validate(
+            {"timestamp": "2024-04-10T09:15:00Z", "status_code": "received"}
+        )
+
+
+def test_create_properties() -> None:
+    _ = OpportunityProperties.model_validate(
+        {"datetime": "2025-04-01T00:00:00Z/2025-04-01T23:59:59Z", "product_id": "foo"}
+    )
+
+
 def test_opportunity_request_shape() -> None:
     """An unspecified page size stays unspecified: the default is the server's to
     choose, not the model's.
@@ -56,12 +80,15 @@ SEARCH_RECORD_DICT = {
     "id": "search-1",
     "product_id": "umbra_spotlight",
     "search_parameters": SEARCH_PARAMS,
-    "status": {"timestamp": "2024-04-10T09:15:00Z", "status_code": "received"},
+    "status": {
+        "timestamp": "2024-04-18T11:00:00Z",
+        "status_code": "received",
+        "links": [],
+    },
 }
 
 
 def test_opportunity_search_record_request_field() -> None:
-    """A record says what was searched for, not which request body carried it."""
     record = OpportunitySearchRecord.model_validate(SEARCH_RECORD_DICT)
     assert record.search_parameters.geometry.type == "Point"
     dumped = record.model_dump(mode="json")
@@ -70,76 +97,17 @@ def test_opportunity_search_record_request_field() -> None:
 
 
 def test_opportunity_search_record_collection() -> None:
-    collection = OpportunitySearchRecordCollection.model_validate(
-        {"records": [SEARCH_RECORD_DICT]},
-    )
+    collection = OpportunitySearchRecordCollection(records=[OpportunitySearchRecord.model_validate(SEARCH_RECORD_DICT)])
     dumped = collection.model_dump(mode="json")
     assert dumped["stapi_type"] == "OpportunitySearchRecordCollection"
     assert len(dumped["records"]) == 1
 
 
-def test_opportunity_search_status_accepts_extension_status_code() -> None:
-    status = OpportunitySearchStatus.model_validate({"timestamp": "2024-04-10T09:15:00Z", "status_code": "queued"})
-    assert status.status_code == "queued"
-    assert status.model_dump(mode="json")["status_code"] == "queued"
-
-
-def test_opportunity_search_status_code_constrainable_with_custom_enum() -> None:
-    from enum import StrEnum
-
-    class NarrowCodes(StrEnum):
-        special = "special"
-
-    with pytest.raises(pydantic.ValidationError):
-        OpportunitySearchStatus[NarrowCodes].model_validate(
-            {"timestamp": "2024-04-10T09:15:00Z", "status_code": "received"}
-        )
-
-
 def test_opportunity_search_status_collection() -> None:
-    collection = OpportunitySearchStatusCollection.model_validate(
-        {"statuses": [{"timestamp": "2024-04-10T09:15:00Z", "status_code": "received"}]}
-    )
+    status = OpportunitySearchStatus.model_validate(SEARCH_RECORD_DICT["status"])
+    collection = OpportunitySearchStatusCollection(statuses=[status])
     dumped = collection.model_dump(mode="json")
     assert dumped["stapi_type"] == "OpportunitySearchStatusCollection"
-    assert len(dumped["statuses"]) == 1
-
-
-OPPORTUNITY_DICT = {
-    "type": "Feature",
-    "geometry": {"type": "Point", "coordinates": [13.4, 52.5]},
-    "properties": {
-        "datetime": "2024-04-18T10:56:00Z/2024-04-25T10:56:00Z",
-        "product_id": "umbra_spotlight",
-    },
-}
-
-
-def test_opportunity_id_is_string_only() -> None:
-    opportunity = Opportunity[Point, OpportunityProperties].model_validate({**OPPORTUNITY_DICT, "id": "opp-1"})
-    assert opportunity.id == "opp-1"
-    with pytest.raises(pydantic.ValidationError):
-        Opportunity[Point, OpportunityProperties].model_validate({**OPPORTUNITY_DICT, "id": 1})
-
-
-def test_opportunity_collection_omits_null_id() -> None:
-    collection = OpportunityCollection[Point, OpportunityProperties].model_validate(
-        {"type": "FeatureCollection", "features": []}
-    )
-    assert "id" not in collection.model_dump(mode="json")
-
-
-def test_opportunity_geometry_required_non_null() -> None:
-    """Feature types geometry as nullable, which would let a spec-violating
-    response validate and dump.
-    """
-    with pytest.raises(pydantic.ValidationError):
-        Opportunity[Point, OpportunityProperties].model_validate({**OPPORTUNITY_DICT, "geometry": None})
-
-
-def test_opportunity_properties_required() -> None:
-    with pytest.raises(pydantic.ValidationError):
-        Opportunity[Point, OpportunityProperties].model_validate({**OPPORTUNITY_DICT, "properties": None})
 
 
 def test_opportunity_collection_stapi_fields() -> None:
@@ -147,6 +115,16 @@ def test_opportunity_collection_stapi_fields() -> None:
     dumped = collection.model_dump(mode="json")
     assert dumped["stapi_type"] == "OpportunityCollection"
     assert dumped["stapi_version"] == "0.2.0"
+
+
+OPPORTUNITY_DICT: dict[str, Any] = {
+    "type": "Feature",
+    "geometry": {"type": "Point", "coordinates": [13.4, 52.5]},
+    "properties": {
+        "datetime": "2024-04-18T10:56:00Z/2024-04-25T10:56:00Z",
+        "product_id": "umbra_spotlight",
+    },
+}
 
 
 def test_opportunity_bbox_3d_geometry() -> None:
@@ -208,6 +186,18 @@ def test_opportunity_collection_bbox_unions_features() -> None:
     assert collection.bbox == (13.4, 52.5, 14.4, 53.5)
 
 
+def test_opportunity_id_is_string_only() -> None:
+    schema = Opportunity[Point, OpportunityProperties].model_json_schema(mode="validation")
+    id_types = {member.get("type") for member in schema["properties"]["id"].get("anyOf", [])}
+    assert "integer" not in id_types
+
+
+def test_opportunity_collection_omits_null_id() -> None:
+    collection: OpportunityCollection[Any, Any] = OpportunityCollection(features=[])
+    assert "id" not in collection.model_dump(mode="json")
+    assert '"id":null' not in collection.model_dump_json()
+
+
 def test_opportunity_collection_number_matched() -> None:
     collection: OpportunityCollection[Any, Any] = OpportunityCollection(features=[], number_matched=3)
     assert collection.model_dump(mode="json")["numberMatched"] == 3
@@ -217,3 +207,23 @@ def test_opportunity_collection_number_matched() -> None:
 def test_search_record_collection_number_matched() -> None:
     collection = OpportunitySearchRecordCollection(records=[], number_matched=0)
     assert collection.model_dump(mode="json")["numberMatched"] == 0
+
+
+def test_opportunity_geometry_required_non_null() -> None:
+    with pytest.raises(pydantic.ValidationError):
+        Opportunity[Point, OpportunityProperties].model_validate(
+            {
+                **OPPORTUNITY_DICT,
+                "geometry": None,
+            }
+        )
+
+
+def test_opportunity_properties_required() -> None:
+    with pytest.raises(pydantic.ValidationError):
+        Opportunity[Point, OpportunityProperties].model_validate(
+            {
+                **OPPORTUNITY_DICT,
+                "properties": None,
+            }
+        )

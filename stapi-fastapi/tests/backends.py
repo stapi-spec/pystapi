@@ -1,19 +1,24 @@
 from datetime import UTC, datetime
+from typing import TypeAlias
 from uuid import uuid4
 
 from fastapi import Request
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, ResultE, Success
-from stapi_fastapi import Page
 from stapi_fastapi.errors import PaginationTokenError
+from stapi_fastapi.pagination import Page
 from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_pydantic import (
+    Geometry,
     Opportunity,
+    OpportunityCollection,
+    OpportunityProperties,
     OpportunityRequest,
     OpportunitySearchRecord,
     OpportunitySearchStatus,
     OpportunitySearchStatusCode,
     Order,
+    OrderParameters,
     OrderProperties,
     OrderRequest,
     OrderStatus,
@@ -21,17 +26,24 @@ from stapi_pydantic import (
     StoredOrderRequest,
 )
 
+# These mocks are shared by every test product, so they are parameterized at
+# the generic bounds rather than at one product's concrete geometry/properties
+# models.
+AnyOpportunity: TypeAlias = Opportunity[Geometry, OpportunityProperties]
+AnyOpportunityCollection: TypeAlias = OpportunityCollection[Geometry, OpportunityProperties]
+
 
 def _offset(token: str) -> int:
-    """Read a page offset out of a pagination token.
+    """The offset a pagination token names, as these mocks encode it.
 
-    The mocks encode the offset in the token itself, so anything unparseable is
-    a token that identifies no page rather than an incidental error.
+    The failure is reported as a `PaginationTokenError` rather than the bare
+    `ValueError` `int()` raises, so that the other `ValueError`s these backends
+    can raise stay 500s.
     """
     try:
         return int(token)
     except ValueError:
-        raise PaginationTokenError(f"unusable pagination token: {token!r}") from None
+        raise PaginationTokenError(f"not a pagination token: {token!r}") from None
 
 
 async def mock_get_orders(
@@ -102,12 +114,14 @@ async def mock_get_order_statuses(
         return Failure(e)
 
 
-async def mock_create_order(product_router: ProductRouter, payload: OrderRequest, request: Request) -> ResultE[Order]:
+async def mock_create_order(
+    product_router: ProductRouter, payload: OrderRequest[OrderParameters], request: Request
+) -> ResultE[Order]:
     """
     Create a new order.
     """
     try:
-        status = OrderStatus(
+        status: OrderStatus = OrderStatus(
             timestamp=datetime.now(UTC),
             status_code=OrderStatusCode.received,
         )
@@ -141,7 +155,7 @@ async def mock_search_opportunities(
     next: str | None,
     limit: int,
     request: Request,
-) -> ResultE[Page[Opportunity]]:
+) -> ResultE[Page[AnyOpportunity]]:
     try:
         start = 0
         limit = min(limit, 100)
@@ -173,7 +187,7 @@ async def mock_search_opportunities_async(
     request: Request,
 ) -> ResultE[OpportunitySearchRecord]:
     try:
-        received_status = OpportunitySearchStatus(
+        received_status: OpportunitySearchStatus = OpportunitySearchStatus(
             timestamp=datetime.now(UTC),
             status_code=OpportunitySearchStatusCode.received,
         )
@@ -196,7 +210,7 @@ async def mock_get_opportunity_collection(
     next: str | None,
     limit: int,
     request: Request,
-) -> ResultE[Maybe[Page[Opportunity]]]:
+) -> ResultE[Maybe[Page[AnyOpportunity]]]:
     try:
         collection = request.state._opportunities_db.get_opportunity_collection(opportunity_collection_id)
         if collection is None:
@@ -260,18 +274,19 @@ async def mock_get_opportunity_search_record(
 
 
 async def mock_get_opportunity_search_record_statuses(
-    search_record_id: str,
-    next: str | None,
-    limit: int,
-    request: Request,
+    search_record_id: str, next: str | None, limit: int, request: Request
 ) -> ResultE[Maybe[Page[OpportunitySearchStatus]]]:
     try:
         statuses = request.state._opportunities_db.get_search_record_statuses(search_record_id)
         if statuses is None:
             return Success(Nothing)
 
-        start = _offset(next) if next else 0
+        start = 0
+        limit = min(limit, 100)
+        if next:
+            start = _offset(next)
         end = start + limit
+
         return Success(
             Some(
                 Page(

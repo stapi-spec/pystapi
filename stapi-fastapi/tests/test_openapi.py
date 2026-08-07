@@ -47,6 +47,30 @@ def test_routes_declare_only_the_errors_they_produce(spec: dict[str, Any]) -> No
     assert {"404", "500"} <= set(spec["paths"]["/orders"]["get"]["responses"])
 
 
+@pytest.mark.mock_products([product_test_spotlight_sync_async_opportunity])
+@pytest.mark.parametrize("code", ["200", "201"])
+def test_preference_applied_declared_on_opportunity_search(spec: dict[str, Any], code: str) -> None:
+    """`Preference-Applied` is a spec MUST, and which codes carry it depends on
+    the capabilities of the product actually mounted.
+    """
+    header = spec["paths"][SEARCH_OPPORTUNITIES_PATH]["post"]["responses"][code]["headers"]["Preference-Applied"]
+    assert set(header["schema"]["enum"]) == {"wait", "respond-async"}
+
+
+def test_operation_ids_are_unique_and_named_for_their_route(spec: dict[str, Any]) -> None:
+    """Every generated client names its methods from these.
+
+    They come from the prefixed route name, which is what makes them unique:
+    `get-product` is registered once per product, and FastAPI would emit the
+    collision without complaint.
+    """
+    ids = [operation["operationId"] for _, _, operation in operations(spec)]
+
+    assert len(ids) == len(set(ids)), sorted(id_ for id_ in ids if ids.count(id_) > 1)
+    assert {"root_test_spotlight_get_queryables", "root_test_satellite_provider_get_queryables"} <= set(ids)
+    assert all(operation_id.isidentifier() for operation_id in ids)
+
+
 def test_no_response_schema_carries_a_mangled_auto_title(spec: dict[str, Any]) -> None:
     """FastAPI auto-titles an *inline* response schema after the operation that
     returns it, yielding names like `Response Root Test Spotlight Get
@@ -89,11 +113,11 @@ def test_no_component_schema_is_unreferenced(spec: dict[str, Any]) -> None:
     assert set(schemas) - referenced == set()
 
 
-@pytest.mark.mock_products([product_test_spotlight_sync_async_opportunity])
-@pytest.mark.parametrize("code", ["200", "201"])
-def test_preference_applied_declared_on_opportunity_search(spec: dict[str, Any], code: str) -> None:
-    """`Preference-Applied` is a spec MUST, and which codes carry it depends on
-    the capabilities of the product actually mounted.
+def test_generic_component_names_stay_readable(spec: dict[str, Any]) -> None:
+    """Pydantic names a parameterization after the repr of its parameters, which
+    for the `Geometry` union runs to 204 characters.
     """
-    header = spec["paths"][SEARCH_OPPORTUNITIES_PATH]["post"]["responses"][code]["headers"]["Preference-Applied"]
-    assert set(header["schema"]["enum"]) == {"wait", "respond-async"}
+    names = set(spec["components"]["schemas"])
+
+    assert "OpportunityCollection_Geometry__MyOpportunityProperties_" in names
+    assert max(len(name) for name in names) < 80

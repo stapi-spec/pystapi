@@ -15,6 +15,20 @@ from stapi_pydantic import (
     StoredOrderRequest,
 )
 
+SEARCH_PARAMS = {
+    "datetime": "2024-04-18T10:56:00Z/2024-04-25T10:56:00Z",
+    "geometry": {"type": "Point", "coordinates": [13.4, 52.5]},
+}
+
+
+def test_order_status_new() -> None:
+    status = OrderStatus.new(OrderStatusCode.accepted)
+    assert status.timestamp.tzinfo == datetime.UTC
+    assert status.status_code == OrderStatusCode.accepted
+    assert status.reason_code is None
+    assert status.reason_text is None
+    assert status.links == []
+
 
 def test_order_status_new_uses_cls() -> None:
     class NarrowCodes(StrEnum):
@@ -60,35 +74,8 @@ def test_order_status_code_schema_allows_extension_strings() -> None:
     assert any("$ref" in member for member in status_code_schema["anyOf"])
 
 
-def test_order_status_new() -> None:
-    status = OrderStatus.new(OrderStatusCode.accepted)
-    assert status.timestamp.tzinfo == datetime.UTC
-    assert status.status_code == OrderStatusCode.accepted
-    assert status.reason_code is None
-    assert status.reason_text is None
-    assert status.links == []
-
-
-SEARCH_PARAMS = {
-    "datetime": "2024-04-18T10:56:00Z/2024-04-25T10:56:00Z",
-    "geometry": {"type": "Point", "coordinates": [13.4, 52.5]},
-}
-
-
 class RequiredParams(OrderParameters):
     delivery_format: str
-
-
-def test_concrete_order_parameters_are_base_order_parameters() -> None:
-    assert isinstance(RequiredParams(delivery_format="GEOTIFF"), BaseOrderParameters)
-
-    # RequiredParams (via OrderParameters) forbids extra fields...
-    with pytest.raises(pydantic.ValidationError):
-        RequiredParams.model_validate({"delivery_format": "GEOTIFF", "unexpected_field": "value"})
-
-    # ...while BaseOrderParameters allows and preserves them.
-    base = BaseOrderParameters.model_validate({"unexpected_field": "value"})
-    assert base.model_dump()["unexpected_field"] == "value"
 
 
 def test_order_request_shape() -> None:
@@ -147,35 +134,21 @@ def test_stored_order_parameters_preserve_provider_fields() -> None:
     assert params.model_dump()["deliveryFormat"] == "GEOTIFF"
 
 
+def test_concrete_order_parameters_are_base_order_parameters() -> None:
+    assert isinstance(RequiredParams(delivery_format="GEOTIFF"), BaseOrderParameters)
+
+    # RequiredParams (via OrderParameters) forbids extra fields...
+    with pytest.raises(pydantic.ValidationError):
+        RequiredParams.model_validate({"delivery_format": "GEOTIFF", "unexpected_field": "value"})
+
+    # ...while BaseOrderParameters allows and preserves them.
+    base = BaseOrderParameters.model_validate({"unexpected_field": "value"})
+    assert base.model_dump()["unexpected_field"] == "value"
+
+
 def test_order_extra_properties_allowed() -> None:
     order = Order[OrderStatus].model_validate(ORDER_DICT)
     assert order.properties.model_dump()["owner"] == {"organization": "ACME"}
-
-
-def test_stored_order_request_preserves_unknown_fields() -> None:
-    stored = StoredOrderRequest.model_validate({"search_parameters": SEARCH_PARAMS, "provider_extra": 1})
-    assert stored.model_dump()["provider_extra"] == 1
-
-
-def test_search_parameters_preserve_unknown_fields() -> None:
-    order = Order[OrderStatus].model_validate(
-        {
-            **ORDER_DICT,
-            "properties": {
-                **ORDER_DICT["properties"],
-                "order_request": {"search_parameters": {**SEARCH_PARAMS, "vendor:priority": "high"}},
-            },
-        }
-    )
-    dumped = order.model_dump(mode="json")
-    assert dumped["properties"]["order_request"]["search_parameters"]["vendor:priority"] == "high"
-
-
-def test_order_collection_stapi_fields() -> None:
-    collection = OrderCollection[OrderStatus](features=[Order[OrderStatus].model_validate(ORDER_DICT)])
-    dumped = collection.model_dump(mode="json")
-    assert dumped["stapi_type"] == "OrderCollection"
-    assert dumped["stapi_version"] == "0.2.0"
 
 
 def test_order_bbox_computed_and_serialized() -> None:
@@ -251,8 +224,6 @@ def _order_with(geometry: dict[str, Any], id_: str) -> Order[OrderStatus]:
 
 
 LINE_3D = {"type": "LineString", "coordinates": [[13.0, 52.0, 10.0], [16.0, 55.0, 200.0]]}
-
-
 LINE_3D_LOWER = {"type": "LineString", "coordinates": [[12.0, 51.0, 5.0], [12.5, 51.5, 100.0]]}
 
 
@@ -274,12 +245,38 @@ def test_order_collection_bbox_degrades_to_2d_when_members_are_mixed() -> None:
     assert collection.bbox == (12.0, 51.0, 16.0, 55.0)
 
 
+def test_order_collection_number_matched_not_serialization_required() -> None:
+    schema = OrderCollection[OrderStatus].model_json_schema(mode="serialization")
+    assert {"type", "stapi_type", "stapi_version", "links", "features"} <= set(schema["required"])
+    assert "numberMatched" not in schema["required"]
+
+
+def test_stored_order_request_preserves_unknown_fields() -> None:
+    stored = StoredOrderRequest.model_validate({"search_parameters": SEARCH_PARAMS, "provider_extra": 1})
+    assert stored.model_dump()["provider_extra"] == 1
+
+
+def test_search_parameters_preserve_unknown_fields() -> None:
+    order = Order[OrderStatus].model_validate(
+        {
+            **ORDER_DICT,
+            "properties": {
+                **ORDER_DICT["properties"],
+                "order_request": {"search_parameters": {**SEARCH_PARAMS, "vendor:priority": "high"}},
+            },
+        }
+    )
+    dumped = order.model_dump(mode="json")
+    assert dumped["properties"]["order_request"]["search_parameters"]["vendor:priority"] == "high"
+
+
 def test_order_empty_geometry_bbox_error_is_clear() -> None:
     with pytest.raises(pydantic.ValidationError, match="bbox"):
         Order[OrderStatus].model_validate({**ORDER_DICT, "geometry": {"type": "MultiPoint", "coordinates": []}})
 
 
-def test_order_collection_number_matched_not_serialization_required() -> None:
-    schema = OrderCollection[OrderStatus].model_json_schema(mode="serialization")
-    assert {"type", "stapi_type", "stapi_version", "links", "features"} <= set(schema["required"])
-    assert "numberMatched" not in schema["required"]
+def test_order_collection_stapi_fields() -> None:
+    collection = OrderCollection[OrderStatus](features=[Order[OrderStatus].model_validate(ORDER_DICT)])
+    dumped = collection.model_dump(mode="json")
+    assert dumped["stapi_type"] == "OrderCollection"
+    assert dumped["stapi_version"] == "0.2.0"

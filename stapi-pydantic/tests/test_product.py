@@ -38,11 +38,11 @@ def test_products_collection_dumps_nested_product_by_alias() -> None:
     assert collection.model_dump()["products"][0]["type"] == "Collection"
 
 
-def test_product_collection_is_named_for_its_stapi_type() -> None:
-    assert ProductCollection.model_fields["stapi_type"].default == "ProductCollection"
-
-
 def test_products_collection_number_matched() -> None:
     collection = ProductCollection(products=[], number_matched=12)
     assert collection.model_dump(mode="json")["numberMatched"] == 12
     assert "numberMatched" not in ProductCollection(products=[]).model_dump(mode="json")
+
+
+def test_product_collection_is_named_for_its_stapi_type() -> None:
+    assert ProductCollection.model_fields["stapi_type"].default == "ProductCollection"

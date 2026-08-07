@@ -7,10 +7,12 @@ from stapi_pydantic import (
     OpportunityCollection,
 )
 
-from .shared import create_mock_opportunity, pagination_tester
+from .shared import AssertLink, create_mock_opportunity, pagination_tester
 
 
-def test_search_opportunities_response(stapi_client: TestClient, assert_link, opportunity_search) -> None:
+def test_search_opportunities_response(
+    stapi_client: TestClient, assert_link: AssertLink, opportunity_search: dict[str, Any]
+) -> None:
     product_id = "test-spotlight"
     url = f"/products/{product_id}/opportunities"
 
@@ -40,14 +42,12 @@ def test_search_opportunities_response(stapi_client: TestClient, assert_link, op
 def test_search_opportunities_pagination(
     limit: int,
     stapi_client: TestClient,
-    opportunity_search,
+    opportunity_search: dict[str, Any],
 ) -> None:
     mock_pagination_opportunities = [create_mock_opportunity() for __ in range(3)]
     stapi_client.app_state["_opportunities"] = mock_pagination_opportunities
     product_id = "test-spotlight"
-    expected_returns = []
-    if limit != 0:
-        expected_returns = [x.model_dump(mode="json") for x in mock_pagination_opportunities]
+    expected_returns = [x.model_dump(mode="json") for x in mock_pagination_opportunities]
 
     pagination_tester(
         stapi_client=stapi_client,

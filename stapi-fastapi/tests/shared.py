@@ -1,7 +1,7 @@
 from collections import defaultdict
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
-from typing import Any, Literal, Self, TypeAlias
+from typing import Any, Literal, Protocol, Self, TypeAlias
 from urllib.parse import parse_qs, urlparse
 from uuid import uuid4
 
@@ -16,7 +16,6 @@ from stapi_fastapi.conformance import PRODUCT
 from stapi_fastapi.models.product import Product
 from stapi_pydantic import (
     Opportunity,
-    OpportunityCollection,
     OpportunityProperties,
     OpportunitySearchRecord,
     OpportunitySearchStatus,
@@ -29,6 +28,8 @@ from stapi_pydantic import (
 )
 
 from .backends import (
+    AnyOpportunity,
+    AnyOpportunityCollection,
     mock_create_order,
     mock_get_opportunity_collection,
     mock_search_opportunities,
@@ -40,6 +41,20 @@ link_dict: TypeAlias = dict[str, Any]
 
 def find_link(links: list[link_dict], rel: str) -> link_dict | None:
     return next((link for link in links if link["rel"] == rel), None)
+
+
+class AssertLink(Protocol):
+    """Call signature of the `assert_link` fixture."""
+
+    def __call__(
+        self,
+        req: str,
+        body: dict[str, Any],
+        rel: str,
+        path: str,
+        media_type: str = "application/json",
+        method: str | None = None,
+    ) -> None: ...
 
 
 class InMemoryOrderDB:
@@ -66,15 +81,13 @@ class InMemoryOrderDB:
 class InMemoryOpportunityDB:
     def __init__(self) -> None:
         self._search_records: dict[str, OpportunitySearchRecord] = {}
-        self._statuses: defaultdict[str, list[OpportunitySearchStatus]] = defaultdict(list)
-        self._collections: dict[str, OpportunityCollection] = {}
+        self._statuses: dict[str, list[OpportunitySearchStatus]] = defaultdict(list)
+        self._collections: dict[str, AnyOpportunityCollection] = {}
 
     def get_search_record(self, search_id: str) -> OpportunitySearchRecord | None:
         return deepcopy(self._search_records.get(search_id))
 
     def get_search_record_statuses(self, search_id: str) -> list[OpportunitySearchStatus] | None:
-        # None only when the record is unknown: a known record always has at
-        # least the status it was created with.
         if search_id not in self._search_records:
             return None
         return deepcopy(self._statuses[search_id])
@@ -83,13 +96,14 @@ class InMemoryOpportunityDB:
         return deepcopy(list(self._search_records.values()))
 
     def put_search_record(self, search_record: OpportunitySearchRecord) -> None:
+        """Store a search record, accumulating its status history."""
         self._search_records[search_record.id] = deepcopy(search_record)
         self._statuses[search_record.id].append(deepcopy(search_record.status))
 
-    def get_opportunity_collection(self, collection_id) -> OpportunityCollection | None:
+    def get_opportunity_collection(self, collection_id: str) -> AnyOpportunityCollection | None:
         return deepcopy(self._collections.get(collection_id))
 
-    def put_opportunity_collection(self, collection: OpportunityCollection) -> None:
+    def put_opportunity_collection(self, collection: AnyOpportunityCollection) -> None:
         if collection.id is None:
             raise ValueError("collection must have an id")
         self._collections[collection.id] = deepcopy(collection)
@@ -125,7 +139,6 @@ provider = Provider(
     description="A provider for Test data",
     roles=[ProviderRole.producer],  # Example role
     url="https://test-provider.example.com",  # Must be a valid URL
-    conforms_to=[PRODUCT.geojson_point],
 )
 
 product_test_spotlight = Product(
@@ -182,7 +195,6 @@ product_test_spotlight_async_opportunity = Product(
     order_parameters=MyOrderParameters,
     conforms_to=[PRODUCT.geojson_point],
 )
-
 
 # Declares the opportunity conformance classes itself, the way a provider
 # publishing an async-search product would. What is actually advertised must
@@ -242,7 +254,28 @@ product_test_satellite_provider_sync_opportunity = Product(
 )
 
 
-def create_mock_opportunity() -> Opportunity:
+# Declares no geojson conformance, which a Product must do to say what geometry
+# it accepts. Registering it is an error.
+product_test_spotlight_no_geojson_conformance = Product(
+    id="test-spotlight-no-geojson",
+    title="Test Spotlight Product",
+    description="Test product declaring no geojson conformance",
+    license="CC-BY-4.0",
+    keywords=["test", "satellite"],
+    providers=[provider],
+    links=[],
+    create_order=mock_create_order,
+    search_opportunities=mock_search_opportunities,
+    search_opportunities_async=None,
+    get_opportunity_collection=None,
+    queryables=MyProductQueryables,
+    opportunity_properties=MyOpportunityProperties,
+    order_parameters=MyOrderParameters,
+    conforms_to=[PRODUCT.opportunities],
+)
+
+
+def create_mock_opportunity() -> AnyOpportunity:
     now = datetime.now(UTC)  # Use timezone-aware datetime
     start = now
     end = start + timedelta(days=5)
@@ -272,10 +305,10 @@ def pagination_tester(
     method: str,
     limit: int,
     target: str,
-    expected_returns: list,
-    body: dict | None = None,
+    expected_returns: list[dict[str, Any]],
+    body: dict[str, Any] | None = None,
 ) -> None:
-    retrieved = []
+    retrieved: list[dict[str, Any]] = []
 
     res = make_request(stapi_client, url, method, body, limit)
     assert res.status_code == status.HTTP_200_OK
@@ -311,7 +344,7 @@ def make_request(
     stapi_client: TestClient,
     url: str,
     method: str,
-    body: dict | None,
+    body: dict[str, Any] | None,
     limit: int,
 ) -> Response:
     """request wrapper for pagination tests"""
