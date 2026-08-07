@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **BREAKING** `Geometry` is the six-member STAPI union and no longer includes `GeometryCollection`. The spec enumerates exactly six geometry conformance classes, so a `GeometryCollection` was a value no implementation could declare support for. Import `geojson_pydantic.geometries.Geometry` directly if you need the wider union.
 
 - `CQL2Filter` is typed as `dict[str, Any]` rather than a bare `dict`.
+- **BREAKING** `Link` omits its unset fields from `model_dump()` as well as from JSON output. The `None`-filtering serializer it previously carried applied only to JSON dumps.
 
 ### Fixed
 
